@@ -1,5 +1,6 @@
 [package]
 name = "apexdesk-gnome-phase1"
+default-run = "apexdesk-gnome-phase1"
 version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
