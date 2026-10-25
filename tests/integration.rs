@@ -58,7 +58,12 @@ fn foreign_files_preserve_basic_formatting() {
         let output = dir.join(format!("salida.{ext}"));
         let original_bytes = std::fs::read(&input).unwrap();
         let (loaded, _) = open_document(&input).unwrap();
-        assert_sample_invariants(&loaded, false).unwrap();
+        assert_sample_invariants(&loaded, false).unwrap_or_else(|e| {
+            let spans: Vec<_> = loaded.paragraphs[1].spans()
+                .map(|(start, end, attrs)| (start, end, attrs.bold))
+                .collect();
+            panic!("Error leyendo {ext}: {e}; tramos = {spans:?}");
+        });
         assert_eq!(loaded.meta.title, "Documento externo de prueba");
         assert_eq!(edit_copy(&input, &output, "ejemplo", "prueba").unwrap(), 1);
         let (edited, _) = open_document(&output).unwrap();
