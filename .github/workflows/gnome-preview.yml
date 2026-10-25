@@ -18,7 +18,7 @@ jobs:
       - name: Instalar dependencias de GNOME
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev
+          sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev xvfb xauth scrot
 
       - uses: actions/setup-python@v5
         with:
@@ -39,9 +39,28 @@ jobs:
       - name: Comprobar dependencias sin egui
         run: bash scripts/check-dependencies.sh --features gui
 
+      - name: Comprobar que la ventana se inicia y capturar la interfaz
+        run: |
+          xvfb-run -a -s "-screen 0 1280x800x24" bash -c '
+            GSK_RENDERER=cairo ./target/debug/apexdesk-gnome >gui-stdout.log 2>gui-stderr.log &
+            pid=$!
+            sleep 5
+            if ! kill -0 "$pid" 2>/dev/null; then
+              cat gui-stderr.log
+              exit 1
+            fi
+            scrot fase2-ventana.png
+            kill "$pid"
+            wait "$pid" || true
+          '
+          test -s fase2-ventana.png
+
       - name: Publicar prototipo Linux (depende de GTK/libadwaita del sistema)
         uses: actions/upload-artifact@v4
         with:
           name: apexdesk-gnome-fase2-ubuntu2404
-          path: target/debug/apexdesk-gnome
+          path: |
+            target/debug/apexdesk-gnome
+            fase2-ventana.png
+            gui-stderr.log
           if-no-files-found: error

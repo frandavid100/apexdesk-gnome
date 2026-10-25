@@ -54,7 +54,9 @@ cargo test
 
 El flujo [**Fase 2 — GNOME GTK4 libadwaita**](.github/workflows/gnome-preview.yml)
 compila el binario y lo adjunta como artefacto de desarrollo para Ubuntu 24.04.
-Este binario requiere GTK4/libadwaita instalados y todavía no es un Flatpak.
+El flujo también verifica que la aplicación arranca en Xvfb y adjunta una captura
+de la pantalla inicial. Este binario requiere GTK4/libadwaita instalados y
+todavía no es un Flatpak.
 
 La prueba no valida el aspecto visual ni la accesibilidad en una sesión real
 de GNOME; esto requerirá una revisión manual posterior.
