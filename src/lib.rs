@@ -112,9 +112,19 @@ pub fn assert_sample_invariants(doc: &Document, edited: bool) -> Result<(), Stri
     if doc.paragraphs[1].text != expected {
         return Err(format!("Contenido inesperado: {:?}", doc.paragraphs[1].text));
     }
-    let bold = doc.paragraphs[1]
-        .spans()
-        .any(|(s, e, a)| s == 0 && e >= 5 && a.bold);
+    // El formato puede estar definido en un estilo de carácter nominal
+    // (frecuente en ODT) y no como atributo directo del run.
+    let bold = doc.paragraphs[1].spans().any(|(s, e, a)| {
+        if s != 0 || e < 5 {
+            return false;
+        }
+        a.bold
+            || a.char_style
+                .as_deref()
+                .and_then(|id| doc.styles.by_id(id))
+                .and_then(|style| style.bold)
+                .unwrap_or(false)
+    });
     if !bold {
         return Err("Se perdió el tramo inicial en negrita".into());
     }
