@@ -1,12 +1,25 @@
 [package]
 name = "apexdesk-gnome-phase1"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
-description = "Integración de motores ApexDesk bajo GPL, sin interfaz gráfica"
+description = "Motores ApexDesk GPL y prototipo de lectura nativo GNOME"
 publish = false
 
-# Anclado en la revisión GPL: NO cambiar a main (PolyForm Strict).
+[features]
+default = []
+gui = ["dep:gtk", "dep:adw"]
+
+[[bin]]
+name = "apexdesk-gnome"
+path = "src/bin/gnome.rs"
+required-features = ["gui"]
+
+# Versión GPL verificada; NO cambiar a la rama main actual (PolyForm Strict).
 [dependencies]
 apex-doc = { git = "https://github.com/apexdesk/apexdesk.git", rev = "f35e6fa10470156a4e55febdf9f8bc2920031b82" }
 apex-io  = { git = "https://github.com/apexdesk/apexdesk.git", rev = "f35e6fa10470156a4e55febdf9f8bc2920031b82" }
+
+# La interfaz es opcional: "cargo test" sigue sin requerir GTK/Adwaita.
+gtk = { package = "gtk4", version = "0.10", features = ["v4_10"], optional = true }
+adw = { package = "libadwaita", version = "0.8", features = ["v1_4"], optional = true }

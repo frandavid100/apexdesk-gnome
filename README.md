@@ -1,50 +1,60 @@
-# ApexDesk GNOME — Fase 1
+# ApexDesk GNOME
 
-Esta etapa comprueba si los motores originales de ApexDesk pueden reutilizarse
-para editar archivos DOCX/ODT **sin egui ni eframe**. Todavía **no hay interfaz gráfica**.
-
-## Advertencia de licencia
-
-El código fuente actual de ApexDesk está publicado bajo **PolyForm Strict**,
-que no permite desarrollar derivados sin autorización. Este experimento usa
-**únicamente la revisión anterior GPL-3.0-or-later**, fijada al commit
-[`f35e6fa`](https://github.com/apexdesk/apexdesk/commit/f35e6fa10470156a4e55febdf9f8bc2920031b82).
-No se utilizan cambios posteriores.
-
-Las condiciones GPL-3.0-or-later se aplican a esta integración.
-
-## Pruebas automáticas
-
-GitHub Actions debe ejecutar el flujo
-[`Fase 1 - motores ApexDesk sin GUI`](.github/workflows/rust-check.yml).
-
-El flujo realiza:
-
-1. Generación de un DOCX externo con python-docx y un ODT con odfpy.
-2. Comprobación estructural de los archivos de prueba.
-3. Compilación con Cargo y tres pruebas de integración.
-4. Detección de dependencias transitivas de egui/eframe.
-5. Apertura, edición, guardado en **copia** y reapertura de documentos.
-6. Publicación de documentos de salida como artefactos.
-
-La prueba comprueba dos párrafos, negrita inicial, título y que los archivos
-de origen permanecen intactos. **No valida fidelidad visual** ni tablas,
-imágenes, paginación o compatibilidad general con Office.
-
-## Ejecutar localmente
-
-Requiere Git, Rust estable y Python con `python-docx` y `odfpy`:
-
-```sh
-python scripts/make_fixtures.py
-python scripts/verify_fixtures.py
-cargo generate-lockfile
-cargo test --locked
-bash scripts/check-dependencies.sh
-cargo run --locked -- smoke target/phase1-smoke
-```
+Prototipo de un lector ofimático **nativo GNOME**, construido con GTK4,
+libadwaita y los motores Rust de ApexDesk.
 
 ## Estado
 
-Repositorio de investigación. Los tests Rust **no pueden considerarse
-superados** hasta que conste una ejecución exitosa de GitHub Actions.
+- **Fase 1, superada:** DOCX/ODT se abren, editan y guardan en copias, con
+  comprobaciones de integridad y preservación básica del formato.
+- **Fase 2, en desarrollo:** ventana GNOME, selector de archivos, vista de lectura
+  de texto, negritas, cursivas, subrayados y títulos.
+- **Todavía no** es un editor: no hay modificación de documentos desde la
+  interfaz, maquetación paginada, tablas ni representación de imágenes.
+
+## Licencia y procedencia de los motores
+
+El código fuente **actual** de ApexDesk utiliza PolyForm Strict, que no permite
+crear derivados sin permiso. Este prototipo utiliza **únicamente** la revisión
+previa con licencia GPLv3+ fijada al commit
+[`f35e6fa`](https://github.com/apexdesk/apexdesk/commit/f35e6fa10470156a4e55febdf9f8bc2920031b82).
+No se incorporan modificaciones posteriores. Nuestra aplicación también
+está licenciada bajo GPL-3.0-or-later.
+
+## Instalación desde fuentes en GNOME
+
+Requisitos: Rust estable, desarrollo GTK4 4.10+ y libadwaita 1.4+,
+`pkg-config` y Git. Por ejemplo, en Ubuntu 24.04:
+
+```sh
+sudo apt install git cargo pkg-config libgtk-4-dev libadwaita-1-dev
+cargo run --features gui --bin apexdesk-gnome
+```
+
+El botón **Abrir** permite seleccionar un DOCX u ODT. La ventana indica que
+es una vista previa de **solo lectura**. No modifica el archivo original.
+
+Para ejecutar la fase 1 desde consola:
+
+```sh
+cargo test
+cargo run -- smoke target/phase1-smoke
+```
+
+Para generar los documentos externos usados en las pruebas:
+
+```sh
+python3 -m pip install python-docx==1.2.0 odfpy==1.4.1
+python3 scripts/make_fixtures.py
+python3 scripts/verify_fixtures.py
+cargo test
+```
+
+## Verificaciones CI
+
+El flujo [**Fase 2 — GNOME GTK4 libadwaita**](.github/workflows/gnome-preview.yml)
+compila el binario y lo adjunta como artefacto de desarrollo para Ubuntu 24.04.
+Este binario requiere GTK4/libadwaita instalados y todavía no es un Flatpak.
+
+La prueba no valida el aspecto visual ni la accesibilidad en una sesión real
+de GNOME; esto requerirá una revisión manual posterior.

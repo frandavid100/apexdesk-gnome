@@ -1,4 +1,4 @@
-//! Fase 1: motores ApexDesk GPL, sin egui, eframe ni GTK.
+//! Motores GPL reutilizables y modelo de lectura independiente de la GUI.
 use apex_doc::{Document, Paragraph, Pos, Selection};
 use apex_io::{Format, Loaded};
 use std::path::Path;
@@ -169,3 +169,5 @@ pub fn run_smoke(dir: &Path) -> Result<Vec<String>, String> {
     }
     Ok(report)
 }
+
+pub mod preview;
