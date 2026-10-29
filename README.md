@@ -1,62 +1,42 @@
-# ApexDesk GNOME
+# WordCraft GNOME — rama experimental
 
-Prototipo de un lector ofimático **nativo GNOME**, construido con GTK4,
-libadwaita y los motores Rust de ApexDesk.
+Una interfaz de documentos GTK4/libadwaita para GNOME, utilizando
+**WordCraft**, no ApexDesk.
 
-## Estado
+**Estado:** primera migración, limitada a lectura y navegación por páginas.
+No hay edición, guardado desde la UI, selección ni fidelidad de impresión
+comprobada. La interfaz usa imágenes de página generadas por WordCraft.
 
-- **Fase 1, superada:** DOCX/ODT se abren, editan y guardan en copias, con
-  comprobaciones de integridad y preservación básica del formato.
-- **Fase 2, en desarrollo:** ventana GNOME, selector de archivos, vista de lectura
-  de texto, negritas, cursivas, subrayados y títulos.
-- **Todavía no** es un editor: no hay modificación de documentos desde la
-  interfaz, maquetación paginada, tablas ni representación de imágenes.
+## Motores
 
-## Licencia y procedencia de los motores
+Dependencias con revisión fija:
+[storytold/wordcraft@165d572](https://github.com/storytold/wordcraft/commit/165d5725dc25b4a7887d8025c3b1fe506ccc3dcc).
 
-El código fuente **actual** de ApexDesk utiliza PolyForm Strict, que no permite
-crear derivados sin permiso. Este prototipo utiliza **únicamente** la revisión
-previa con licencia GPLv3+ fijada al commit
-[`f35e6fa`](https://github.com/apexdesk/apexdesk/commit/f35e6fa10470156a4e55febdf9f8bc2920031b82).
-No se incorporan modificaciones posteriores. Nuestra aplicación también
-está licenciada bajo GPL-3.0-or-later.
+- `wordcraft-engine`: comandos, archivos, sesión y paginación.
+- `wordcraft-render`: rasterización de páginas.
+- `wordcraft-doc`: modelo de documento.
 
-## Instalación desde fuentes en GNOME
+Estos módulos son independientes de egui; solo usamos la representación
+RGBA de sus páginas. WordCraft está licenciado MIT OR Apache-2.0.
+Este repositorio experimental mantiene GPL-3.0-or-later para el código propio;
+conservar los avisos de licencia de las dependencias originales.
 
-Requisitos: Rust estable, desarrollo GTK4 4.10+ y libadwaita 1.4+,
-`pkg-config` y Git. Por ejemplo, en Ubuntu 24.04:
+## Compilar / probar
 
-```sh
-sudo apt install git cargo pkg-config libgtk-4-dev libadwaita-1-dev
-cargo run --features gui --bin apexdesk-gnome
-```
-
-El botón **Abrir** permite seleccionar un DOCX u ODT. La ventana indica que
-es una vista previa de **solo lectura**. No modifica el archivo original.
-
-Para ejecutar la fase 1 desde consola:
+Sistema GNOME con GTK4 >= 4.10, libadwaita >= 1.4, Rust >= 1.95.
 
 ```sh
 cargo test
-cargo run -- smoke target/phase1-smoke
+cargo run -- --png pagina.png
+cargo run --features gui --bin wordcraft-gnome -- --sample
 ```
 
-Para generar los documentos externos usados en las pruebas:
+`--sample` abre el documento de ejemplo del motor. También hay un botón
+**Abrir** para elegir DOCX u ODT. Se puede navegar entre las páginas.
+La ventana es **solo lectura**; no modifica los originales.
 
-```sh
-python3 -m pip install python-docx==1.2.0 odfpy==1.4.1
-python3 scripts/make_fixtures.py
-python3 scripts/verify_fixtures.py
-cargo test
-```
+GitHub Actions valida que no entren dependencias egui, compila Rust,
+prueba el render sin interfaz y arranca la ventana en una pantalla virtual.
 
-## Verificaciones CI
-
-El flujo [**Fase 2 — GNOME GTK4 libadwaita**](.github/workflows/gnome-preview.yml)
-compila el binario y lo adjunta como artefacto de desarrollo para Ubuntu 24.04.
-El flujo también verifica que la aplicación arranca en Xvfb y adjunta una captura
-de la pantalla inicial. Este binario requiere GTK4/libadwaita instalados y
-todavía no es un Flatpak.
-
-La prueba no valida el aspecto visual ni la accesibilidad en una sesión real
-de GNOME; esto requerirá una revisión manual posterior.
+La versión antigua basada en ApexDesk continúa intacta en la rama `main`
+hasta que la migración se valide.

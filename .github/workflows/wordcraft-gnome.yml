@@ -1,0 +1,66 @@
+name: "Migración a WordCraft — GTK4/libadwaita"
+on:
+  push:
+    branches: [wordcraft-migration]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Instalar bibliotecas GNOME y pantalla virtual
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev xvfb xauth scrot
+      - name: Tests sin interfaz
+        run: cargo test
+      - name: Validar árbol sin egui/eframe
+        run: |
+          cargo tree --features gui --edges normal --prefix none --format '{p}' | tee dependencies.txt
+          if grep -E '^(egui|eframe|egui-[a-z0-9_-]+|epaint) v' dependencies.txt; then
+            echo 'ERROR: dependencia egui encontrada'
+            exit 1
+          fi
+      - name: Compilar lector GNOME
+        run: cargo build --release --features gui --bin wordcraft-gnome
+      - name: Vista del motor sin interfaz
+        run: |
+          cargo run -- --png muestra-wordcraft.png
+          test -s muestra-wordcraft.png
+      - name: Iniciar GNOME en Xvfb y tomar captura
+        run: |
+          xvfb-run -a -s "-screen 0 1280x900x24" bash -c '
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample >gui-out.log 2>gui-err.log &
+            pid=$!
+            sleep 8
+            if ! kill -0 "$pid" 2>/dev/null; then
+              cat gui-err.log
+              exit 1
+            fi
+            scrot vista-gnome.png
+            kill "$pid"
+            wait "$pid" || true
+          '
+          test -s vista-gnome.png
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wordcraft-gnome-prototipo-linux
+          path: |
+            target/release/wordcraft-gnome
+            muestra-wordcraft.png
+            vista-gnome.png
+            gui-err.log
+            dependencies.txt
+          if-no-files-found: warn
