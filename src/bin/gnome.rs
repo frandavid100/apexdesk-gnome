@@ -198,5 +198,7 @@ fn main() {
     let sample_on_start = std::env::args().any(|arg| arg == "--sample");
     let app = Application::builder().application_id(APP_ID).build();
     app.connect_activate(move |app| make_window(app, sample_on_start));
-    app.run();
+    // Gio Application analizaría --sample como opción propia y rechazaría el arranque.
+    // Es un argumento interno del prototipo, no del procesador de opciones de Gio.
+    app.run_with_args(&["wordcraft-gnome"]);
 }
