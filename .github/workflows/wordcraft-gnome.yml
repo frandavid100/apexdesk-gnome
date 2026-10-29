@@ -33,7 +33,7 @@ jobs:
             exit 1
           fi
       - name: Compilar lector GNOME
-        run: cargo build --release --features gui --bin wordcraft-gnome
+        run: cargo build --features gui --bin wordcraft-gnome
       - name: Vista del motor sin interfaz
         run: |
           cargo run -- --png muestra-wordcraft.png
@@ -41,7 +41,7 @@ jobs:
       - name: Iniciar GNOME en Xvfb y tomar captura
         run: |
           xvfb-run -a -s "-screen 0 1280x900x24" bash -c '
-            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample >gui-out.log 2>gui-err.log &
+            GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --sample >gui-out.log 2>gui-err.log &
             pid=$!
             sleep 8
             if ! kill -0 "$pid" 2>/dev/null; then
@@ -58,7 +58,7 @@ jobs:
         with:
           name: wordcraft-gnome-prototipo-linux
           path: |
-            target/release/wordcraft-gnome
+            target/debug/wordcraft-gnome
             muestra-wordcraft.png
             vista-gnome.png
             gui-err.log
