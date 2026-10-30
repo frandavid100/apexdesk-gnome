@@ -746,8 +746,7 @@ fn install_css() {
     let provider = gtk::CssProvider::new();
     // Adwaita suministra color, espaciados y estados; CSS mínimo para papel.
     provider.load_from_data("
-      .document-scroll { background: @headerbar_bg_color; }
-      .document-scroll:backdrop { background: @headerbar_backdrop_color; }
+      .document-scroll { background: @window_bg_color; }
       .document-sheet { background: white; box-shadow: 0 1px 4px alpha(black, 0.15); }
       .thumbnail-sheet { background: white; box-shadow: 0 1px 3px alpha(black, 0.16); }
       .thumbnail-button.selected-thumb { background: alpha(@window_fg_color, 0.09); }
@@ -1079,7 +1078,7 @@ fn make_window(
         let ui = ui.clone(); let popover = text_popover.clone();
         font_button.connect_font_desc_notify(move |button| {
             if ui.format_syncing.get() { return; }
-            let desc = button.font_desc();
+            let Some(desc) = button.font_desc() else { return };
             if let Some(name) = desc.family() {
                 popover.popdown();
                 apply_format_operation(&ui, |session| formatting::font(session, &name));
