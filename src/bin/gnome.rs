@@ -75,6 +75,8 @@ struct Ui {
     save_path: RefCell<Option<PathBuf>>,
     source_path: RefCell<Option<PathBuf>>,
     format_toolbar: gtk::ScrolledWindow,
+    sidebar_selector: gtk::Box,
+    _bottom_heights: gtk::SizeGroup,
     format_bold: gtk::ToggleButton,
     format_italic: gtk::ToggleButton,
     format_underline: gtk::ToggleButton,
@@ -735,14 +737,14 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         let number = gtk::Label::new(Some(&(i + 1).to_string()));
         number.add_css_class("dim-label");
         let content=gtk::Box::new(gtk::Orientation::Vertical,5);content.set_halign(gtk::Align::Center);content.set_vexpand(false);
-        let button=gtk::Button::new();button.set_child(Some(&thumb));button.add_css_class("flat");button.add_css_class("thumbnail-button");
+        let button=gtk::Button::new();button.add_css_class("flat");button.add_css_class("thumbnail-button");
         button.set_halign(gtk::Align::Center);button.set_valign(gtk::Align::Start);button.set_vexpand(false);thumb.set_valign(gtk::Align::Center);
-        content.append(&button);content.append(&number);content.set_margin_top(7);content.set_margin_bottom(14);
+        content.append(&thumb);content.append(&number);button.set_child(Some(&content));button.set_margin_top(7);button.set_margin_bottom(14);
         {
             let ui = ui.clone();
             button.connect_clicked(move |_| jump_to(&ui, i));
         }
-        ui.thumbnails_box.append(&content);
+        ui.thumbnails_box.append(&button);
         thumbs.push(thumb);
         thumb_buttons.push(button);
     }
@@ -785,7 +787,7 @@ fn install_css() {
       .document-scroll { background: @window_bg_color; }
       .document-sheet { background: white; box-shadow: 0 1px 4px alpha(black, 0.15); }
       .thumbnail-sheet { background: white; box-shadow: 0 1px 3px alpha(black, 0.16); }
-      .thumbnail-button { padding: 8px; min-width: 0; min-height: 0; }
+      .thumbnail-button { padding: 12px; min-width: 0; min-height: 0; }
       .thumbnail-button.selected-thumb { background: alpha(@window_fg_color, 0.09); }
       .sidebar-selector button { border-radius: 10px; }
       .sidebar-selector button:checked { background: alpha(@window_fg_color, 0.12); }
@@ -850,18 +852,6 @@ fn build_tab(
     sidebar_button.set_tooltip_text(Some("Mostrar u ocultar miniaturas (F9)"));
     header.pack_start(&sidebar_button);
     let compact_search=gtk::Button::from_icon_name("edit-find-symbolic");compact_search.set_tooltip_text(Some("Buscar (Ctrl+F)"));header.pack_start(&compact_search);
-    let new_document=gtk::Button::with_label("+");
-    new_document.add_css_class("flat");
-    new_document.set_tooltip_text(Some("Documento nuevo en otra pestaña (Ctrl+N)"));
-    header.pack_start(&new_document);
-
-    let save_button = gtk::Button::from_icon_name("document-save-symbolic");
-    save_button.set_tooltip_text(Some("Guardar (Ctrl+S)"));
-    header.pack_start(&save_button);
-    let save_as_button = gtk::Button::with_label("Guardar como…");
-
-
-
     let zoom_out = gtk::Button::with_label("−");
     zoom_out.set_tooltip_text(Some("Reducir zoom (Ctrl+-)"));
     let zoom_in = gtk::Button::with_label("+");
@@ -870,16 +860,6 @@ fn build_tab(
     zoom_label.add_css_class("zoom-value");
     let fit_button = gtk::Button::with_label("Ajustar al ancho");
     let normal_zoom = gtk::Button::with_label("Tamaño real (100 %)");
-    let menu = gtk::Popover::new();
-    let menu_content = gtk::Box::new(gtk::Orientation::Vertical, 6);
-    menu_content.set_margin_top(12);
-    menu_content.set_margin_bottom(12);
-    menu_content.set_margin_start(12);
-    menu_content.set_margin_end(12);
-    menu_content.append(&save_as_button);
-
-
-    menu.set_child(Some(&menu_content));
     // Si el panel lateral está cerrado, su menú de aplicación debe seguir
     // accesible desde la cabecera principal.
     let compact_app_menu=gtk::MenuButton::new();compact_app_menu.set_icon_name("open-menu-symbolic");compact_app_menu.set_tooltip_text(Some("Menú principal"));header.pack_end(&compact_app_menu);
@@ -887,7 +867,7 @@ fn build_tab(
     let menu_button = gtk::MenuButton::new();
     menu_button.set_icon_name("view-more-symbolic");
     menu_button.set_tooltip_text(Some("Opciones del documento"));
-    menu_button.set_popover(Some(&menu));
+    install_document_menu(&menu_button);
     header.pack_end(&menu_button);
 
 
@@ -925,11 +905,12 @@ fn build_tab(
     sidebar_toolbar.add_top_bar(&side_header);
     let sidebar_pages=gtk::Stack::new();sidebar_pages.set_transition_type(gtk::StackTransitionType::Crossfade);sidebar_pages.set_transition_duration(180);
     let navigation_pages=gtk::Stack::new();navigation_pages.set_vexpand(true);navigation_pages.add_named(&thumbnails_scroll,Some("thumbnails"));
-    let navigation=gtk::Box::new(gtk::Orientation::Vertical,0);navigation.append(&navigation_pages);
-    let selector=gtk::Box::new(gtk::Orientation::Horizontal,6);selector.add_css_class("sidebar-selector");selector.set_margin_start(6);selector.set_margin_end(6);selector.set_margin_top(6);selector.set_margin_bottom(6);
+    let navigation=ToolbarView::new();navigation.set_content(Some(&navigation_pages));navigation.set_bottom_bar_style(adw::ToolbarStyle::Flat);
+    let selector=gtk::Box::new(gtk::Orientation::Horizontal,6);selector.add_css_class("sidebar-selector");selector.set_margin_start(6);selector.set_margin_end(6);selector.set_margin_top(5);selector.set_margin_bottom(5);
     let pages_toggle=gtk::ToggleButton::new();pages_toggle.set_child(Some(&sidebar_icon("pages")));pages_toggle.set_tooltip_text(Some("Páginas"));pages_toggle.set_hexpand(true);pages_toggle.add_css_class("flat");pages_toggle.set_widget_name("sidebar-pages");
     let titles_toggle=gtk::ToggleButton::new();titles_toggle.set_child(Some(&sidebar_icon("outline")));titles_toggle.set_tooltip_text(Some("Títulos"));titles_toggle.set_hexpand(true);titles_toggle.add_css_class("flat");titles_toggle.set_widget_name("sidebar-outline");titles_toggle.set_group(Some(&pages_toggle));pages_toggle.set_active(true);
-    selector.append(&pages_toggle);selector.append(&titles_toggle);navigation.append(&selector);sidebar_pages.add_named(&navigation,Some("navigation"));sidebar_toolbar.set_content(Some(&sidebar_pages));
+    selector.append(&pages_toggle);selector.append(&titles_toggle);
+    let selector_bar=gtk::Box::new(gtk::Orientation::Vertical,0);selector_bar.add_css_class("toolbar");selector_bar.append(&selector);navigation.add_bottom_bar(&selector_bar);sidebar_pages.add_named(&navigation,Some("navigation"));sidebar_toolbar.set_content(Some(&sidebar_pages));
 
     let zoom_buttons = gtk::Box::new(gtk::Orientation::Vertical, 8);
     zoom_buttons.set_halign(gtk::Align::End);
@@ -1044,7 +1025,9 @@ fn build_tab(
     format_toolbar.add_css_class("toolbar");
     format_toolbar.set_visible(false);
 
+    let bottom_heights=gtk::SizeGroup::new(gtk::SizeGroupMode::Vertical);bottom_heights.add_widget(&selector_bar);bottom_heights.add_widget(&format_toolbar);
     let document_toolbar = ToolbarView::new();
+    document_toolbar.set_bottom_bar_style(adw::ToolbarStyle::Flat);
     document_toolbar.add_top_bar(&header);
     let tab_bar = adw::TabBar::new(); tab_bar.set_view(Some(&host.tabs));
     tab_bar.set_autohide(true); document_toolbar.add_top_bar(&tab_bar);
@@ -1089,7 +1072,7 @@ fn build_tab(
         pending_tab_close: RefCell::new(None),
         save_path: RefCell::new(None),
         source_path: RefCell::new(None),
-        format_toolbar,
+        format_toolbar,sidebar_selector:selector_bar.clone(),_bottom_heights:bottom_heights,
         format_bold: bold_button.clone(),
         format_italic: italic_button.clone(),
         format_underline: underline_button.clone(),
@@ -1150,10 +1133,6 @@ fn build_tab(
     host.docs.borrow_mut().push((tab_page,ui.clone()));
     install_main_menu(&app_menu);install_main_menu(&compact_app_menu);refresh_main_actions(host);
     install_autosave(&ui);
-    {
-        let app=app.clone();let host=host.clone();
-        new_document.connect_clicked(move |_| blank_tab(&app,&host));
-    }
     for (button, edit) in [(undo_button, Edit::Undo), (redo_button, Edit::Redo)] {
         let ui = ui.clone();
         button.connect_clicked(move |_| {
@@ -1188,12 +1167,6 @@ fn build_tab(
             apply_format_operation(&ui, |session| formatting::size(session, size));
         });
     }
-    for (button, save_as) in [(save_button, false), (save_as_button, true)] {
-        let ui = ui.clone();
-        let parent = window.clone();
-        button.connect_clicked(move |_| save_document(&ui, &parent, save_as, Box::new(|| {})));
-    }
-
     // All formatting commands preserve the selection and return keyboard
     // focus to the editable document.
     for (button, action) in [
@@ -1601,7 +1574,7 @@ fn build_tab(
 
     if let Some((session, label)) = initial_document {
         opened(&ui, session, &label);
-    } else if sample_on_start { opened(&ui, sample_session(), "Documento de ejemplo"); }
+    } else if sample_on_start { opened(&ui, sample_session(), "Prueba de interfaz"); }
     else {opened(&ui,Session::new(wordcraft_doc::Document::new()),"Documento nuevo");}
     window.present();
     install_table_context_menu(&ui,&window);
@@ -1640,6 +1613,8 @@ fn build_tab(
     if std::env::args().any(|a|a=="--view-pointer-test"){let u=ui.clone();let m=style_menu.clone();let w=window.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1300),move||view_pointer_test(&u,&m,&w,&a));}
     if std::env::args().any(|a|a=="--spreads-demo"){window.set_default_size(1800,950);let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1300),move||{if let Some(d)=u.current.borrow_mut().as_mut(){d.fit_to_width=false;}zoom_to(&u,1.0);});}
     if std::env::args().any(|a|a=="--outline-demo"){let b=titles_toggle.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||b.set_active(true));}
+    if std::env::args().any(|a|a=="--chrome-ui-test"){let u=ui.clone();let m=menu_button.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||chrome_ui_test(&u,&m,&app));}
+    if std::env::args().any(|a|a=="--document-menu-demo"){let m=menu_button.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||m.popup());}
     if std::env::args().any(|a|a=="--main-menu-demo"){let m=app_menu.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||m.popup());}
     if std::env::args().any(|a|a=="--overview-demo") && host.tabs.n_pages()==1{let h=host.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||{blank_tab(&app,&h);h.overview.set_open(true);});}
     if std::env::args().any(|a|a=="--nav-ui-test") && host.tabs.n_pages()==1{let u=ui.clone();let h=host.clone();let app=app.clone();let s=outline_panel.clone();let b=titles_toggle.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||navigation_ui_test(&u,&s,&b,&h,&app));}
@@ -1728,7 +1703,7 @@ fn main() {
         println!("WordCraft GNOME · guardado DOCX y ODT · fase 3D");
         return;
     }
-    let sample_on_start = std::env::args().any(|arg| arg == "--sample");
+    let sample_on_start = std::env::args().any(|arg| arg == "--test-document");
     let sidebar_on_start = std::env::args().any(|arg| arg == "--sidebar");
     let narrow_on_start = std::env::args().any(|arg| arg == "--narrow");
     let dark_on_start = std::env::args().any(|arg| arg == "--dark");
@@ -1779,3 +1754,4 @@ fn schedule_thumbnail_refresh(ui: &Rc<Ui>) {
         refresh_thumbnails(&ui);
     });
 }
+
