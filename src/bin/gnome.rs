@@ -157,6 +157,82 @@ fn copy_selection(ui: &Rc<Ui>) {
     }
 }
 
+
+/// Reflow using the existing WordCraft session. Rebuild the page widgets only
+/// when the pagination or the dimensions really changed.
+fn after_content_change(ui: &Rc<Ui>) {
+    let (rebuild, old_zoom, fit_width_mode, old_scroll) = {
+        let mut state = ui.current.borrow_mut();
+        let Some(doc) = state.as_mut() else { return };
+        let layout = doc.session.layout();
+        let sizes: Vec<(f32, f32)> = layout.pages.iter().map(|p| (p.w, p.h)).collect();
+        let needs_rebuild = sizes != doc.sizes;
+        if !needs_rebuild {
+            doc.painted_pages.clear();
+            doc.painted_thumbs.clear();
+            for picture in &doc.pages {
+                picture.set_paintable(None::<&gdk::Paintable>);
+            }
+            for picture in &doc.thumbs {
+                picture.set_paintable(None::<&gdk::Paintable>);
+            }
+        }
+        (needs_rebuild, doc.zoom, doc.fit_to_width, ui.scroll.vadjustment().value())
+    };
+    if rebuild {
+        let prior = ui.current.borrow_mut().take();
+        if let Some(previous) = prior {
+            let name = ui.title.title().to_string();
+            opened(ui, previous.session, &name);
+            if !fit_width_mode {
+                if let Some(doc) = ui.current.borrow_mut().as_mut() {
+                    doc.fit_to_width = false;
+                }
+                zoom_to(ui, old_zoom);
+            }
+            let ui = ui.clone();
+            glib::idle_add_local_once(move || {
+                if fit_width_mode { fit_width(&ui); }
+                let vadj = ui.scroll.vadjustment();
+                vadj.set_value(old_scroll.min((vadj.upper()-vadj.page_size()).max(0.0)));
+                refresh_pages(&ui);
+                refresh_thumbnails(&ui);
+                refresh_selection(&ui);
+                caret_ensure_visible(&ui);
+                ui.document_box.grab_focus();
+            });
+        }
+    } else {
+        refresh_pages(ui);
+        refresh_thumbnails(ui);
+        refresh_selection(ui);
+        let ui = ui.clone();
+        glib::idle_add_local_once(move || caret_ensure_visible(&ui));
+    }
+    ui.dirty.set(true);
+    ui.title.set_subtitle("● Cambios sin guardar · Fase 3B");
+}
+
+fn apply_user_edit(ui: &Rc<Ui>, edit: Edit) {
+    let changed = {
+        let mut value = ui.current.borrow_mut();
+        value.as_mut().map(|doc| editing::apply(&mut doc.session, edit))
+    };
+    match changed {
+        Some(Ok(true)) => {
+            let first_edit = !ui.dirty.get();
+            after_content_change(ui);
+            if first_edit {
+                ui.toasts.add_toast(Toast::new(
+                    "Edición en memoria: todavía no se puede guardar el documento.",
+                ));
+            }
+        }
+        Some(Ok(false)) | None => {}
+        Some(Err(err)) => ui.toasts.add_toast(Toast::new(&err)),
+    }
+}
+
 fn clear_box(parent: &gtk::Box) {
     while let Some(child) = parent.first_child() {
         parent.remove(&child);
