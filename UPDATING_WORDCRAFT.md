@@ -195,3 +195,11 @@ GtkModelButton closes its ancestor popover before invoking its action-dispatch h
 Normal startup anchors table/picture tool popovers directly to the document canvas instead of exposing toolbar menu buttons. Their pointing rectangle is updated from the context click. The shared outside-click policy exempts an anchor only when it is a MenuButton, never the whole canvas. Public engine operations and dependencies remain unchanged.
 
 Canvas clearing must preserve GtkPopover children: standalone tools belong to the tab and need the same realized ancestor throughout opened/page rebuilds. Removing every Fixed child detaches their native parent before popup, including at normal startup. Deferred transient-menu cleanup also checks that a parent still exists.
+
+
+
+## Adaptive controls and contained context pages
+
+`gnome_adaptive.rs` observes actual viewport adjustment changes, moving existing history/format boxes between header and bottom bar. No permanent frame tick is introduced. Width hysteresis avoids relayout loops. Capture open popovers before hiding their former toolbar; reopening suppresses the usual home-page reset until allocation settles, retaining pin and selection.
+
+Text/Style/Paragraph use GtkStack interpolation and native slide transitions. GtkPopoverMenu custom slots lease the same root widgets for contained contextual submenus, restoring them synchronously on closed while retaining the previous deferred native-menu unparenting. Weak embedded-host routing sends close/pin actions to the current container. Hosts join per-tab exclusive dismissal without changing modality on a mapped surface. The duplicated native submenu back row is hidden after guarded GtkStack page lookup; check this small GTK hierarchy boundary on GTK upgrades. All document operations remain public upstream commands, with no engine or dependency changes.
