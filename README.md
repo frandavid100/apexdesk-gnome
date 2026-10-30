@@ -37,3 +37,21 @@ Abrir y Nueva ventana pertenecen al menú general encima del panel lateral;
 el mismo menú sigue disponible cuando el panel está oculto.
 El fondo del documento usa el color de ventana de Adwaita, como la cabecera
 plana. Las hojas permanecen blancas.
+
+## Pestañas, autoguardado y búsqueda
+
++ y Ctrl+N crean un documento nuevo en una pestaña. Ctrl+W cierra la pestaña;
+Nueva ventana usa Ctrl+Shift+N. Abrir reutiliza una pestaña vacía o añade otra.
+El panel de miniaturas es más estrecho y se abre por defecto.
+
+Preferencias (menú general): desactivado, archivo de recuperación (predeterminado,
+10 segundos, trabajador de WordCraft) o propio archivo (30 segundos). Este último
+modo permite actualizar también el archivo abierto originalmente; los documentos
+sin nombre usan recuperación hasta que se guarden por primera vez.
+La preferencia persiste y se aplica también a las otras pestañas y ventanas.
+Recuperar documentos permite recuperar copias de una ejecución anterior.
+
+Buscar y Buscar/reemplazar están en el menú del documento (Ctrl+F / Ctrl+H).
+Las sustituciones pasan por el motor y se pueden deshacer.
+
+Véase UPDATING_WORDCRAFT.md para la separación de capas y la actualización del motor.
