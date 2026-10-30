@@ -48,7 +48,47 @@ fn context_prepare(ui:&Rc<Ui>,x:f64,y:f64)->Option<DocumentContext>{
     Some(if picture{DocumentContext::Picture}else if pos.path.cell().is_some(){DocumentContext::Table}else{DocumentContext::Text})
 }
 fn context_open_format(ui:&Rc<Ui>,name:&str){
-    if let Some(menu)=style_widget(&ui.format_toolbar,name).and_then(|w|w.downcast::<gtk::MenuButton>().ok()){menu.popup();}
+    if let Some(menu)=format_button(ui,name){menu.popup();}
+}
+struct ContextFormatLease {host:glib::WeakRef<gtk::PopoverMenu>,entries:Vec<(gtk::Popover,gtk::Widget,Rc<FormatHeader>)>,restored:Cell<bool>}
+impl ContextFormatLease {
+    fn restore(&self){
+        if self.restored.replace(true){return;}
+        for(origin,body,header)in &self.entries{
+            if let Some(host)=self.host.upgrade(){host.remove_child(body);}
+            if body.parent().is_none(){origin.set_child(Some(body));}
+            header.parent_back.borrow_mut().take();header.home();
+            EMBEDDED_FORMAT.with(|items|items.borrow_mut().retain(|(p,_,_)|p.upgrade().as_ref()!=Some(origin)));
+        }
+    }
+}
+fn native_menu_stack(root:&impl IsA<gtk::Widget>)->Option<gtk::Stack>{
+    let root=root.as_ref();if let Some(s)=root.downcast_ref::<gtk::Stack>(){return Some(s.clone());}
+    let mut child=root.first_child();while let Some(w)=child{if let Some(s)=native_menu_stack(&w){return Some(s);}child=w.next_sibling();}None
+}
+fn mount_context_formats(ui:&Rc<Ui>,host:&gtk::PopoverMenu){
+    // Official GtkPopoverMenu custom slots hold the existing widget trees.
+    // Keep nonmodality constant, including when pinning inside a custom page.
+    host.set_autohide(false);ui.format_group.show(host.upcast_ref());
+    ui.format_group.hosts.borrow_mut().retain(|p|p.upgrade().is_some());ui.format_group.hosts.borrow_mut().push(host.clone().upcast::<gtk::Popover>().downgrade());
+    let mut entries=Vec::new();
+    for(name,label,id)in[("style-menu","Estilo","context-style"),("paragraph-menu","Párrafo","context-paragraph"),("text-menu","Texto","context-text")]{
+        let Some(origin)=format_button(ui,name).and_then(|m|m.popover())else{continue;};
+        let header=ui.format_group.entries.borrow().iter().find(|(p,_)|p.upgrade().as_ref()==Some(&origin)).map(|(_,h)|h.clone());
+        let (Some(body),Some(header))=(origin.child(),header)else{continue;};origin.set_child(None::<&gtk::Widget>);
+        if !host.add_child(&body,id){origin.set_child(Some(&body));continue;}
+        let weak=host.downgrade();header.parent_back.replace(Some(Rc::new(move||{if let Some(host)=weak.upgrade(){host.set_visible_submenu(Some("main"));}})));
+        header.home();
+        // GTK generates a native back/title row before every custom submenu.
+        // Our shared header already provides back/title/pin in one row. Retain
+        // GTK's title for its navigation bookkeeping, but hide this duplicate.
+        if let Some(page)=native_menu_stack(host).and_then(|s|s.child_by_name(label)){if let Some(title)=page.first_child(){if title.type_().name()=="GtkModelButton"{title.set_visible(false);}}}
+        EMBEDDED_FORMAT.with(|items|items.borrow_mut().push((origin.downgrade(),host.clone().upcast::<gtk::Popover>().downgrade(),header.pin.downgrade())));
+        entries.push((origin,body,header));
+    }
+    if let Some(s)=ui.style.borrow().as_ref(){s.main();}if let Some(s)=ui.paragraph.borrow().as_ref(){s.home();}if let Some(s)=ui.text_tools.borrow().as_ref(){s.home();}
+    let lease=Rc::new(ContextFormatLease{host:host.downgrade(),entries,restored:Cell::new(false)});
+    host.connect_closed(move |_|lease.restore());
 }
 fn context_item(menu:&gio::Menu,group:&gio::SimpleActionGroup,pop:&gtk::PopoverMenu,ui:&Rc<Ui>,label:&str,name:&str,enabled:bool,callback:impl Fn(&Rc<Ui>)+'static){
     let action=gio::SimpleAction::new(name,None);action.set_enabled(enabled);
@@ -77,7 +117,7 @@ fn show_document_context(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32,kind:D
     let specific=gio::Menu::new();
     match kind {
         DocumentContext::Text=>{
-            for (label,name,widget) in [("Estilo…","style","style-menu"),("Párrafo…","paragraph","paragraph-menu"),("Texto…","text","text-menu")]{context_item(&specific,&group,&pop,ui,label,name,true,move|u|context_open_format(u,widget));}
+            for(label,id)in[("Estilo","context-style"),("Párrafo","context-paragraph"),("Texto","context-text")]{let page=gio::Menu::new();let item=gio::MenuItem::new(None,None);item.set_attribute_value("custom",Some(&id.to_variant()));page.append_item(&item);specific.append_submenu(Some(label),&page);}
         },
         DocumentContext::Picture=>{
             context_item(&specific,&group,&pop,ui,"Tamaño de la imagen…","picture-size",true,|u|context_picture_editor(u));
@@ -98,6 +138,7 @@ fn show_document_context(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32,kind:D
         }
     }
     root.append_section(None,&specific);
+    if kind==DocumentContext::Text{mount_context_formats(ui,&pop);}
     // GtkModelButton closes before activating its action helper. Keep the
     // hierarchy and action muxer alive until that signal has fully returned.
     pop.connect_closed(|p|{let p=p.clone();glib::idle_add_local_once(move||{if !p.is_visible()&&p.parent().is_some(){p.unparent();}});});pop.popup();pop
@@ -153,7 +194,7 @@ fn context_ui_test(ui:&Rc<Ui>,parent:&ApplicationWindow,app:&Application){
             assert_eq!(ui.current.borrow_mut().as_mut().unwrap().session.doc.para_at(&Pos::body(0,0)).unwrap().text,", texto de prueba");
             apply_user_edit(&ui,Edit::Undo);
             let edit=show_document_context(&ui,&parent,100,150,DocumentContext::Text);context_activate_row(&edit,"Seleccionar todo");assert!(!ui.current.borrow().as_ref().unwrap().session.sel.is_collapsed());
-            for (label,name) in [("Estilo…","style-menu"),("Párrafo…","paragraph-menu"),("Texto…","text-menu")]{let edit=show_document_context(&ui,&parent,100,150,DocumentContext::Text);context_activate_row(&edit,label);let m=style_widget(&ui.format_toolbar,name).unwrap().downcast::<gtk::MenuButton>().unwrap();assert!(m.popover().unwrap().is_visible(),"context format action must open panel");m.popdown();}
+            for (label,name) in [("Estilo","style-menu"),("Párrafo","paragraph-menu"),("Texto","text-menu")]{let edit=show_document_context(&ui,&parent,100,150,DocumentContext::Text);context_activate_row(&edit,label);let m=format_button(&ui,name).unwrap();assert!(!m.popover().unwrap().is_visible(),"context must not open toolbar popup");assert!(m.popover().unwrap().child().is_none(),"controls must be embedded in context");assert_eq!(edit.visible_submenu().as_deref(),Some(label));edit.popdown();assert!(m.popover().unwrap().child().is_some(),"closing context must return controls");}
 
             {let mut value=ui.current.borrow_mut();value.as_mut().unwrap().session.run("select.range",&serde_json::json!({"anchor":Pos::body(0,0),"focus":Pos::body(0,11)})).unwrap();}
             // Clicking outside the selection moves the caret, without a mutation.
@@ -184,4 +225,5 @@ fn context_ui_test(ui:&Rc<Ui>,parent:&ApplicationWindow,app:&Application){
         });
     });
 }
+
 
