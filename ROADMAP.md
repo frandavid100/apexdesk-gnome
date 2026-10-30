@@ -8,13 +8,15 @@ Las fases siguientes son propuestas; no implican autorización para implementarl
 Recoger la prueba del usuario de formato avanzado y compilación optimizada en GNOME OS.
 Corregir los fallos que aparezcan antes de acumular funciones nuevas.
 
-## Estilos: rediseño implementado, pendiente de prueba manual
+## Estilos: rediseño probado por el usuario; ajustes visuales
 
 El desplegable incluye todos los estilos de párrafo/texto del documento,
 búsqueda, aplicación por nombre y botón derecho para abrir una subpágina
 de gestión. Previsualización, actualizar, renombrar, eliminar y crear quedan
 dentro del propio desplegable. La fila superior vuelve a la página anterior.
 Orden acordado de la barra: Estilo → Párrafo → Texto.
+El usuario confirma la distribución; se aligera el peso tipográfico de los botones.
+Antes de Párrafo se añade movimiento suave del cursor y se elimina la apertura diferida del panel lateral.
 
 La revisión del resto de desplegables queda pendiente de diseño con el usuario.
 No continuar todavía con imágenes por haber quedado después de esta revisión.
