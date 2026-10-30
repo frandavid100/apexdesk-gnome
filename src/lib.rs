@@ -81,3 +81,5 @@ pub mod saving;
 pub mod preferences;
 
 pub mod tables;
+
+pub mod styles;
