@@ -30,6 +30,7 @@ struct Current {
     painted_pages: HashSet<usize>,
     painted_thumbs: HashSet<usize>,
     active: usize,
+    status_active: Option<usize>,
 }
 
 struct Ui {
@@ -455,15 +456,18 @@ fn document_page_picture() -> gtk::Picture {
 
 fn update_status(ui: &Rc<Ui>) {
     // Un cambio de tamaño puede emitir una señal de scroll de forma reentrante.
-    let Ok(current) = ui.current.try_borrow() else { return };
-    if let Some(doc) = current.as_ref() {
+    let Ok(mut current) = ui.current.try_borrow_mut() else { return };
+    if let Some(doc) = current.as_mut() {
         ui.page_label.set_text(&format!("{} de {}", doc.active + 1, doc.sizes.len()));
         ui.zoom_label.set_text(&format!("{:.0} %", doc.zoom * 100.0));
         ui.zoom_out.set_sensitive(doc.zoom > viewer_layout::MIN_ZOOM);
         ui.zoom_in.set_sensitive(doc.zoom < viewer_layout::MAX_ZOOM);
-        for (i, button) in doc.thumb_buttons.iter().enumerate() {
-            if i == doc.active { button.add_css_class("selected-thumb"); }
-            else { button.remove_css_class("selected-thumb"); }
+        if doc.status_active != Some(doc.active) {
+            if let Some(previous)=doc.status_active {
+                doc.thumb_buttons[previous].remove_css_class("selected-thumb");
+            }
+            doc.thumb_buttons[doc.active].add_css_class("selected-thumb");
+            doc.status_active=Some(doc.active);
         }
     } else {
         ui.page_label.set_text("Sin documento");
@@ -727,7 +731,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         pages, page_frames, selection_areas, thumbs, thumb_buttons,
         painted_pages: HashSet::new(),
         painted_thumbs: HashSet::new(),
-        active: 0,
+        active: 0, status_active: None,
     }));
     *ui.drag_anchor.borrow_mut() = None;
     ui.selection_zoom.set(zoom);
