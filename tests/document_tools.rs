@@ -48,3 +48,10 @@ fn pdf_export_preserves_editable_destination_dirty_selection_and_history(){
     for ext in ["docx","odt"]{let setup=PageSetup{width:841.89,height:595.28,top:36.0,bottom:36.0,left:40.0,right:40.0};document_properties::apply(&mut s,setup,true).unwrap();let file=dir.join(format!("pagina.{ext}"));saving::save(&mut s,&file).unwrap();let reopened=open_document(&file).unwrap();let p=PageSetup::current(&reopened);assert!((p.width-setup.width).abs()<0.2&& (p.left-40.0).abs()<0.2);}
     std::fs::remove_dir_all(dir).unwrap();
 }
+
+#[test]
+fn page_setup_preserves_pending_character_format(){
+    let mut s=Session::new(Document::from_text("Texto"));s.run("format.bold",&json!({"value":true})).unwrap();
+    let pending=s.pending.clone();assert!(pending.is_some());let p=PageSetup::current(&s);
+    document_properties::apply(&mut s,PageSetup{top:50.0,..p},true).unwrap();assert_eq!(s.pending,pending);
+}
