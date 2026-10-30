@@ -129,6 +129,11 @@ jobs:
             run_case vista-parrafo-estrecha.png --paragraph-demo --narrow
             run_case vista-parrafo-oscura.png --paragraph-demo --dark
             run_case vista-buscar-estrecha.png --search-demo --narrow
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --nav-ui-test 2> sidebar-navigation.log
+            grep -q SIDEBAR_NAVIGATION_OK sidebar-navigation.log
+            run_case vista-titulos.png --outline-demo
+            run_case vista-menu-principal.png --main-menu-demo
+            run_case vista-todas-pestanas.png --overview-demo
             run_case vista-buscar.png --search-demo
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --tabs-test 2> tabs.log
             grep -q TABS_OK tabs.log
@@ -224,6 +229,10 @@ jobs:
             search-sidebar.log
             paragraph-popover.log
             view-pointer.log
+            sidebar-navigation.log
+            vista-titulos.png
+            vista-menu-principal.png
+            vista-todas-pestanas.png
             view-pointer-failure.png
             vista-paginas-dobles.png
             vista-seleccion.png
