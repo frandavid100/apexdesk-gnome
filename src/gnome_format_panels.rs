@@ -66,42 +66,4 @@ fn selection_paragraph(ui:&Rc<Ui>)->serde_json::Value{
     let value=ui.current.borrow();let Some(doc)=value.as_ref() else{return serde_json::json!({});};
     doc.session.doc.para_at(&doc.session.sel.focus).and_then(|p|serde_json::to_value(doc.session.doc.styles.resolve_para(&p.props)).ok()).unwrap_or_default()
 }
-fn show_text_options(ui:&Rc<Ui>,parent:&ApplicationWindow){
-    let w=panel_window(parent,"Texto");let state=selection_character(ui);
-    let p=panel_page(&w,"Fuente");let g=panel_group(&p,"Formato de caracteres");
-    for(label,key,cmd)in[("Negrita","bold","format.bold"),("Cursiva","italic","format.italic"),("Tachado","strike","format.strikethrough"),("Tachado doble","doubleStrike","format.doubleStrikethrough"),("Versalitas","smallCaps","format.smallCaps"),("Mayúsculas tipográficas","caps","format.allCaps"),("Texto oculto","hidden","format.hidden")]{panel_toggle(&g,label,state[key].as_bool().unwrap_or(false),ui,&w,cmd);}
-    panel_action(&g,"Subíndice",ui,&w,"format.subscript",serde_json::json!({}));
-    panel_action(&g,"Superíndice",ui,&w,"format.superscript",serde_json::json!({}));
-    let g=panel_group(&p,"Tamaño y mayúsculas");
-    panel_action(&g,"Aumentar tamaño",ui,&w,"format.growFont",serde_json::json!({}));panel_action(&g,"Reducir tamaño",ui,&w,"format.shrinkFont",serde_json::json!({}));
-    panel_choice(&g,"Cambiar mayúsculas/minúsculas",&[("Tipo oración","sentence"),("minúsculas","lower"),("MAYÚSCULAS","upper"),("Cada Palabra","title"),("Invertir mayúsculas","toggle")],ui,&w,"format.changeCase","mode");
-    panel_action(&g,"Borrar formato de texto",ui,&w,"format.clear",serde_json::json!({}));
-    let g=panel_group(&p,"Espaciado de caracteres");
-    let spacing=panel_number(&g,"Espaciado (pt)",state["spacing"].as_f64().unwrap_or(0.0),-100.0,100.0);
-    let scale=panel_number(&g,"Escala (%)",state["scale"].as_f64().unwrap_or(100.0),1.0,600.0);
-    let position=panel_number(&g,"Desplazamiento vertical (pt)",state["position"].as_f64().unwrap_or(0.0),-100.0,100.0);
-    let apply=gtk::Button::with_label("Aplicar espaciado");g.add(&apply);
-    {let ui=ui.clone();let w=w.clone();apply.connect_clicked(move|_|{
-        spacing.update();scale.update();position.update();
-        let args=serde_json::json!({"props":{"spacing":spacing.value(),"scale":scale.value(),"position":position.value()}});
-        if let Err(e)=format_execute(&ui,"format.set",args){w.add_toast(Toast::new(&e));}
-    });}
-    let p=panel_page(&w,"Color y efectos");let g=panel_group(&p,"Color");
-    panel_color(&g,"Color del texto",ui,&w,"format.color");panel_action(&g,"Color automático",ui,&w,"format.color",serde_json::json!({"color":"auto"}));
-    panel_choice(&g,"Resaltado",&[("Sin resaltado","none"),("Amarillo","yellow"),("Verde","brightGreen"),("Turquesa","turquoise"),("Rosa","pink"),("Azul","blue"),("Rojo","red"),("Azul oscuro","darkBlue"),("Verde azulado","teal"),("Verde oscuro","green"),("Violeta","violet"),("Rojo oscuro","darkRed"),("Amarillo oscuro","darkYellow"),("Gris 50 %","gray50"),("Gris 25 %","gray25"),("Negro","black")],ui,&w,"format.highlight","color");
-    let g=panel_group(&p,"Subrayado");
-    panel_action(&g,"Quitar subrayado",ui,&w,"format.underline",serde_json::json!({"value":false}));
-    panel_choice(&g,"Estilo de subrayado",&[("Sencillo","single"),("Doble","double"),("Grueso","thick"),("Punteado","dotted"),("Discontinuo","dash"),("Punto y raya","dotDash"),("Dos puntos y raya","dotDotDash"),("Ondulado","wave"),("Solo palabras","words")],ui,&w,"format.underline","style");
-    panel_color(&g,"Color del subrayado",ui,&w,"format.underlineColor");panel_action(&g,"Subrayado de color automático",ui,&w,"format.underlineColor",serde_json::json!({"color":"auto"}));
-    let g=panel_group(&p,"Efectos de texto");
-    for(label,key,cmd)in[("Contorno","outline","format.outline"),("Sombra","shadow","format.shadow"),("Relieve","emboss","format.emboss"),("Grabado","engrave","format.engrave"),("Borde del texto","border","format.border")]{panel_toggle(&g,label,state[key].as_bool().unwrap_or(false),ui,&w,cmd);}
-    let p=panel_page(&w,"Anotaciones");let g=panel_group(&p,"Caracteres encerrados");
-    panel_choice(&g,"Forma",&[("Círculo","circle"),("Cuadrado","square"),("Triángulo","triangle"),("Rombo","diamond")],ui,&w,"format.enclose","shape");
-    panel_action(&g,"Quitar forma",ui,&w,"format.enclose",serde_json::json!({"shape":null}));
-    let g=panel_group(&p,"Guía fonética sobre el texto seleccionado");
-    let ruby=panel_entry(&g,"Anotación","");let size=panel_number(&g,"Tamaño (pt)",8.0,1.0,96.0);let offset=panel_number(&g,"Separación (pt)",0.0,-20.0,100.0);
-    let b=gtk::Button::with_label("Aplicar guía fonética");g.add(&b);
-    {let ui=ui.clone();let w=w.clone();b.connect_clicked(move|_|{size.update();offset.update();if let Err(e)=format_execute(&ui,"format.phonetic",serde_json::json!({"ruby":ruby.text().as_str(),"size":size.value(),"offset":offset.value(),"align":"center"})){w.add_toast(Toast::new(&e));}});}
-    panel_action(&g,"Quitar guía fonética",ui,&w,"format.phonetic",serde_json::json!({"ruby":null}));
-    w.present();
-}
+fn show_text_options(ui:&Rc<Ui>,_parent:&ApplicationWindow){if let Some(s)=ui.text_tools.borrow().as_ref(){if let Some(p)=s.popover.upgrade(){p.popup();}s.page("options");}}
