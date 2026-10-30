@@ -55,6 +55,10 @@ struct Ui {
     dirty: Cell<bool>,
     closing_confirmed: Cell<bool>,
     format_toolbar: gtk::ScrolledWindow,
+    format_bold: gtk::ToggleButton,
+    format_italic: gtk::ToggleButton,
+    format_underline: gtk::ToggleButton,
+    format_syncing: Cell<bool>,
 }
 
 fn texture(img: wordcraft_gnome::PageImage) -> gdk::MemoryTexture {
@@ -78,6 +82,28 @@ fn refresh_selection(ui: &Rc<Ui>) {
             for area in &doc.selection_areas { area.queue_draw(); }
         }
     }
+    refresh_format_controls(ui);
+}
+
+/// Reflect the actual WordCraft formatting state, rather than leaving B/I/U
+/// buttons visually disconnected from the selected text.
+fn refresh_format_controls(ui: &Rc<Ui>) {
+    let state = {
+        let Ok(mut current) = ui.current.try_borrow_mut() else { return };
+        current.as_mut()
+            .and_then(|doc| doc.session.run("format.state", &serde_json::json!({})).ok())
+    };
+    let Some(state) = state else { return };
+    ui.format_syncing.set(true);
+    for (button, property) in [
+        (&ui.format_bold, "bold"),
+        (&ui.format_italic, "italic"),
+        (&ui.format_underline, "underline"),
+    ] {
+        let active = state.get(property).and_then(|x| x.as_bool()).unwrap_or(false);
+        button.set_active(active);
+    }
+    ui.format_syncing.set(false);
 }
 
 /// Compute actual per-page widget bounds in GTK coordinates, then convert to
@@ -804,13 +830,13 @@ fn make_window(
     format_bar.set_margin_end(10);
     format_bar.set_margin_top(5);
     format_bar.set_margin_bottom(5);
-    let bold_button = gtk::Button::with_label("B");
+    let bold_button = gtk::ToggleButton::with_label("B");
     bold_button.set_tooltip_text(Some("Negrita (Ctrl+B)"));
     bold_button.add_css_class("flat");
-    let italic_button = gtk::Button::with_label("I");
+    let italic_button = gtk::ToggleButton::with_label("I");
     italic_button.set_tooltip_text(Some("Cursiva (Ctrl+I)"));
     italic_button.add_css_class("flat");
-    let underline_button = gtk::Button::with_label("U");
+    let underline_button = gtk::ToggleButton::with_label("U");
     underline_button.set_tooltip_text(Some("Subrayado (Ctrl+U)"));
     underline_button.add_css_class("flat");
     format_bar.append(&bold_button);
@@ -882,6 +908,10 @@ fn make_window(
         dirty: Cell::new(false),
         closing_confirmed: Cell::new(false),
         format_toolbar,
+        format_bold: bold_button.clone(),
+        format_italic: italic_button.clone(),
+        format_underline: underline_button.clone(),
+        format_syncing: Cell::new(false),
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button,
         page_label, zoom_label, zoom_out, zoom_in, previous, next, stack, title, toasts,
@@ -896,7 +926,11 @@ fn make_window(
         (underline_button, Format::Underline),
     ] {
         let ui = ui.clone();
-        button.connect_clicked(move |_| apply_user_format(&ui, action));
+        button.connect_toggled(move |_| {
+            if !ui.format_syncing.get() {
+                apply_user_format(&ui, action);
+            }
+        });
     }
     for (button, action, popover) in format_actions {
         let ui = ui.clone();
