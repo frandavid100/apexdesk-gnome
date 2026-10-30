@@ -33,12 +33,18 @@ fn view_pointer_test(ui:&Rc<Ui>,menu:&gtk::MenuButton,window:&ApplicationWindow,
                 let canvas=ui.document_box.compute_bounds(&window).unwrap();let m=menu.compute_bounds(&window).unwrap();
                 let scroll=ui.scroll.vadjustment().value();
                 eprintln!("VIEW_POINTER_READY {} {} {} {}",(m.x()+m.width()/2.0)as i32,(m.y()+m.height()/2.0)as i32,(canvas.x()as f64+x)as i32,(canvas.y()as f64+y)as i32);
-                glib::timeout_add_local_once(std::time::Duration::from_secs(3),move||{
-                    assert!((ui.scroll.vadjustment().value()-scroll).abs()<2.0,"popover return moved the viewport");
-                    let value=ui.current.borrow();let d=value.as_ref().unwrap();
-                    assert_eq!(d.session.sel.focus.path,expected.path,"click must stay on the clicked paragraph");
-                    assert!(d.session.sel.focus.off.abs_diff(expected.off)<=1);
-                    eprintln!("VIEW_POINTER_OK");app.quit();
+                glib::timeout_add_local_once(std::time::Duration::from_secs(1),move||{
+                    assert!((ui.scroll.vadjustment().value()-scroll).abs()<2.0,"popover dismissal moved the viewport");
+                    // GtkPopover consumes the dismissing click. Verify it first,
+                    // then let xdotool send a fresh canvas click at the same point.
+                    eprintln!("VIEW_POINTER_DISMISSED");
+                    glib::timeout_add_local_once(std::time::Duration::from_secs(2),move||{
+                        assert!((ui.scroll.vadjustment().value()-scroll).abs()<2.0,"canvas focus moved the viewport");
+                        let value=ui.current.borrow();let d=value.as_ref().unwrap();
+                        assert_eq!(d.session.sel.focus.path,expected.path,"click must stay on the clicked paragraph");
+                        assert!(d.session.sel.focus.off.abs_diff(expected.off)<=1);
+                        eprintln!("VIEW_POINTER_OK");app.quit();
+                    });
                 });
             });
         });
