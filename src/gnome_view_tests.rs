@@ -60,12 +60,16 @@ fn chrome_ui_test(ui:&Rc<Ui>,menu:&gtk::MenuButton,app:&Application){
     assert!(ui.current.borrow().as_ref().unwrap().session.is_untouched_blank());
     assert_eq!(ui.sidebar_selector.height(),ui.format_toolbar.height());
     assert!(menu.popover().unwrap().is::<gtk::PopoverMenu>());
-    let model=menu.menu_model().unwrap();assert_eq!(model.n_items(),3);
+    let model=menu.menu_model().unwrap();assert_eq!(model.n_items(),4);
     for(section,actions)in[(0,["win.undo","win.redo"]),(1,["win.save","win.save-as"]) ]{
         let part=model.item_link(section,"section").unwrap();assert_eq!(part.n_items(),2);
         for(i,action)in actions.iter().enumerate(){assert_eq!(part.item_attribute_value(i as i32,"action",None).unwrap().get::<String>().unwrap(),*action);}
     }
-    let extra=model.item_link(2,"section").unwrap();assert_eq!(extra.n_items(),2);
+    assert!(style_widget(&ui.format_toolbar,"table-menu").is_none());assert!(style_widget(&ui.format_toolbar,"picture-menu").is_none());
+    let add=model.item_link(2,"submenu").unwrap();assert_eq!(add.n_items(),2);
+    assert_eq!(add.item_attribute_value(0,"action",None).unwrap().get::<String>().unwrap(),"win.insert-table");
+    assert_eq!(add.item_attribute_value(1,"action",None).unwrap().get::<String>().unwrap(),"win.insert-picture");
+    let extra=model.item_link(3,"section").unwrap();assert_eq!(extra.n_items(),2);
     assert_eq!(extra.item_attribute_value(0,"action",None).unwrap().get::<String>().unwrap(),"win.document-properties");
     assert_eq!(extra.item_attribute_value(1,"action",None).unwrap().get::<String>().unwrap(),"win.export-pdf");
     let h=ui.host.upgrade().unwrap();assert!(h.window.lookup_action("example").is_none());
@@ -78,4 +82,5 @@ fn chrome_ui_test(ui:&Rc<Ui>,menu:&gtk::MenuButton,app:&Application){
     assert!(ui.current.borrow().as_ref().unwrap().session.can_undo());
     eprintln!("DOCUMENT_CHROME_OK");app.quit();
 }
+
 
