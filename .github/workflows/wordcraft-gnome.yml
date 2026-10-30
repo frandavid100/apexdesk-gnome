@@ -68,6 +68,8 @@ jobs:
               kill "$pid"
               wait "$pid" || true
             }
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --adaptive-ui-test 2> adaptive-tools.log
+            grep -q ADAPTIVE_UI_OK adaptive-tools.log
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --context-ui-test 2> context-menu.log &
             context_pid=$!
             for attempt in $(seq 1 300); do
@@ -205,6 +207,9 @@ jobs:
             run_case vista-titulos.png --outline-demo
             run_case vista-menu-principal.png --main-menu-demo
             run_case vista-menu-documento.png --document-menu-demo
+            run_case vista-contexto-estilo.png --context-style-demo
+            run_case vista-contexto-parrafo.png --context-paragraph-demo
+            run_case vista-contexto-texto-panel.png --context-text-demo
             run_case vista-todas-pestanas.png --overview-demo
             run_case vista-buscar.png --search-demo
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --tabs-test 2> tabs.log
@@ -304,6 +309,10 @@ jobs:
             document-tools.log
             document-tools-test.pdf
             vista-pdf-exportado.png
+            adaptive-tools.log
+            vista-contexto-estilo.png
+            vista-contexto-parrafo.png
+            vista-contexto-texto-panel.png
             context-menu.log
             vista-contexto-texto.png
             vista-imagen.png
@@ -338,6 +347,7 @@ jobs:
             performance-debug.txt
             performance-release.txt
           if-no-files-found: warn
+
 
 
 
