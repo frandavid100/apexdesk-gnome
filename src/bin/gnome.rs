@@ -907,7 +907,7 @@ fn make_window(
 
     let toasts = ToastOverlay::new();
     toasts.set_child(Some(&stack));
-    // A second native toolbar for document editing, horizontally scrollable
+    // A bottom native toolbar for document editing, horizontally scrollable
     // on small windows. It lives in AdwToolbarView, never over the pages.
     let format_bar = gtk::Box::new(gtk::Orientation::Horizontal, 6);
     format_bar.set_margin_start(10);
@@ -962,7 +962,7 @@ fn make_window(
 
     let document_toolbar = ToolbarView::new();
     document_toolbar.add_top_bar(&header);
-    document_toolbar.add_top_bar(&format_toolbar);
+    document_toolbar.add_bottom_bar(&format_toolbar);
     document_toolbar.set_content(Some(&toasts));
 
     let sidebar = adw::OverlaySplitView::new();
