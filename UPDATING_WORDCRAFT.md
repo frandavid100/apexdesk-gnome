@@ -89,3 +89,19 @@ registered only during movement; it respects gtk-enable-animations. Selection
 drags, missing carets, new sessions and page changes snap. No upstream patch.
 The sidebar's initial visibility is set before attaching the tab, with no delayed
 show call. Explicit user toggles retain libadwaita's normal transitions.
+
+## Sidebar search and paragraph popover
+
+`search.rs` invokes literal `edit.advancedFind` in the body and consumes all public
+`Session.find.results`, not the JSON response's 200-item sample. It preserves
+selection while collecting context, pages and highlight geometry. Hit actions
+validate document identity and revision before selecting or replacing through
+public engine commands. Empty replacement deletes the range. UI result buttons
+refresh after mutations/undo, and each tab owns its query and options.
+`gnome_search.rs` owns the sidebar stack and weak callbacks; highlights are a
+separate GTK overlay and do not change the document or the raster cache.
+`gnome_paragraph.rs` replaces the old paragraph dialog with icon controls and
+scrollable internal pages with a fixed back row. New paragraph/replace icons
+are drawn as small foreground-colour vectors, so they work without optional
+icon-theme assets and follow light/dark appearance. It retains the public paragraph commands; no engine
+formatting model is copied. The source engine remains unmodified.
