@@ -734,7 +734,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
             (width * THUMB_SCALE).ceil() as i32,
             (height * THUMB_SCALE).ceil() as i32,
         );
-        thumb.add_css_class("thumbnail-sheet");
+        thumb.add_css_class("thumbnail-sheet");thumb.set_overflow(gtk::Overflow::Hidden);
         let number = gtk::Label::new(Some(&(i + 1).to_string()));
         number.add_css_class("dim-label");
         let content=gtk::Box::new(gtk::Orientation::Vertical,5);content.set_halign(gtk::Align::Center);content.set_vexpand(false);
@@ -787,7 +787,7 @@ fn install_css() {
     provider.load_from_data("
       .document-scroll { background: @window_bg_color; }
       .document-sheet { background: white; box-shadow: 0 1px 4px alpha(black, 0.15); }
-      .thumbnail-sheet { background: white; box-shadow: 0 1px 3px alpha(black, 0.16); }
+      .thumbnail-sheet { background: white; border-radius: 6px; border: 1px solid alpha(black, 0.12); background-clip: content-box; }
       .thumbnail-button { padding: 12px; min-width: 0; min-height: 0; }
       .thumbnail-button.selected-thumb { background: alpha(@window_fg_color, 0.09); }
       .sidebar-selector button { border-radius: 10px; }
@@ -797,7 +797,7 @@ fn install_css() {
       button.search-replace { min-width: 24px; min-height: 24px; padding: 0; }
       .style-popover button, .format-popover button { font-weight: normal; }
       .style-row.current-style { background: alpha(@window_fg_color, 0.14); border-radius: 6px; }
-      .format-popover button:checked { background: alpha(@window_fg_color, 0.14); }
+      .format-popover button:checked:not(.split-action) { background: alpha(@window_fg_color, 0.14); }
       .page-indicator, .zoom-value { font-feature-settings: 'tnum'; }
     ");
     if let Some(display) = gdk::Display::default() {
@@ -1612,6 +1612,16 @@ fn build_tab(
             if std::env::args().any(|a|a=="--table-properties-demo"){show_table_properties(&u,&w);}else{m.popup();}
         });
     }
+    if std::env::args().any(|a|a=="--split-states-demo") {
+        let m=align_menu.clone();let s=paragraph_popover.clone();let w=window.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{
+            m.popup();glib::timeout_add_local_once(std::time::Duration::from_millis(400),move||{
+                let body=style_widget(&s.main,"paragraph-indent").unwrap().compute_bounds(&w).unwrap();
+                let arrow=style_widget(&s.main,"paragraph-more-indents").unwrap().compute_bounds(&w).unwrap();
+                eprintln!("SPLIT_POINTER_READY {} {} {} {}",(body.x()+body.width()/2.0)as i32,(body.y()+body.height()/2.0)as i32,(arrow.x()+arrow.width()/2.0)as i32,(arrow.y()+arrow.height()/2.0)as i32);
+            });
+        });
+    }
     if std::env::args().any(|a|a=="--paragraph-demo"||a=="--paragraph-spacing-demo") {let m=align_menu.clone();let s=paragraph_popover.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{m.popup();if std::env::args().any(|a|a=="--paragraph-spacing-demo"){s.page("spacing");}});}
     if std::env::args().any(|a|a=="--paragraph-ui-test") {let s=paragraph_popover.clone();let m=align_menu.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||paragraph_ui_test(&s,&m,&app));}
     if std::env::args().any(|a|a=="--search-ui-test") {let s=search_panel.clone();let ui=ui.clone();let app=app.clone();let host=host.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||search_ui_test(&ui,&s,&app,&host));}
@@ -1760,6 +1770,7 @@ fn schedule_thumbnail_refresh(ui: &Rc<Ui>) {
         refresh_thumbnails(&ui);
     });
 }
+
 
 
 
