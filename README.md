@@ -1,56 +1,65 @@
-# WordCraft GNOME — visor de documentos
+# WordCraft GNOME — interfaz adaptativa libadwaita
 
-Interfaz **GTK4 + libadwaita**, con motores de [WordCraft](https://github.com/storytold/wordcraft)
-independientes de egui. Código de desarrollo experimental.
+Esta rama (`adwaita-layout`) reemplaza la estructura manual del visor por
+los contenedores recomendados por las **GNOME Human Interface Guidelines**.
 
-## Ramas
+## Componentes
 
-- `main`: prototipo anterior, basado en ApexDesk; permanece intacto.
-- `wordcraft-migration`: primera integración de WordCraft, visor de una sola página.
-- **`wordcraft-viewer`**: visor con páginas continuas, zoom, miniaturas y cabecera organizada como GNOME Papers.
+- `AdwApplicationWindow`: ventana.
+- `AdwOverlaySplitView`: panel lateral y documento, con ancho proporcional
+  administrado por libadwaita. El panel se superpone en ventanas pequeñas.
+- `AdwToolbarView` y `AdwHeaderBar`: cabeceras y barras integradas con GNOME.
+- `AdwBreakpoint`: cambio de disposición por debajo de **760sp**, incluidos
+  ajustes de accesibilidad para texto grande.
+- `GtkOverlay` con estilo `.osd`: controles de zoom sobre el lienzo.
+- El renderizado, paginación y formatos siguen procediendo de WordCraft.
 
-## Funciones de esta versión
+El menú de la **aplicación** está en la cabecera lateral; el menú del
+**documento** está en la cabecera principal.
 
-- Abrir documentos **DOCX y ODT** en modo solo lectura.
-- Desplazamiento vertical continuo entre páginas.
-- **Zoom** del 50 % al 200 % con botones flotantes, menú de opciones, `Ctrl++`, `Ctrl+-` o `Ctrl+rueda`.
-- **Ajustar al ancho** con el botón correspondiente o `Ctrl+0`.
-- Panel lateral con **cabecera independiente** y miniaturas completas, que se puede mostrar y ocultar (F9).
-- Pulsar en una miniatura para saltar a esa página.
-- Navegación por páginas mediante los botones de cabecera.
-- Renderizado bajo demanda de las páginas y miniaturas próximas a la zona visible para contener el uso de memoria.
-- Documento de ejemplo de WordCraft, para probarlo sin abrir archivos.
+## Funciones
 
-El zoom cambia el tamaño de representación, **no el formato interno del documento**.
-La paginación, tablas y estilos proceden de WordCraft, no de `GtkTextView`.
+Permite abrir DOCX/ODT, leerlos, desplazarse de forma continua, ajustar zoom,
+consultar miniaturas y saltar a páginas. No permite editar ni guardar todavía.
 
-**Limitaciones:** no permite escribir, seleccionar texto o guardar documentos.
-Se necesitarán pruebas adicionales con archivos grandes, escalado HiDPI,
-rotaciones y compatibilidad de formatos. El lanzamiento automatizado bajo Xvfb
-no sustituye las pruebas manuales en GNOME OS.
+Los atajos principales: `Ctrl+O` abrir, `F9` panel, `Ctrl++` ampliar,
+`Ctrl+-` reducir, `Ctrl+0` ajustar ancho.
 
-## Compilación y pruebas
+## Pruebas
 
-Requiere Rust 1.95+, GTK4 4.10+ y libadwaita 1.4+ de desarrollo.
+Requiere GTK4 >= 4.10, libadwaita >= 1.4 y Rust estable.
 
 ```sh
 cargo test
-cargo run --features gui --bin wordcraft-gnome -- --sample
-```
-
-Para fotografiar la interfaz con las miniaturas abiertas:
-
-```sh
 cargo run --features gui --bin wordcraft-gnome -- --sample --sidebar
 ```
 
-El [workflow CI](.github/workflows/wordcraft-gnome.yml) ejecuta pruebas
-del motor y de la geometría del visor, comprueba que no haya egui/eframe,
-compila la aplicación y la arranca bajo Xvfb. Publica una captura y un
-binario Linux de desarrollo como artefacto. Para reducir el tamaño del ZIP se
-retiran los símbolos de depuración del binario distribuido; el código conserva
-las pruebas y la información necesaria en el repositorio.
+Para pruebas visuales sin modificar preferencias del usuario:
 
-Los motores WordCraft están fijados a la revisión
-[`165d5725`](https://github.com/storytold/wordcraft/commit/165d5725dc25b4a7887d8025c3b1fe506ccc3dcc)
-y se distribuyen bajo MIT OR Apache-2.0. Nuestro código está bajo GPL-3.0-or-later.
+```sh
+./wordcraft-gnome --sample --narrow --sidebar
+./wordcraft-gnome --sample --narrow
+./wordcraft-gnome --sample --dark --sidebar
+./wordcraft-gnome --version
+```
+
+El flujo de GitHub Actions genera capturas de las cinco disposiciones,
+compila los motores sin egui y crea un ejecutable Linux reducido (sin símbolos
+de depuración). Las capturas automatizadas no sustituyen las pruebas
+interactivas con teclado, lector de pantalla o Wayland real.
+
+## Ramas y licencias
+
+- `main`: prototipo previo basado en ApexDesk.
+- `wordcraft-migration`: primera integración de WordCraft.
+- `wordcraft-viewer`: visor anterior con contenedores manuales.
+- `adwaita-layout`: refactorización HIG/libadwaita (esta rama).
+
+Las dependencias de WordCraft proceden de
+[storytold/wordcraft, revisión 165d5725](https://github.com/storytold/wordcraft/commit/165d5725dc25b4a7887d8025c3b1fe506ccc3dcc),
+con licencia MIT OR Apache-2.0; el código del proyecto es GPL-3.0-or-later.
+
+Documentación de referencia:
+[GNOME HIG](https://developer.gnome.org/hig/),
+[OverlaySplitView](https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/class.OverlaySplitView.html),
+[ToolbarView](https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/class.ToolbarView.html).
