@@ -34,3 +34,11 @@ adw = { package = "libadwaita", version = "0.8", features = ["v1_4"], optional =
 # no se heredan: el proyecto consumidor debe declarar el mismo reemplazo.
 [patch.crates-io]
 krilla = { git = "https://github.com/storytold/craft-libs", rev = "92d392cff132eaf53e13afff77f38b5c11b73aa0" }
+
+# Production binaries optimize the renderer and engine as well as the GTK host.
+# Keep unwinding: upstream uses catch_unwind in file/recovery operations.
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 1
+strip = "symbols"
