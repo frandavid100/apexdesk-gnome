@@ -92,7 +92,7 @@ fn install_table_controls(ui:&Rc<Ui>,parent:&ApplicationWindow,bar:&gtk::Box)->g
     let pop=gtk::Popover::new();pop.add_css_class("format-popover");let content=gtk::Box::new(gtk::Orientation::Vertical,6);
     content.set_margin_top(8);content.set_margin_bottom(8);content.set_margin_start(8);content.set_margin_end(8);
     format_popover_header(&pop,&content,"Tabla",&ui.format_group);
-    let insert=gtk::Button::with_label("Insertar tabla…");insert.add_css_class("flat");content.append(&insert);
+    let insert=gtk::Button::with_label("Insertar tabla…");insert.add_css_class("flat");insert.set_visible(tool_diagnostics());content.append(&insert);
     {let ui=ui.clone();let p=parent.clone();let pop=pop.clone();insert.connect_clicked(move|_|{close_format_popover(&pop);show_insert_table(&ui,&p);});}
     let context=gtk::Box::new(gtk::Orientation::Vertical,6);context.set_widget_name("table-context");content.append(&context);
     let heading=gtk::Label::new(Some("Tabla actual"));heading.add_css_class("heading");context.append(&heading);
@@ -122,3 +122,4 @@ fn refresh_table_controls(ui:&Rc<Ui>,pop:&gtk::Popover){
     if let Some(w)=style_widget(&root,"table-context"){w.set_visible(doc.is_some_and(|d|wordcraft_gnome::tables::in_table(&d.session)));}
     if let Some(w)=style_widget(&root,"table-merge"){w.set_sensitive(doc.is_some_and(|d|wordcraft_gnome::tables::selected_cells(&d.session)>1));}
 }
+
