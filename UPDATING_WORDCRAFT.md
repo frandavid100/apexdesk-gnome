@@ -169,3 +169,11 @@ or added dependencies. Recheck split child hierarchy when upgrading libadwaita.
 Tests wait for GTK frames, assert mapped surfaces, no hide signal/surface
 replacement during pin toggles, and exclusive switching with pin inheritance.
 
+
+
+## Images, page setup and PDF
+
+`pictures.rs` selects exactly one picture through pure select.range, uses insert.picture, picture.change/size and text.delete, and leaves all media/layout handling upstream. New images are inline; preserve the engine's object hit testing and UTF-8 object character length. Selection painting uses its ObjectHit bounds. The fifth editing popover joins the existing exclusive pin group.
+`document_properties.rs` clones each target section, updates only paper/margins, prevalidates all sections, and calls layout.pageSetup for each. The engine checkpoint/join/merge and edit_snapshot/restore APIs provide one undo and rollback on errors; existing headers, footers, columns and other settings stay distinct. Temporary caret commands restore the user's selection. Millimetre display rounding does not dirty unchanged fields.
+`pdf_export.rs` uses pure file.exportPdf with an explicit .pdf destination. The GUI clones the document and creates a separate Session inside a GIO blocking worker, retaining the live session's path, dirty state, selection and history. Native file dialogs confirm the exact output path; never silently append an extension after confirmation.
+`gnome_document_tools.rs` owns native popover, staged modal properties and file selectors. Async chooser callbacks validate document identity/revision before acting. No dependency or engine revision changes.
