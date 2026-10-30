@@ -50,6 +50,8 @@ struct Ui {
     toasts: ToastOverlay,
     selection_data: Rc<RefCell<SelectionGeometry>>,
     selection_zoom: Rc<Cell<f32>>,
+    caret_motion: Rc<RefCell<wordcraft_gnome::caret_motion::CaretMotion>>,
+    caret_tick_active: Cell<bool>,
     drag_anchor: RefCell<Option<Pos>>,
     dirty: Cell<bool>,
     thumbnail_refresh_pending: Cell<bool>,
@@ -87,7 +89,32 @@ fn refresh_selection(ui: &Rc<Ui>) {
         let Some(doc) = value.as_mut() else { return };
         selection::geometry(&mut doc.session)
     };
+    let now = ui.document_box.frame_clock().map(|c| c.frame_time()).unwrap_or(0);
+    let animate = ui.document_box.is_mapped()
+        && ui.document_box.settings().property::<bool>("gtk-enable-animations")
+        && snapshot.highlights.is_empty() && ui.drag_anchor.borrow().is_none();
+    ui.caret_motion.borrow_mut().retarget(snapshot.caret.clone(), now, animate);
     *ui.selection_data.borrow_mut() = snapshot;
+    if ui.caret_motion.borrow().is_moving() && !ui.caret_tick_active.replace(true) {
+        let weak = Rc::downgrade(ui);
+        ui.document_box.add_tick_callback(move |widget, clock| {
+            let Some(ui) = weak.upgrade() else { return glib::ControlFlow::Break };
+            let enabled = widget.settings().property::<bool>("gtk-enable-animations");
+            let moving = {
+                let mut motion = ui.caret_motion.borrow_mut();
+                if !enabled || ui.closed.get() { motion.finish(); }
+                motion.advance(clock.frame_time());
+                motion.is_moving()
+            };
+            if let Some(doc) = ui.current.borrow().as_ref() {
+                for area in &doc.selection_areas { area.queue_draw(); }
+            }
+            if moving { glib::ControlFlow::Continue } else {
+                ui.caret_tick_active.set(false);
+                glib::ControlFlow::Break
+            }
+        });
+    }
     if let Ok(value) = ui.current.try_borrow() {
         if let Some(doc) = value.as_ref() {
             for area in &doc.selection_areas { area.queue_draw(); }
@@ -638,6 +665,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     }
     let zoom = 1.0;
     let tops = viewer_layout::page_tops(&sizes, zoom);
+    ui.caret_motion.borrow_mut().retarget(None, 0, false);
     clear_box(&ui.document_box);
     clear_box(&ui.thumbnails_box);
 
@@ -668,6 +696,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         {
             let data = ui.selection_data.clone();
             let scale = ui.selection_zoom.clone();
+            let motion = ui.caret_motion.clone();
             area.set_draw_func(move |_, cr, _, _| {
                 let selection = data.borrow();
                 let z = f64::from(scale.get());
@@ -676,7 +705,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
                     cr.rectangle(r.x*z, r.y*z, r.width*z, r.height*z);
                     let _ = cr.fill();
                 }
-                if let Some(r) = selection.caret.as_ref().filter(|r| r.page == i) {
+                if let Some(r) = motion.borrow().position().filter(|r| r.page == i) {
                     cr.set_source_rgba(0.08, 0.30, 0.74, 1.0);
                     cr.rectangle(r.x*z, r.y*z, (r.width*z).max(1.5), (r.height*z).max(2.0));
                     let _ = cr.fill();
@@ -764,6 +793,7 @@ fn install_css() {
       .document-sheet { background: white; box-shadow: 0 1px 4px alpha(black, 0.15); }
       .thumbnail-sheet { background: white; box-shadow: 0 1px 3px alpha(black, 0.16); }
       .thumbnail-button.selected-thumb { background: alpha(@window_fg_color, 0.09); }
+      .style-popover button { font-weight: normal; }
       .page-indicator, .zoom-value { font-feature-settings: 'tnum'; }
     ");
     if let Some(display) = gdk::Display::default() {
@@ -1060,7 +1090,10 @@ fn build_tab(
     let sidebar = adw::OverlaySplitView::new();
     sidebar.set_sidebar(Some(&sidebar_toolbar));
     sidebar.set_content(Some(&document_toolbar));
-    sidebar.set_show_sidebar(false);
+    sidebar.set_collapsed(narrow_on_start);
+    sidebar.set_show_sidebar(sidebar_on_start || !narrow_on_start);
+    sidebar_button.set_active(sidebar_on_start || !narrow_on_start);
+    compact_app_menu.set_visible(!(sidebar_on_start || !narrow_on_start));
     sidebar.set_min_sidebar_width(190.0);
     sidebar.set_max_sidebar_width(240.0);
     sidebar.set_sidebar_width_fraction(0.21);
@@ -1081,6 +1114,8 @@ fn build_tab(
         current: RefCell::new(None),
         selection_data: Rc::new(RefCell::new(SelectionGeometry::default())),
         selection_zoom: Rc::new(Cell::new(1.0)),
+        caret_motion: Rc::new(RefCell::new(Default::default())),
+        caret_tick_active: Cell::new(false),
         drag_anchor: RefCell::new(None),
         dirty: Cell::new(false), thumbnail_refresh_pending: Cell::new(false),
         closing_confirmed: Cell::new(false),
@@ -1105,6 +1140,42 @@ fn build_tab(
     for (button,kind,popover) in [(more_text,0,text_popover.clone()),(more_paragraph,1,align_menu.popover().unwrap_or_else(gtk::Popover::new))] {
         let ui=ui.clone();let parent=window.clone();
         button.connect_clicked(move|_|{popover.popdown();match kind{0=>show_text_options(&ui,&parent),1=>show_paragraph_options(&ui,&parent),_=>unreachable!()}});
+    }
+    if std::env::args().any(|a| a == "--motion-ui-test") {
+        assert!(ui.sidebar.shows_sidebar(), "sidebar must be open before mapping");
+        let changes = Rc::new(Cell::new(0));
+        let count = changes.clone();
+        ui.sidebar.connect_show_sidebar_notify(move |_| count.set(count.get() + 1));
+        let test_ui = ui.clone(); let test_app = app.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_millis(1500), move || {
+            assert_eq!(changes.get(), 0, "startup must not toggle the sidebar");
+            assert!(test_ui.sidebar.shows_sidebar());
+            let settings = test_ui.document_box.settings();
+            let old = settings.property::<bool>("gtk-enable-animations");
+            settings.set_property("gtk-enable-animations", true);
+            {
+                let mut state = test_ui.current.borrow_mut();
+                state.as_mut().unwrap().session.run("caret.docStart", &serde_json::json!({})).unwrap();
+            }
+            test_ui.caret_motion.borrow_mut().retarget(None, 0, false);
+            refresh_selection(&test_ui);
+            let revision = test_ui.current.borrow().as_ref().unwrap().session.rev();
+            selected_command(&test_ui, "right", false);
+            assert!(test_ui.caret_motion.borrow().is_moving());
+            assert_ne!(test_ui.caret_motion.borrow().position(), test_ui.selection_data.borrow().caret.as_ref());
+            let next = test_ui.clone();
+            glib::timeout_add_local_once(std::time::Duration::from_millis(250), move || {
+                assert!(!next.caret_motion.borrow().is_moving(), "frame clock must finish the motion");
+                assert_eq!(next.caret_motion.borrow().position(), next.selection_data.borrow().caret.as_ref());
+                settings.set_property("gtk-enable-animations", false);
+                selected_command(&next, "right", false);
+                assert!(!next.caret_motion.borrow().is_moving());
+                assert_eq!(next.caret_motion.borrow().position(), next.selection_data.borrow().caret.as_ref());
+                assert_eq!(revision, next.current.borrow().as_ref().unwrap().session.rev());
+                settings.set_property("gtk-enable-animations", old);
+                eprintln!("MOTION_UI_OK"); test_app.quit();
+            });
+        });
     }
     let style_popover=install_style_popover(&ui,&style_menu);
     let table_menu=install_table_controls(&ui,&window,&format_bar);
@@ -1674,20 +1745,6 @@ fn build_tab(
     if std::env::args().any(|a| a == "--zoom-menu-demo") {
         let menu = zoom_menu.clone();
         glib::timeout_add_local_once(std::time::Duration::from_millis(1100), move || menu.popup());
-    }
-    if sidebar_on_start || !narrow_on_start {
-        // Cuando se aplica AdwBreakpoint, el split puede cambiar por sí mismo
-        // la visibilidad del panel; abrimos la miniatura tras estabilizarlo.
-        let ui = ui.clone();
-        glib::timeout_add_local_once(std::time::Duration::from_millis(350), move || {
-            ui.sidebar.set_show_sidebar(true);
-            ui.sidebar_button.set_active(true);
-            refresh_thumbnails(&ui);
-            let ui2 = ui.clone();
-            glib::timeout_add_local_once(std::time::Duration::from_millis(420), move || {
-                refit_if_needed(&ui2);
-            });
-        });
     }
     if sample_on_start || initial_loaded {
         let ui = ui.clone();
