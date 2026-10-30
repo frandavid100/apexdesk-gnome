@@ -30,12 +30,13 @@ impl StylePopover {
         let query=self.search.text().to_lowercase();let mut count=0;
         for st in styles.into_iter().filter(|s|s.name.to_lowercase().contains(&query)||s.id.to_lowercase().contains(&query)){
             count+=1;
-            let row=gtk::Box::new(gtk::Orientation::Horizontal,0);
+            let row=gtk::Box::new(gtk::Orientation::Horizontal,0);row.add_css_class("style-row");
+            if current.as_deref()==Some(st.id.as_str()){row.add_css_class("current-style");}
             let apply=gtk::Button::new();apply.add_css_class("flat");apply.set_hexpand(true);apply.set_widget_name(&format!("style-apply-{}",st.id));
             let label=gtk::Label::new(Some(&st.name));label.set_xalign(0.0);label.set_hexpand(true);label.set_ellipsize(gtk::pango::EllipsizeMode::End);label.set_max_width_chars(28);
             let content=gtk::Box::new(gtk::Orientation::Horizontal,8);content.append(&label);
             let kind=gtk::Label::new(Some(if st.kind==wordcraft_doc::styles::StyleKind::Paragraph{"¶"}else{"a"}));kind.add_css_class("dim-label");kind.set_tooltip_text(Some(if st.kind==wordcraft_doc::styles::StyleKind::Paragraph{"Estilo de párrafo"}else{"Estilo de carácter"}));content.append(&kind);
-            if current.as_deref()==Some(st.id.as_str()){let check=gtk::Label::new(Some("✓"));check.set_tooltip_text(Some("Estilo actual"));content.append(&check);}
+            if current.as_deref()==Some(st.id.as_str()){apply.set_tooltip_text(Some("Estilo actual"));}
             apply.set_child(Some(&content));row.append(&apply);
             let manage=gtk::Button::with_label("›");manage.add_css_class("flat");manage.set_tooltip_text(Some(&format!("Gestionar «{}»",st.name)));manage.set_widget_name(&format!("style-manage-{}",st.id));row.append(&manage);
             let weak=Rc::downgrade(self);let id=st.id.clone();apply.connect_clicked(move|_|{if let Some(s)=weak.upgrade(){
