@@ -8,19 +8,23 @@ Las fases siguientes son propuestas; no implican autorización para implementarl
 Recoger la prueba del usuario de formato avanzado y compilación optimizada en GNOME OS.
 Corregir los fallos que aparezcan antes de acumular funciones nuevas.
 
-## Siguiente ampliación propuesta: tablas
+## Tablas: implementadas, pendientes de prueba manual
 
-Auditar primero los comandos públicos y el comportamiento de selección en celdas de
-la revisión fijada de WordCraft. Reutilizar esos comandos desde una interfaz GNOME.
+El usuario autorizó esta ampliación. Incluye selector de tamaño, filas/columnas,
+selección rectangular de celdas, combinar/dividir, anchos/alturas, alineación,
+bordes, sombreado, cabeceras y división de tabla. Menú Tabla en la barra inferior,
+propiedades en un panel nativo y menú contextual con clic derecho/Mayús+F10.
 
-Alcance propuesto: insertar tabla con filas/columnas; añadir y eliminar filas/columnas;
-combinar/dividir celdas cuando lo admita el motor; ajustar anchos, alineación, bordes y
-sombreado. Revisar navegación con Tab/Shift+Tab y edición de texto dentro de celdas.
-Ubicación de controles por decidir con el usuario; priorizar controles contextuales compactos.
+La estructura se modifica mediante los comandos de WordCraft. La navegación entre
+celdas existentes usa selección pura para conservar el estado de cambios e historial.
+Tab en la última celda añade una fila mediante el motor; Mayús+Tab retrocede.
 
-Criterios de aceptación: operaciones reversibles con Deshacer/Rehacer, cursor y selección
-coherentes, guardado/reapertura en DOCX y ODT, tablas de varias páginas y ventana estrecha.
-Identificar y documentar límites del motor; no simular funciones que no estén soportadas.
+Pruebas: historial, selecciones vacías, columnas independientes, combinar/dividir,
+DOCX/ODT, varias páginas y teclado real en Xvfb. Revisar el resultado de CI y
+la prueba del usuario antes de marcar esta entrega como validada manualmente.
+
+Quedan para una ampliación posterior los tiradores de tamaño con ratón, las
+fórmulas y los estilos completos de tabla; no forman parte de esta entrega.
 
 ## Después: imágenes
 
