@@ -22,7 +22,7 @@ jobs:
       - name: Instalar bibliotecas GNOME y pantalla virtual
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev xvfb xauth scrot
+          sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev xvfb xauth scrot adwaita-icon-theme
       - name: Tests sin interfaz
         run: cargo test
       - name: Validar árbol sin egui/eframe

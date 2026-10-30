@@ -319,7 +319,7 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     header.pack_start(&example_button);
 
     let sidebar_button = gtk::ToggleButton::new();
-    sidebar_button.set_icon_name("view-sidebar-symbolic");
+    sidebar_button.set_icon_name("sidebar-show-symbolic");
     sidebar_button.set_tooltip_text(Some("Mostrar u ocultar miniaturas"));
     header.pack_start(&sidebar_button);
 
