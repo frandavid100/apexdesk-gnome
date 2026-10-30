@@ -86,3 +86,5 @@ Autorizados e implementados menús contextuales nativos para texto, tablas e im�
 
 
 Corrección prioritaria autorizada: conservar las acciones al cerrar una fila nativa, aspecto de contexto como Nautilus sin punta, retirar historial redundante del contexto y mover inserción de Tabla/Imagen a Añadir. Validar activación real de filas, no solo invocación directa de acciones, antes de distribuir.
+
+Entrega correctiva validada automáticamente en CI 41137708372, código 7cd6debaa1ec55b4f44783966f2b22c56daad8c5. Contexto nativo funcional, sin historial redundante; Tabla/Imagen fuera de la barra, inserción en Añadir y paneles preservados al reconstruir el documento. Pendiente de prueba manual del usuario.
