@@ -6,6 +6,7 @@ struct SearchPanel {
     replacement: gtk::Entry,
     replacement_row: gtk::Box,
     replace_all: gtk::Button,
+    _actions_width: gtk::SizeGroup,
     match_case: gtk::CheckButton,
     replace_mode: gtk::CheckButton,
     list: gtk::ListBox,
@@ -87,11 +88,12 @@ fn install_search_panel(ui:&Rc<Ui>,toggle:&gtk::ToggleButton,compact:&gtk::Butto
     let replacement=gtk::Entry::new();replacement.set_placeholder_text(Some("Reemplazar por"));replacement.set_hexpand(true);replacement.set_width_chars(1);
     let replacement_row=gtk::Box::new(gtk::Orientation::Horizontal,4);replacement_row.set_margin_start(6);replacement_row.set_margin_end(6);replacement_row.append(&replacement);
     let replace_all=gtk::Button::new();replace_all.set_child(Some(&paragraph_icon("replace")));replace_all.add_css_class("flat");replace_all.set_tooltip_text(Some("Reemplazar todos los resultados"));replace_all.set_widget_name("search-replace-all");replacement_row.append(&replace_all);replacement_row.set_visible(false);root.append(&replacement_row);
+    let actions_width=gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal);actions_width.add_widget(&options);actions_width.add_widget(&replace_all);
     let status=gtk::Label::new(Some("Escribe para buscar"));status.add_css_class("dim-label");status.set_wrap(true);root.append(&status);
     let list=gtk::ListBox::new();list.set_activate_on_single_click(true);list.add_css_class("navigation-sidebar");
     let scroll=gtk::ScrolledWindow::new();scroll.set_policy(gtk::PolicyType::Never,gtk::PolicyType::Automatic);scroll.set_vexpand(true);scroll.set_child(Some(&list));root.append(&scroll);
     ui.sidebar_pages.add_named(&root,Some("search"));
-    let s=Rc::new(SearchPanel{ui:Rc::downgrade(ui),toggle:toggle.clone(),query:query.clone(),replacement:replacement.clone(),replacement_row,replace_all:replace_all.clone(),match_case:case.clone(),replace_mode:replace.clone(),list:list.clone(),status,hits:RefCell::new(Vec::new()),pending:Cell::new(false)});
+    let s=Rc::new(SearchPanel{ui:Rc::downgrade(ui),toggle:toggle.clone(),query:query.clone(),replacement:replacement.clone(),replacement_row,replace_all:replace_all.clone(),_actions_width:actions_width,match_case:case.clone(),replace_mode:replace.clone(),list:list.clone(),status,hits:RefCell::new(Vec::new()),pending:Cell::new(false)});
     let weak=Rc::downgrade(&s);replace_all.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.replace_all();}});
     let weak=Rc::downgrade(&s);query.connect_search_changed(move |_|{if let Some(s)=weak.upgrade(){s.refresh();}});
     let weak=Rc::downgrade(&s);case.connect_toggled(move |_|{if let Some(s)=weak.upgrade(){s.refresh();}});
