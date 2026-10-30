@@ -488,7 +488,8 @@ fn make_window(
     }
     {
         let ui = ui.clone();
-        ui.sidebar.connect_show_sidebar_notify(move |split| {
+        let split = ui.sidebar.clone();
+        split.connect_show_sidebar_notify(move |split| {
             let visible = split.shows_sidebar();
             if ui.sidebar_button.is_active() != visible {
                 ui.sidebar_button.set_active(visible);
