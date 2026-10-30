@@ -61,7 +61,7 @@ impl StylePopover {
         let title=gtk::Label::new(Some(&st.name));title.set_xalign(0.0);title.set_wrap(true);title.set_max_width_chars(28);title.add_css_class("heading");title.set_margin_top(6);self.detail.append(&title);
         let kind=gtk::Label::new(Some(if st.kind==wordcraft_doc::styles::StyleKind::Paragraph{"Estilo de párrafo"}else{"Estilo de texto"}));kind.set_xalign(0.0);kind.add_css_class("dim-label");self.detail.append(&kind);
         if let Some(ui)=self.ui.upgrade(){let preview={let state=ui.current.borrow();state.as_ref().map(|d|wordcraft_gnome::styles::preview(&d.session,id))};
-            if let Some(Ok(image))=preview{let picture=gtk::Picture::for_paintable(&texture(image));picture.set_content_fit(gtk::ContentFit::Contain);picture.set_size_request(290,85);picture.add_css_class("document-sheet");picture.set_margin_top(8);picture.set_margin_bottom(8);picture.set_widget_name("style-preview");self.detail.append(&picture);}
+            if let Some(Ok(image))=preview{let picture=gtk::Picture::for_paintable(&texture(image));picture.set_content_fit(gtk::ContentFit::ScaleDown);picture.set_size_request(290,85);picture.add_css_class("document-sheet");picture.set_margin_top(8);picture.set_margin_bottom(8);picture.set_widget_name("style-preview");self.detail.append(&picture);}
         }
         self.detail.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
         let update=self.action("Actualizar según la selección","style-update",wordcraft_gnome::styles::Edit::Update(st.id.clone()),Some(st.id.clone()));self.detail.append(&update);
