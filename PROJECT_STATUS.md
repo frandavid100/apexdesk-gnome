@@ -59,12 +59,12 @@ tiradores de tamaño con ratón ni fórmulas. Las imágenes nuevas son en línea
 
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `737a89cddaaa3a66b126d87c4da9d3ac72fad7ee`.
+Código del último ejecutable validado: `7cd6debaa1ec55b4f44783966f2b22c56daad8c5`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41132689848).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13013628621`.
-Ejecutable actual con menús contextuales: 34.180.168 bytes.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41137708372).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13018325422`.
+Ejecutable actual con menús contextuales corregidos: 34.200.664 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
@@ -156,7 +156,7 @@ El usuario ha confirmado que le gusta el resultado de los botones divididos nati
 
 ## Menús contextuales: trabajo autorizado
 
-El usuario autoriza activar el clic derecho en texto, tablas e imágenes antes de preparar la aplicación instalable. Se sustituye el menú de tablas personalizado por GtkPopoverMenu/GMenu. Texto ofrece historial, portapapeles, selección y acceso a Estilo/Párrafo/Texto; tablas añaden submenús de inserción, selección y eliminación, combinar celdas y propiedades/dividir; imágenes ofrecen tamaño, tamaño original, sustitución y eliminación. Pulsar dentro de una selección de texto o celdas la conserva; fuera sitúa el cursor o selecciona la imagen. Menú/Mayús+F10 funciona para los tres contextos. Copiar/cortar/pegar y sus atajos comparten un portapapeles enriquecido que mantiene tablas, imágenes y formato entre documentos mientras GTK conserva el proveedor original; al copiar desde otra aplicación se usa el nuevo texto. No hay cambios en el motor ni en las dependencias.
+El usuario autoriza activar el clic derecho en texto, tablas e imágenes antes de preparar la aplicación instalable. Se sustituye el menú de tablas personalizado por GtkPopoverMenu/GMenu. Texto ofrece portapapeles, selección y acceso a Estilo/Párrafo/Texto; no repite Deshacer/Rehacer; tablas añaden submenús de inserción, selección y eliminación, combinar celdas y propiedades/dividir; imágenes ofrecen tamaño, tamaño original, sustitución y eliminación. Pulsar dentro de una selección de texto o celdas la conserva; fuera sitúa el cursor o selecciona la imagen. Menú/Mayús+F10 funciona para los tres contextos. Copiar/cortar/pegar y sus atajos comparten un portapapeles enriquecido que mantiene tablas, imágenes y formato entre documentos mientras GTK conserva el proveedor original; al copiar desde otra aplicación se usa el nuevo texto. No hay cambios en el motor ni en las dependencias.
 
 El usuario ha autorizado retirar Tabla e Imagen de la barra y mover su inserción a Añadir en el menú del documento. Se aplica en la revisión correctiva posterior; se mantienen todos sus controles desde el contexto. Próxima prioridad acordada: distribución instalable después de estos ajustes de menús.
 
@@ -166,7 +166,7 @@ Validación de esta entrega: CI 41132689848 completada correctamente sobre 737a8
 
 ## Corrección tras prueba del usuario: activación contextual y Añadir
 
-El usuario informa de que las filas no realizan acciones. Causa verificada en GtkModelButton: el controlador nativo cierra el popover antes de activar su GtkActionHelper. El cierre del host desmontaba el menú inmediatamente, perdiendo su jerarquía y sus acciones. El desmontaje se difiere al siguiente ciclo idle, conservando el grupo hasta finalizar la activación. La prueba anterior activaba la acción directamente y no reproducía el recorrido de una fila nativa; se corrige para pulsar Copiar con xdotool y activar las demás filas mediante GtkWidget.activate/GtkModelButton, nunca mediante Popover.activate_action.
+El usuario informa de que las filas no realizan acciones. Causa verificada en GtkModelButton: el controlador nativo cierra el popover antes de ejecutar la acción asociada. El cierre del host desmontaba el menú inmediatamente, perdiendo su jerarquía y sus acciones. El desmontaje se difiere al siguiente ciclo idle, conservando el grupo hasta finalizar la activación. La prueba anterior activaba la acción directamente y no reproducía el recorrido de una fila nativa; se corrige para pulsar Copiar con xdotool y activar las demás filas mediante GtkWidget.activate/GtkModelButton, nunca mediante Popover.activate_action.
 
 Aspecto según el código de Nautilus: GtkPopoverMenu sin punta, alineado al inicio y con aceleradores nativos. Sin Deshacer/Rehacer en el contexto. Menú del documento con Añadir → Tabla/Imagen. Barra normal solo Estilo/Párrafo/Texto, además del historial existente. Las opciones de tabla y tamaño de imagen siguen disponibles como paneles contextuales con la misma chincheta; se anclan al punto del clic y siguen usando el grupo exclusivo. Los botones antiguos solo se construyen como anclas visibles en diagnósticos internos que prueban los paneles anteriores, no en el arranque normal.
 
@@ -174,4 +174,4 @@ La regresión busca filas solo en la página visible del GtkStack nativo: GtkPop
 
 Los paneles contextuales de tabla/imagen permanecen como hijos del lienzo al reconstruir páginas o abrir el documento. clear_canvas elimina las páginas, no los GtkPopover: desmontarlos durante opened dejaba sus superficies sin una ventana nativa. La prueba normal (sin anclas de diagnóstico en barra) cubre esa apertura y conservación tras reconstrucción.
 
-Punto de continuidad durante la corrección: código 7cd6debaa1ec55b4f44783966f2b22c56daad8c5, CI 41137708372 en curso. Todavía no se ha sustituido la descarga: la versión 18 corresponde a la entrega anterior con el fallo informado. No confundir compilación o comprobaciones parciales con una entrega validada.
+Entrega correctiva validada: código 7cd6debaa1ec55b4f44783966f2b22c56daad8c5; CI 41137708372 completada correctamente. cargo test --locked y compilación release superados. CONTEXT_UI_OK incluye clic real en Copiar, filas nativas para Cortar/Pegar/Seleccionar todo, apertura de Estilo/Párrafo/Texto, submenú visible de selección de columna y paneles normales de tabla/imagen tras abrir documentos. DOCUMENT_CHROME_OK verifica Añadir → Tabla/Imagen y ausencia de sus botones en la barra normal. También pasan POPOVER_PIN_OK, VIEW_POINTER_OK y DOCUMENT_TOOLS_OK. Capturas de contexto sin punta y menú de documento con Añadir revisadas. Pendiente de confirmación manual del usuario en su GNOME OS.
