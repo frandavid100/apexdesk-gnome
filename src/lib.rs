@@ -83,3 +83,5 @@ pub mod preferences;
 pub mod tables;
 
 pub mod styles;
+
+pub mod caret_motion;
