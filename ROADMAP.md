@@ -54,11 +54,11 @@ la prueba del usuario antes de marcar esta entrega como validada manualmente.
 Quedan para una ampliación posterior los tiradores de tamaño con ratón, las
 fórmulas y los estilos completos de tabla; no forman parte de esta entrega.
 
-## Imágenes, página y PDF: autorizados e implementados, en validación
+## Imágenes, página y PDF: implementados y validados automáticamente
 
 Imagen a la derecha de Tabla. Insertar imágenes en línea desde selector nativo; tamaño en mm y proporción por defecto; restaurar tamaño, sustituir y eliminar en el propio desplegable.
 Propiedades del documento en los tres puntos: papel, orientación y márgenes, con alcance de sección/documento y un solo paso de deshacer. Exportar a PDF separado de Guardar como para conservar el destino editable; trabajo en segundo plano.
-Pruebas: imágenes y página en DOCX/ODT, historial/errores, selección mediante clic real, panel fijado, diálogo y PDF. Pendiente de terminar validación gráfica y revisión del usuario.
+Pruebas: imágenes y página en DOCX/ODT, historial/errores, selección mediante clic real, panel fijado, diálogo y PDF. Validación completa de CI 41127358053 y revisión visual de paneles/PDF superadas; pendiente de prueba del usuario.
 
 ## Más adelante: página y entrega como aplicación
 
