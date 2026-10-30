@@ -1,5 +1,9 @@
 # WordCraft GNOME — fase 3D
 
+Para retomar el desarrollo: [estado actual](PROJECT_STATUS.md),
+[hoja de ruta](ROADMAP.md) e [instrucciones para agentes](AGENTS.md).
+Rama de trabajo: `wordcraft-saving`.
+
 Guardar (Ctrl+S), Guardar como (Ctrl+Shift+S), DOCX y ODT mediante el motor WordCraft.
 La primera operación propone una copia y protege el archivo abierto originalmente.
 El nombre debe incluir .docx o .odt; cambiar la extensión elige el formato.
