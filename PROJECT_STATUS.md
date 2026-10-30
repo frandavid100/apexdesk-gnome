@@ -24,7 +24,7 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 - Cabecera del documento de una línea: nombre y ● a su izquierda cuando hay cambios pendientes, sin subtítulo ni contador de páginas.
 - Barra adaptable: en ancho, Deshacer/Rehacer arriba a la izquierda y Estilo/Párrafo/Texto arriba a la derecha, solo iconos con nombres accesibles. En estrecho los mismos cinco controles pasan abajo; no hay duplicados.
 - Los tres desplegables de barra (Estilo, Párrafo, Texto) y los dos paneles contextuales (Tabla e Imagen) comparten un grupo por pestaña: solo uno puede estar abierto y la chincheta se conserva al pasar de uno a otro. La modalidad GTK es siempre no modal; fijar/desfijar solo cambia la política de cierre, sin ocultar, recrear ni volver a mostrar la superficie. Sin fijar se cierra al aplicar o pulsar fuera. Cabecera única con nombre, vuelta atrás contextual y chincheta. Controles divididos de Párrafo con AdwSplitButton plano: fondo compartido al pasar el puntero y resaltado independiente de cuerpo/chevrón, como Nautilus; subopciones en la misma subpágina, sin otro popup.
-- Orden de formato: Estilo → Párrafo → Texto, en la cabecera o en la barra inferior según el ancho útil del documento. Tabla e Imagen se insertan desde Añadir en el menú del documento y se editan con clic derecho. Estilos y Párrafo se gestionan en desplegables con subpáginas internas; Texto conserva su panel ampliado.
+- Orden de formato: Estilo → Párrafo → Texto, en la cabecera o en la barra inferior según el ancho útil del documento. Tabla e Imagen se insertan desde Añadir en el menú del documento y se editan con clic derecho. Estilos y Párrafo se gestionan en desplegables con subpáginas internas; Texto agrupa sus opciones avanzadas en subpáginas internas.
 - Zoom a la derecha: +, − y un tercer botón con 100 % y Ajustar al ancho.
 - Sin botones Página anterior/siguiente; navegación mediante scroll y miniaturas.
 - Selector inferior del panel lateral con iconos Páginas/Títulos, inspirado en Papers. Títulos jerárquicos con secciones contraíbles, numeración y navegación al texto mediante WordCraft.
@@ -59,12 +59,12 @@ tiradores de tamaño con ratón ni fórmulas. Las imágenes nuevas son en línea
 
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `7cd6debaa1ec55b4f44783966f2b22c56daad8c5`.
+Código del último ejecutable validado: `c744dac3f553b0304e631dd80dde7fbe3669e1cd`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41137708372).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13018325422`.
-Ejecutable actual con menús contextuales corregidos: 34.200.664 bytes.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41144295677).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13020294789`.
+Ejecutable actual con barra adaptable y contexto contenido: 34.258.488 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
@@ -107,6 +107,7 @@ Probar manualmente tablas importadas complejas y los controles en ventana estrec
 
 ## Mapa del código
 
+- `src/gnome_adaptive.rs`: reubicación de los mismos controles, iconos accesibles y subpáginas avanzadas de Texto.
 - `src/gnome_document_tools.rs`: Imagen, diálogo de propiedades y selector de exportación PDF.
 - `src/pictures.rs`, `src/document_properties.rs`, `src/pdf_export.rs`: adaptadores de imágenes, sección/documento y PDF con estado editable preservado.
 - `src/bin/gnome.rs`: widgets GTK, selección visual, entrada y lienzo Fixed de páginas.
@@ -178,9 +179,9 @@ Entrega correctiva validada: código 7cd6debaa1ec55b4f44783966f2b22c56daad8c5; C
 
 
 
-## Trabajo actual autorizado: barra adaptable y contexto contenido
+## Barra adaptable y contexto contenido: entrega validada
 
-El usuario autoriza conjuntamente mover los cinco controles a la cabecera con iconos, recuperar la barra inferior cuando no caben, animar tamaño/navegación como Añadir y abrir Estilo/Párrafo/Texto dentro del propio contexto. Implementación en revisión, aún sin sustituir la descarga validada anterior. Código de integración feb387055fabed2bda11ccb0d1e8dc8a1cb1fa0f (comprobar commits posteriores), CI 41143877597 en curso.
+El usuario autoriza conjuntamente mover los cinco controles a la cabecera con iconos, recuperar la barra inferior cuando no caben, animar tamaño/navegación como Añadir y abrir Estilo/Párrafo/Texto dentro del propio contexto. Implementación validada en c744dac3f553b0304e631dd80dde7fbe3669e1cd, CI 41144295677 completada correctamente.
 
 `gnome_adaptive.rs` mueve las mismas dos cajas de widgets: historial a la izquierda y formato a la derecha. Se usa el ancho real del viewport, no un tick continuo; histéresis 640/680 px para evitar oscilaciones. Al recolocar un panel abierto se conserva la subpágina y la chincheta; se captura antes de ocultar la barra. No modifica documento, selección ni historial. Iconos vectoriales con nombres accesibles y tooltips.
 
@@ -188,4 +189,7 @@ Los tres menús usan GtkStack con interpolate-size y SlideLeftRight, respetando 
 
 El contexto usa submenús nativos GMenu y custom slots oficiales de GtkPopoverMenu para alojar temporalmente los árboles de widgets existentes. No abre el popover de la barra. Un préstamo restaura cada árbol al cerrar; las acciones y estados siguen compartidos. Se oculta únicamente la cabecera atrás nativa duplicada para conservar una sola fila atrás/título/chincheta. Revalidar esa detección de GtkStack/GtkModelButton al actualizar GTK. El host contextual mantiene autohide=false desde antes de mapearse: la chincheta no remapea la superficie. No hay cambios en WordCraft ni dependencias.
 
-Las pruebas ADAPTIVE_UI_OK y CONTEXT_UI_OK ya pasaron en la revisión 3c225058025de0622bc5fcd5ff3d6aa7c37e05c2: estrechar/ensanchar con panel fijado, subpágina conservada, préstamo/restauración de controles, cambio exclusivo del contexto a la barra, navegación de Texto y movimiento reducido. La regresión de foco se ajusta para pulsar fuera del nuevo popup de cabecera, que antes cubría el punto de prueba a la derecha de la página. Se conserva la comprobación de scroll y selección. La revisión actual conserva la captura síncrona del panel antes de que GTK desmonte el ancla al redimensionar, añade estilos de fuente/estados idénticos en contexto y foco de teclado explícito para el host no modal. Aún sin sustituir la descarga anterior.
+Las pruebas ADAPTIVE_UI_OK y CONTEXT_UI_OK ya pasaron en la revisión 3c225058025de0622bc5fcd5ff3d6aa7c37e05c2: estrechar/ensanchar con panel fijado, subpágina conservada, préstamo/restauración de controles, cambio exclusivo del contexto a la barra, navegación de Texto y movimiento reducido. La regresión de foco se ajusta para pulsar fuera del nuevo popup de cabecera, que antes cubría el punto de prueba a la derecha de la página. Se conserva la comprobación de scroll y selección. La revisión actual conserva la captura síncrona del panel antes de que GTK desmonte el ancla al redimensionar, añade estilos de fuente/estados idénticos en contexto y foco de teclado explícito para el host no modal. La validación completa de la revisión final se registra a continuación.
+
+
+Validación final: cargo test --locked y compilación release superados; CI 41144295677 sobre c744dac3f553b0304e631dd80dde7fbe3669e1cd. ADAPTIVE_NARROW_OK / ADAPTIVE_WIDE_OK / ADAPTIVE_UI_OK verifican controles únicos, cambio de barra, panel fijado realmente mapeado y subpágina conservada, selección/revisión sin cambios, préstamo/restauración de widgets, cambio del contexto a otro panel y movimiento reducido. CONTEXT_UI_OK comprueba clic real en Copiar, foco en el menú al abrirlo y en el editor al cerrarlo, filas nativas de portapapeles y los tres submenús contenidos. VIEW_POINTER_OK, DOCUMENT_CHROME_OK, POPOVER_PIN_OK y DOCUMENT_TOOLS_OK también pasan. Revisadas capturas ancha/estrecha, los tres contextos con cabecera única y Texto avanzado. Pendiente de prueba manual del usuario en GNOME OS; no interpretar estas pruebas como confirmación manual.
