@@ -55,8 +55,8 @@ impl ParagraphPopover {
     }
     fn split(self:&Rc<Self>,row:&gtk::Box,button:&gtk::ToggleButton,page:&'static str,label:&str){
         // AdwSplitButton owns native shared hover, separator and half-button states.
-        let split=adw::SplitButton::new();split.add_css_class("flat");split.add_css_class("image-button");split.set_hexpand(true);
-        let icon=button.child().unwrap();button.set_child(None::<&gtk::Widget>);split.set_child(Some(&icon));
+        let split=adw::SplitButton::new();split.add_css_class("flat");split.set_hexpand(true);
+        let icon=button.child().unwrap();button.set_child(None::<&gtk::Widget>);split.set_child(Some(&icon));split.add_css_class("image-button");
         split.set_tooltip_text(button.tooltip_text().as_deref());split.set_dropdown_tooltip(&format!("Opciones de {label}"));
         // The documented CSS hierarchy exposes the two GTK controls. Route the
         // dropdown's lazy popup callback to our existing stack, not another popup.
