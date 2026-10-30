@@ -20,7 +20,7 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 
 - Documentos en pestañas; `+` y Ctrl+N crean una pestaña. También hay ventanas independientes.
 - Abrir y Nueva ventana pertenecen al menú general del panel lateral.
-- Panel lateral estrecho y abierto por defecto. Fondo del visor del color de la ventana; hojas blancas.
+- Panel lateral estrecho y abierto por defecto desde su construcción, sin apertura diferida. Fondo del visor del color de la ventana; hojas blancas.
 - Barra de edición abajo, como Apostrophe. Deshacer y Rehacer a la izquierda.
 - Orden de formato: Estilo → Párrafo → Texto. Estilos se gestiona íntegramente en el desplegable y subpáginas internas; texto/párrafo mantienen opciones ampliadas.
 - Zoom a la derecha: +, − y un tercer botón con 100 % y Ajustar al ancho.
@@ -34,7 +34,7 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 | Área | Estado |
 | --- | --- |
 | Visualización | Páginas, miniaturas bajo demanda, zoom, ajuste al ancho, tema oscuro y ventana estrecha. |
-| Fase 3A | Cursor, selección con ratón/teclado, doble/triple clic y copiar. |
+| Fase 3A | Cursor con desplazamiento visual suave de 100 ms, selección con ratón/teclado, doble/triple clic y copiar. |
 | Fase 3B | Escritura Unicode, borrar, párrafos, saltos, portapapeles, deshacer y rehacer. |
 | Fase 3C | Fuente, tamaño, negrita, cursiva, subrayados, colores, resaltado, tachados, sub/superíndice, espaciado y efectos admitidos por WordCraft. |
 | Párrafos | Alineación/dirección, sangrías, interlineado, espaciado, listas multinivel, ordenación, bordes, sombreado, tabulaciones y marcas ¶. |
@@ -52,12 +52,12 @@ tiradores de tamaño con ratón, fórmulas ni una interfaz dedicada para inserta
 
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `23596f6a38be7a527ac604cd5c1d2b1f7b892b3e`.
+Código del último ejecutable validado: `1dedfc25a7a90a23f871022115d5c08e7ba8641f`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41077508772).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `12988132751`.
-Ejecutable actual con el nuevo desplegable: 33.681.224 bytes.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41081266192).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `12990441821`.
+Ejecutable actual con el cursor animado y ajustes de estilos: 33.696.184 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
@@ -71,11 +71,12 @@ También se comparó una región de la página en las capturas anterior/actual s
 
 Pasaron los tests de integración con el motor, de los adaptadores y de búsqueda de páginas frente al recorrido anterior;
 la CI compiló y probó el ejecutable release en ventanas, pestañas y paneles nativos.
+Las pruebas del cursor verifican movimientos consecutivos, fin de animación con el reloj de GTK, ausencia de cambios de historial, movimiento reducido y arranque del panel sin alternar su visibilidad.
 Las pruebas de estilos verifican previsualización sin cambios, gestión completa,
 validación de nombres y el recorrido real de botones/subpáginas sin ventanas adicionales.
 
-**Pendiente de confirmación del usuario:** rediseño de estilos, tablas, formato avanzado y última optimización en su
-GNOME OS Preview 51. Había confirmado que las entregas anteriores funcionaban.
+**Confirmación del usuario:** el desplegable de estilos funciona y su distribución le gusta; solicita quitar la negrita general. Se mantienen ¶/a para tipo y ✓ para estilo actual, ahora con explicaciones al pasar el puntero.
+**Pendiente de confirmación del usuario:** movimiento suave del cursor, arranque del panel sin animación, tablas, formato avanzado y última optimización en su GNOME OS Preview 51.
 No interpretar el éxito de la CI como una prueba manual del usuario.
 
 ## Límites y comprobación pendiente
@@ -94,6 +95,7 @@ Probar manualmente tablas importadas complejas y los controles en ventana estrec
 - `src/bin/gnome.rs`: widgets GTK, selección visual, entrada y vista de páginas.
 - `src/gnome_host.rs`: pestañas, ventanas, preferencias, búsqueda y recuperación.
 - `src/gnome_format_panels.rs`: paneles de texto y párrafo.
+- `src/caret_motion.rs`: interpolación visual aislada, sin modificar selección, documento ni historial.
 - `src/gnome_styles.rs`: lista, gestión y formularios dentro del desplegable de estilos.
 - `src/styles.rs`: comandos de estilos y previsualización aislada.
 - `src/gnome_tables.rs`: inserción, menú de tabla, propiedades y menú contextual.
