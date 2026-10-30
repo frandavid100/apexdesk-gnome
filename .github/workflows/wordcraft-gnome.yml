@@ -63,6 +63,7 @@ jobs:
               wait "$pid" || true
             }
             run_case vista-gnome.png --sidebar
+            run_case vista-seleccion.png --sidebar --select-demo
             run_case vista-sin-panel.png
             run_case vista-estrecha-panel.png --narrow --sidebar
             run_case vista-estrecha.png --narrow
@@ -81,7 +82,7 @@ jobs:
           '
           python - <<'PY'
           from PIL import Image
-          images = ["vista-gnome.png", "vista-sin-panel.png",
+          images = ["vista-gnome.png", "vista-seleccion.png", "vista-sin-panel.png",
                     "vista-estrecha-panel.png", "vista-estrecha.png",
                     "vista-oscura.png"]
           for name in images:
@@ -108,6 +109,7 @@ jobs:
             wordcraft-gnome
             muestra-wordcraft.png
             vista-gnome.png
+            vista-seleccion.png
             vista-sin-panel.png
             vista-estrecha-panel.png
             vista-estrecha.png
