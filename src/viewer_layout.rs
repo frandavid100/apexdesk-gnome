@@ -4,6 +4,79 @@ pub const MIN_ZOOM: f32 = 0.5;
 pub const MAX_ZOOM: f32 = 2.0;
 pub const THUMB_SCALE: f32 = 0.28;
 
+#[derive(Clone, Debug)]
+pub struct PageBox { pub x:f64, pub y:f64, pub width:f64, pub height:f64 }
+#[derive(Clone, Debug)]
+pub struct Row { pub top:f64, pub height:f64, pub first:usize, pub count:usize }
+#[derive(Clone, Debug)]
+pub struct Arrangement {
+    pub columns:usize, pub pages:Vec<PageBox>, pub rows:Vec<Row>,
+    pub width:f64, pub height:f64,
+}
+/// Keep document order, with no cover-page exception. Never shrink to force a spread.
+pub fn arrange(sizes:&[(f32,f32)],zoom:f32,available:f64)->Arrangement {
+    let z=f64::from(zoom_clamped(zoom));
+    let pair=sizes.chunks(2).filter(|c|c.len()==2)
+        .map(|c|(f64::from(c[0].0)*z).ceil()+(f64::from(c[1].0)*z).ceil()+PAGE_GAP*3.0)
+        .fold(0.0,f64::max);
+    let columns=if sizes.len()>1 && pair<=available {2}else{1};
+    let width=sizes.chunks(columns).map(|c|c.iter().map(|s|(f64::from(s.0)*z).ceil()).sum::<f64>()+PAGE_GAP*(c.len()+1)as f64).fold(0.0,f64::max);
+    let mut pages=Vec::new();let mut rows=Vec::new();let mut y=PAGE_GAP;
+    for c in sizes.chunks(columns){
+        let row_width=c.iter().map(|s|(f64::from(s.0)*z).ceil()).sum::<f64>()+PAGE_GAP*(c.len().saturating_sub(1))as f64;
+        let mut x=(width-row_width)/2.0;
+        let height=c.iter().map(|s|(f64::from(s.1)*z).ceil()).fold(0.0,f64::max);
+        rows.push(Row{top:y,height,first:pages.len(),count:c.len()});
+        for &(w,h) in c {let w=(f64::from(w)*z).ceil();pages.push(PageBox{x,y,width:w,height:(f64::from(h)*z).ceil()});x+=w+PAGE_GAP;}
+        y+=height+PAGE_GAP;
+    }
+    Arrangement{columns,pages,rows,width,height:if sizes.is_empty(){0.0}else{y}}
+}
+impl Arrangement {
+    pub fn visible(&self,first:f64,last:f64)->Vec<usize>{
+        let start=self.rows.partition_point(|r|r.top+r.height<first-260.0);
+        let end=self.rows.partition_point(|r|r.top<=last+260.0);
+        self.rows[start..end].iter().flat_map(|r|r.first..r.first+r.count).collect()
+    }
+    pub fn page_at(&self,x:f64,y:f64)->usize{
+        let row=self.rows.partition_point(|r|r.top<=y).saturating_sub(1);
+        let first=row.saturating_sub(1);let last=(row+2).min(self.rows.len());
+        self.rows[first..last].iter().flat_map(|r|r.first..r.first+r.count).min_by(|&a,&b|{
+            let distance=|p:&PageBox|{let dx=(p.x-x).max(0.0).max(x-p.x-p.width);let dy=(p.y-y).max(0.0).max(y-p.y-p.height);dx*dx+dy*dy};
+            distance(&self.pages[a]).total_cmp(&distance(&self.pages[b]))
+        }).unwrap_or(0)
+    }
+}
+
+#[cfg(test)]
+mod spreads {
+    use super::*;
+    #[test]
+    fn width_zoom_mixed_heights_and_odd_page_keep_document_order(){
+        let sizes=[(612.0,792.0),(612.0,500.0),(400.0,900.0)];
+        let single=arrange(&sizes,1.0,1289.0);assert_eq!(single.columns,1);
+        let spread=arrange(&sizes,1.0,1290.0);assert_eq!(spread.columns,2);
+        assert_eq!(spread.pages[0].y,spread.pages[1].y);
+        assert_eq!(spread.pages[2].y,22.0+792.0+22.0);
+        assert_eq!(spread.page_at(spread.pages[1].x+50.0,100.0),1);
+        assert_eq!(spread.visible(0.0,100.0),vec![0,1]);
+        assert_eq!(spread.pages[2].x,(spread.width-400.0)/2.0);
+        assert_eq!(arrange(&sizes,0.5,900.0).columns,2);
+        assert_eq!(arrange(&sizes,2.0,1500.0).columns,1);
+        assert!(arrange(&[],1.0,900.0).visible(0.0,900.0).is_empty());
+    }
+    #[test]
+    fn indexed_spreads_match_full_scan(){
+        let sizes:Vec<_>=(0..1001).map(|i|(400.0+(i%3)as f32*70.0,300.0+(i%7)as f32*113.0)).collect();
+        for zoom in [0.5,1.0,2.0]{for width in [700.0,2400.0]{let a=arrange(&sizes,zoom,width);
+            for row in a.rows.iter().step_by(17){let first=row.top-400.0;let last=first+800.0;
+                let expected:Vec<_>=a.rows.iter().filter(|r|r.top+r.height>=first-260.0&&r.top<=last+260.0).flat_map(|r|r.first..r.first+r.count).collect();
+                assert_eq!(a.visible(first,last),expected);
+            }
+        }}
+    }
+}
+
 pub fn zoom_clamped(value: f32) -> f32 {
     if value.is_finite() { value.clamp(MIN_ZOOM, MAX_ZOOM) } else { 1.0 }
 }
