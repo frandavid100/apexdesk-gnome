@@ -64,6 +64,7 @@ impl SearchPanel {
         match result{Some(Ok(()))=>after_content_change(&ui),Some(Err(e))=>ui.toasts.add_toast(Toast::new(&e)),None=>{}}
         self.refresh();
         let count=self.hits.borrow().len();if count>0{self.activate(index.min(count-1));}
+        ui.document_box.grab_focus();
     }
 }
 fn install_search_panel(ui:&Rc<Ui>,toggle:&gtk::ToggleButton,compact:&gtk::Button)->Rc<SearchPanel>{
