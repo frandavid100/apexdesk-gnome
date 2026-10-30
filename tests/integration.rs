@@ -32,3 +32,13 @@ fn reject_unsupported_file_types() {
     let mut session = Session::new(Document::from_text("Prueba"));
     assert!(render_page(&mut session, 0, f32::NAN).is_ok());
 }
+
+#[test]
+fn thumbnails_render_at_their_actual_small_scale() {
+    let mut session = sample_session();
+    let full = render_page(&mut session, 0, 1.0).unwrap();
+    let thumb = render_page(&mut session, 0, 0.28).unwrap();
+    // A 28% thumbnail must not silently become a 40% page.
+    assert!(thumb.width as f32 <= full.width as f32 * 0.30);
+    assert!(thumb.height as f32 <= full.height as f32 * 0.30);
+}
