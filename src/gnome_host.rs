@@ -224,13 +224,23 @@ fn show_recovery(ui:&Rc<Ui>, parent:&ApplicationWindow, app:&Application, host:&
                 let mut state=ui.current.borrow_mut();if let Some(doc)=state.as_mut() {
                     doc.session.recovery_tick();
                     let id=record.id.clone();let ui2=ui.clone();
-                    glib::timeout_add_local_once(std::time::Duration::from_millis(500),move || {
-                        let mut state=ui2.current.borrow_mut();if let Some(doc)=state.as_mut(){
-                            doc.session.recovery_tick();
-                            match doc.session.run("file.recover",&serde_json::json!({"restore":id})) {
-                                Ok(_)=>ui2.restoring.set(true),Err(e)=>ui2.toasts.add_toast(Toast::new(&e.to_string())),
-                            }
+                    ui2.title.set_subtitle("Cargando copia de recuperación…");
+                    let attempts=Cell::new(0u32);
+                    glib::timeout_add_local(std::time::Duration::from_millis(100),move || {
+                        if ui2.closed.get(){return glib::ControlFlow::Break;}
+                        let mut state=ui2.current.borrow_mut();
+                        let Some(doc)=state.as_mut() else{return glib::ControlFlow::Break;};
+                        doc.session.recovery_tick();
+                        if !doc.session.recovery_ready() {
+                            attempts.set(attempts.get()+1);
+                            if attempts.get()<200{return glib::ControlFlow::Continue;}
+                            ui2.toasts.add_toast(Toast::new("No se pudo cargar la lista de recuperación"));
+                            return glib::ControlFlow::Break;
                         }
+                        match doc.session.run("file.recover",&serde_json::json!({"restore":id})) {
+                            Ok(_)=>ui2.restoring.set(true),Err(e)=>ui2.toasts.add_toast(Toast::new(&e.to_string())),
+                        }
+                        glib::ControlFlow::Break
                     });
                 }
             }
