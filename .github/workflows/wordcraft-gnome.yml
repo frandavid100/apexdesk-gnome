@@ -125,6 +125,29 @@ jobs:
             grep -q SEARCH_SIDEBAR_OK search-sidebar.log
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --paragraph-ui-test 2> paragraph-popover.log
             grep -q PARAGRAPH_POPOVER_OK paragraph-popover.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --split-states-demo 2> split-states.log &
+            split_pid=$!
+            for attempt in $(seq 1 300); do
+              if grep -q SPLIT_POINTER_READY split-states.log; then break; fi
+              kill -0 "$split_pid"
+              sleep 0.1
+            done
+            read marker bx by ax ay < <(grep SPLIT_POINTER_READY split-states.log | tail -n1)
+            split_window=$(xdotool search --onlyvisible --pid "$split_pid" | head -n1)
+            xdotool mousemove --window "$split_window" 600 150
+            sleep 0.4
+            scrot vista-dividido-reposo.png
+            xdotool mousemove --window "$split_window" "$bx" "$by"
+            sleep 0.4
+            scrot vista-dividido-cuerpo.png
+            xdotool mousemove --window "$split_window" "$ax" "$ay"
+            sleep 0.4
+            scrot vista-dividido-flecha.png
+            xdotool click 1
+            sleep 0.4
+            scrot vista-dividido-subpagina.png
+            kill "$split_pid"
+            wait "$split_pid" || true
             run_case vista-parrafo.png --paragraph-demo
             run_case vista-interlineado.png --paragraph-spacing-demo
             run_case vista-parrafo-estrecha.png --paragraph-demo --narrow
@@ -235,6 +258,11 @@ jobs:
             vista-parrafo-oscura.png
             search-sidebar.log
             paragraph-popover.log
+            split-states.log
+            vista-dividido-reposo.png
+            vista-dividido-cuerpo.png
+            vista-dividido-flecha.png
+            vista-dividido-subpagina.png
             view-pointer.log
             sidebar-navigation.log
             document-chrome.log
