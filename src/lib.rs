@@ -79,3 +79,5 @@ pub mod formatting;
 pub mod saving;
 
 pub mod preferences;
+
+pub mod tables;
