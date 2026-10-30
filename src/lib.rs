@@ -37,7 +37,7 @@ pub fn open_document(path: &Path) -> Result<Session, String> {
 /// Rasterización fiel de una página, con el propio maquetador de WordCraft.
 /// La escala se limita para evitar imágenes enormes en esta prueba inicial.
 pub fn render_page(session: &mut Session, page_index: usize, scale: f32) -> Result<PageImage, String> {
-    let scale = if scale.is_finite() { scale.clamp(0.4, 2.0) } else { 1.0 };
+    let scale = if scale.is_finite() { scale.clamp(0.15, 2.0) } else { 1.0 };
     let layout = session.layout();
     let count = layout.pages.len();
     let page = layout.pages.get(page_index).ok_or("La página solicitada no existe")?;
