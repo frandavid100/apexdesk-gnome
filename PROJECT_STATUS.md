@@ -59,12 +59,12 @@ tiradores de tamaño con ratón ni fórmulas. Las imágenes nuevas son en línea
 
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `6c8a945dc6b8139e331e52f2768c75dcacdde2d0`.
+Código del último ejecutable validado: `737a89cddaaa3a66b126d87c4da9d3ac72fad7ee`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41127358053).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13011259052`.
-Ejecutable actual con cabeceras y chincheta: 34.103.448 bytes.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41132689848).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13013628621`.
+Ejecutable actual con menús contextuales: 34.180.168 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
@@ -121,7 +121,8 @@ Probar manualmente tablas importadas complejas y los controles en ventana estrec
 - `src/gnome_popover_pin.rs`: cabeceras, chincheta, reapertura no modal sin reiniciar subpáginas y chevrón común.
 - `src/gnome_styles.rs`: lista, gestión y formularios dentro del desplegable de estilos.
 - `src/styles.rs`: comandos de estilos y previsualización aislada.
-- `src/gnome_tables.rs`: inserción, menú de tabla, propiedades y menú contextual.
+- `src/gnome_tables.rs`: inserción, menú de tabla y propiedades.
+- `src/gnome_context.rs`: menús contextuales nativos de texto/tablas/imágenes, selección por clic derecho y portapapeles enriquecido compartido entre documentos.
 - `src/tables.rs`: navegación entre celdas sin ensuciar el documento ni el historial.
 - `src/lib.rs`: apertura y adaptador de renderizado; conserva API de RGBA recto y nativo premultiplicado.
 - `src/{selection,editing,formatting,saving,preferences,viewer_layout}.rs`: adaptadores y geometría.
@@ -150,3 +151,13 @@ Completar el documento mínimo: imágenes (insertar, conservar proporción al re
 ## Imágenes, propiedades y PDF: entrega validada
 
 El usuario ha confirmado que le gusta el resultado de los botones divididos nativos y las miniaturas redondeadas. Autoriza conjuntamente Imagen en barra inferior, Propiedades del documento y Exportar a PDF en menú del documento. La implementación usa API públicas de WordCraft y no cambia las dependencias. CI 41127358053 completada correctamente, con cargo test --locked y compilación release. Las regresiones verifican imágenes y página en DOCX/ODT, proporción, tamaño original, sustitución, borrado y deshacer; cambios de sección/documento agrupados y formato pendiente conservado; errores y cambios nulos; destino, estado e historial al exportar. IMAGE_POINTER_READY/DOCUMENT_TOOLS_OK verifican clic real, controles de imagen fijados y diálogo de propiedades. PDF renderizado y revisado visualmente: una página A4 horizontal, texto extraíble e imagen incrustada. Capturas ancha/estrecha y propiedades revisadas. No es una confirmación manual del usuario; pendiente de sus documentos reales y del selector nativo en su equipo.
+
+
+
+## Menús contextuales: trabajo autorizado
+
+El usuario autoriza activar el clic derecho en texto, tablas e imágenes antes de preparar la aplicación instalable. Se sustituye el menú de tablas personalizado por GtkPopoverMenu/GMenu. Texto ofrece historial, portapapeles, selección y acceso a Estilo/Párrafo/Texto; tablas añaden submenús de inserción, selección y eliminación, combinar celdas y propiedades/dividir; imágenes ofrecen tamaño, tamaño original, sustitución y eliminación. Pulsar dentro de una selección de texto o celdas la conserva; fuera sitúa el cursor o selecciona la imagen. Menú/Mayús+F10 funciona para los tres contextos. Copiar/cortar/pegar y sus atajos comparten un portapapeles enriquecido que mantiene tablas, imágenes y formato entre documentos mientras GTK conserva el proveedor original; al copiar desde otra aplicación se usa el nuevo texto. No hay cambios en el motor ni en las dependencias.
+
+El usuario está valorando retirar Tabla e Imagen de la barra y mover su inserción a Añadir en el menú del documento. **Es una propuesta pendiente, no aplicada en esta entrega**; se mantienen ambos botones y sus controles completos. Próxima prioridad acordada: distribución instalable después de estos ajustes de menús.
+
+Validación de esta entrega: CI 41132689848 completada correctamente sobre 737a89cddaaa3a66b126d87c4da9d3ac72fad7ee; cargo test --locked y compilación release. CONTEXT_UI_OK verifica clic secundario real con xdotool, conservación de selección y revisión, menús GMenu nativos, copiar/pegar/deshacer, selección de columna, selección de imagen sin cambios, pegado de imagen en otro documento con deshacer y sustitución por texto de un propietario externo del portapapeles. También pasan POPOVER_PIN_OK, VIEW_POINTER_OK y DOCUMENT_TOOLS_OK. Captura del menú contextual de texto revisada. Pendiente de prueba manual del usuario en GNOME OS y con sus documentos reales.
