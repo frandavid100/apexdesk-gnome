@@ -146,19 +146,3 @@ fn show_paragraph_options(ui:&Rc<Ui>,parent:&ApplicationWindow){
     panel_action(&g,"Borrar tabulaciones",ui,&w,"para.tabs",serde_json::json!({"clearAll":true}));
     panel_action(&g,"Restablecer formato de párrafo",ui,&w,"para.reset",serde_json::json!({}));w.present();
 }
-fn show_styles(ui:&Rc<Ui>,parent:&ApplicationWindow){
-    let w=panel_window(parent,"Estilos");let p=panel_page(&w,"Estilos");let g=panel_group(&p,"Estilos del documento");
-    let styles=ui.current.borrow().as_ref().map(|d|d.session.doc.styles.styles.iter().filter(|st|matches!(st.kind,wordcraft_doc::styles::StyleKind::Paragraph|wordcraft_doc::styles::StyleKind::Character)).cloned().collect::<Vec<_>>()).unwrap_or_default();
-    for st in &styles {panel_action(&g,&st.name,ui,&w,"para.style",serde_json::json!({"style":st.id}));}
-    let p=panel_page(&w,"Gestionar");let g=panel_group(&p,"Crear a partir de la selección");let name=panel_entry(&g,"Nombre del nuevo estilo","");let b=gtk::Button::with_label("Crear estilo");g.add(&b);
-    {let ui=ui.clone();let w=w.clone();b.connect_clicked(move|_|{let name=name.text();if name.trim().is_empty(){w.add_toast(Toast::new("Escribe un nombre para el estilo"));return;}match format_execute(&ui,"styles.create",serde_json::json!({"name":name.as_str(),"fromSelection":true})){Ok(())=>w.add_toast(Toast::new("Estilo creado. Vuelve a abrir Estilos para seleccionarlo.")),Err(e)=>w.add_toast(Toast::new(&e))}});}
-    let g=panel_group(&p,"Actualizar un estilo con el formato de la selección");
-    let labels:Vec<&str>=styles.iter().map(|st|st.name.as_str()).collect();let row=adw::ComboRow::new();row.set_title("Estilo");row.set_model(Some(&gtk::StringList::new(&labels)));g.add(&row);
-    let b=gtk::Button::with_label("Actualizar desde la selección");g.add(&b);
-    {let ui=ui.clone();let w=w.clone();let row=row.clone();let styles=styles.clone();b.connect_clicked(move|_|{if let Some(st)=styles.get(row.selected() as usize){if let Err(e)=format_execute(&ui,"styles.updateToMatch",serde_json::json!({"style":st.id})){w.add_toast(Toast::new(&e));}}});}
-    let g=panel_group(&p,"Renombrar");let name=panel_entry(&g,"Nuevo nombre","");let b=gtk::Button::with_label("Renombrar estilo seleccionado");g.add(&b);
-    {let ui=ui.clone();let w=w.clone();let row=row.clone();let styles=styles.clone();b.connect_clicked(move|_|{if let Some(st)=styles.get(row.selected() as usize){if name.text().trim().is_empty(){w.add_toast(Toast::new("Escribe un nombre"));return;}if let Err(e)=format_execute(&ui,"styles.modify",serde_json::json!({"style":st.id,"name":name.text().as_str()})){w.add_toast(Toast::new(&e));}}});}
-    let g=panel_group(&p,"Eliminar estilos personalizados");
-    for st in styles.iter().filter(|st|!st.builtin){panel_action(&g,&format!("Eliminar {}",st.name),ui,&w,"styles.delete",serde_json::json!({"style":st.id}));}
-    w.present();
-}
