@@ -62,3 +62,41 @@ fn formatting_state_is_observable_and_undoable() {
     assert_eq!(state(&mut s)["underline"], false);
     assert_eq!(text(&s), "Texto de ejemplo");
 }
+
+#[test]
+fn font_fractional_size_and_lists_survive_save_and_reopen() {
+    let mut s = Session::new(Document::from_text("Primero\nSegundo"));
+    select_all(&mut s).unwrap();
+    wordcraft_gnome::formatting::font(&mut s, "DejaVu Sans").unwrap();
+    wordcraft_gnome::formatting::size(&mut s, 13.5).unwrap();
+    apply(&mut s, Format::Bullets).unwrap();
+    apply(&mut s, Format::Indent).unwrap();
+    apply(&mut s, Format::Outdent).unwrap();
+    let path = std::env::temp_dir().join(format!("wordcraft-basic-{}.docx", std::process::id()));
+    wordcraft_gnome::saving::save(&mut s, &path).unwrap();
+    let mut reopened = wordcraft_gnome::open_document(&path).unwrap();
+    select_all(&mut reopened).unwrap();
+    let state = reopened.run("format.state", &serde_json::json!({})).unwrap();
+    assert_eq!(state["font"], "DejaVu Sans");
+    assert_eq!(state["size"], 13.5);
+    let para = reopened.doc.para_at(&reopened.sel.focus).unwrap();
+    assert!(reopened.doc.styles.resolve_para(&para.props).numbering.is_some());
+    assert_eq!(text(&reopened), "Primero\nSegundo");
+    apply(&mut reopened, Format::Numbering).unwrap();
+    assert!(reopened.can_undo());
+    reopened.run("edit.undo", &serde_json::json!({})).unwrap();
+    assert!(reopened.can_redo());
+    std::fs::remove_file(path).unwrap();
+}
+
+#[test]
+fn invalid_free_sizes_and_empty_fonts_are_rejected_without_edits() {
+    let mut s = Session::new(Document::from_text("Conservar"));
+    let rev = s.rev();
+    for size in [f64::NAN, f64::INFINITY, 0.0, -4.0, 2000.0] {
+        assert!(wordcraft_gnome::formatting::size(&mut s, size).is_err());
+    }
+    assert!(wordcraft_gnome::formatting::font(&mut s, "  ").is_err());
+    assert_eq!(s.rev(), rev);
+    assert_eq!(text(&s), "Conservar");
+}
