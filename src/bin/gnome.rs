@@ -233,6 +233,32 @@ fn apply_user_edit(ui: &Rc<Ui>, edit: Edit) {
     }
 }
 
+
+/// Never silently discard in-memory edits. Saving to disk comes in phase 3D.
+fn ask_discard(
+    ui: &Rc<Ui>,
+    parent: &ApplicationWindow,
+    action: impl FnOnce() + 'static,
+) {
+    if !ui.dirty.get() { action(); return; }
+    let dialog = adw::MessageDialog::new(
+        Some(parent),
+        Some("¿Descartar los cambios?"),
+        Some("Esta versión aún no guarda documentos. Los cambios se perderán si abres otro archivo. Puedes copiarlos antes con Ctrl+A y Ctrl+C."),
+    );
+    dialog.add_response("cancel", "Cancelar");
+    dialog.add_response("discard", "Descartar cambios");
+    dialog.set_response_appearance("discard", adw::ResponseAppearance::Destructive);
+    dialog.set_close_response("cancel");
+    let once = Rc::new(RefCell::new(Some(action)));
+    dialog.connect_response(None, move |_, response| {
+        if response == "discard" {
+            if let Some(action) = once.borrow_mut().take() { action(); }
+        }
+    });
+    dialog.present();
+}
+
 fn clear_box(parent: &gtk::Box) {
     while let Some(child) = parent.first_child() {
         parent.remove(&child);
@@ -816,18 +842,26 @@ fn make_window(
 
     {
         let ui = ui.clone();
+        let parent = window.clone();
         let app_popover = app_popover.clone();
         example_button.connect_clicked(move |_| {
-            opened(&ui, sample_session(), "Documento de ejemplo");
             app_popover.popdown();
+            let next = ui.clone();
+            ask_discard(&ui, &parent, move || {
+                opened(&next, sample_session(), "Documento de ejemplo");
+            });
         });
     }
     {
         let ui = ui.clone();
+        let parent = window.clone();
         let compact_app_popover = compact_app_popover.clone();
         compact_example_button.connect_clicked(move |_| {
-            opened(&ui, sample_session(), "Documento de ejemplo");
             compact_app_popover.popdown();
+            let next = ui.clone();
+            ask_discard(&ui, &parent, move || {
+                opened(&next, sample_session(), "Documento de ejemplo");
+            });
         });
     }
     {
@@ -1080,11 +1114,43 @@ fn make_window(
                     Ok(session) => {
                         let label = path.file_name().map(|n| n.to_string_lossy().into_owned())
                             .unwrap_or_else(|| "Documento".to_string());
-                        opened(&ui, session, &label);
+                        let next = ui.clone();
+                        let parent = parent.clone();
+                        ask_discard(&ui, &parent, move || opened(&next, session, &label));
                     }
                     Err(err) => ui.toasts.add_toast(Toast::new(&err)),
                 }
             });
+        });
+    }
+
+    // Closing a modified document without saving would lose the changes.
+    {
+        let ui = ui.clone();
+        let parent = window.clone();
+        window.connect_close_request(move |_| {
+            if !ui.dirty.get() || ui.closing_confirmed.get() {
+                return glib::Propagation::Proceed;
+            }
+            let dialog = adw::MessageDialog::new(
+                Some(&parent),
+                Some("¿Cerrar sin guardar?"),
+                Some("Los cambios realizados en esta versión experimental no se pueden guardar todavía. Cópialos antes si deseas conservarlos."),
+            );
+            dialog.add_response("cancel", "Continuar editando");
+            dialog.add_response("discard", "Cerrar sin guardar");
+            dialog.set_response_appearance("discard", adw::ResponseAppearance::Destructive);
+            dialog.set_close_response("cancel");
+            let ui = ui.clone();
+            let parent = parent.clone();
+            dialog.connect_response(None, move |_, response| {
+                if response == "discard" {
+                    ui.closing_confirmed.set(true);
+                    parent.close();
+                }
+            });
+            dialog.present();
+            glib::Propagation::Stop
         });
     }
 
