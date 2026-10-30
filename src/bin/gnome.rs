@@ -66,7 +66,8 @@ fn document_page_picture() -> gtk::Picture {
 }
 
 fn update_status(ui: &Rc<Ui>) {
-    let current = ui.current.borrow();
+    // Un cambio de tamaño puede emitir una señal de scroll de forma reentrante.
+    let Ok(current) = ui.current.try_borrow() else { return };
     if let Some(doc) = current.as_ref() {
         ui.page_label.set_text(&format!("{} de {}", doc.active + 1, doc.sizes.len()));
         ui.previous.set_sensitive(doc.active > 0);
