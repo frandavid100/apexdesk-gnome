@@ -775,6 +775,7 @@ fn install_css() {
 
 include!("../gnome_host.rs");
 include!("../gnome_format_panels.rs");
+include!("../gnome_tables.rs");
 
 fn build_tab(
     app: &Application,
@@ -1112,6 +1113,7 @@ fn build_tab(
         let ui=ui.clone();let parent=window.clone();
         button.connect_clicked(move|_|{popover.popdown();match kind{0=>show_text_options(&ui,&parent),1=>show_paragraph_options(&ui,&parent),_=>show_styles(&ui,&parent)}});
     }
+    let table_menu=install_table_controls(&ui,&window,&format_bar);
     host.docs.borrow_mut().push((tab_page,ui.clone()));
     install_autosave(&ui);
     {
@@ -1404,6 +1406,18 @@ fn build_tab(
             let shift = modifiers.contains(gdk::ModifierType::SHIFT_MASK);
             let control = modifiers.contains(gdk::ModifierType::CONTROL_MASK);
             if ui.document_box.has_focus() {
+                if key==gdk::Key::Menu || (shift && key==gdk::Key::F10) {
+                    let y=ui.scroll.vadjustment().value() as i32+40;
+                    show_table_context_at(&ui,&save_parent,60,y);
+                    return glib::Propagation::Stop;
+                }
+                if (key==gdk::Key::Tab || key==gdk::Key::ISO_Left_Tab) && !control && !modifiers.contains(gdk::ModifierType::ALT_MASK) {
+                    let inside=ui.current.borrow().as_ref().is_some_and(|d|wordcraft_gnome::tables::in_table(&d.session));
+                    if inside {
+                        table_navigate(&ui,shift || key==gdk::Key::ISO_Left_Tab,control);
+                        return glib::Propagation::Stop;
+                    }
+                }
                 // Commands which change the document are resolved by
                 // WordCraft, including replacement of selected text.
                 if !control && !modifiers.contains(gdk::ModifierType::ALT_MASK) {
@@ -1607,6 +1621,20 @@ fn build_tab(
     } else if sample_on_start { opened(&ui, sample_session(), "Documento de ejemplo"); }
     else {opened(&ui,Session::new(wordcraft_doc::Document::new()),"Documento nuevo");}
     window.present();
+    install_table_context_menu(&ui,&window);
+    if std::env::args().any(|a|a=="--table-menu-demo"||a=="--table-properties-demo"||a=="--table-insert-demo") {
+        let u=ui.clone();let w=window.clone();let m=table_menu.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{
+            if std::env::args().any(|a|a=="--table-insert-demo"){show_insert_table(&u,&w);return;}
+            if let Some(d)=u.current.borrow_mut().as_mut(){
+                d.session.run("caret.docEnd",&serde_json::json!({})).unwrap();
+                d.session.run("insert.table",&serde_json::json!({"rows":3,"cols":3})).unwrap();
+                d.session.run("text.insert",&serde_json::json!({"text":"Tabla de prueba"})).unwrap();
+            }
+            after_content_change(&u);caret_ensure_visible(&u);
+            if std::env::args().any(|a|a=="--table-properties-demo"){show_table_properties(&u,&w);}else{m.popup();}
+        });
+    }
     if std::env::args().any(|a|a=="--advanced-text-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_text_options(&u,&w));}
     if std::env::args().any(|a|a=="--advanced-paragraph-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_paragraph_options(&u,&w));}
     if std::env::args().any(|a|a=="--styles-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_styles(&u,&w));}
