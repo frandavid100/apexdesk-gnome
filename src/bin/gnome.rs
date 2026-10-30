@@ -1626,7 +1626,7 @@ fn build_tab(
     if std::env::args().any(|a|a=="--styles-ui-test") {let s=style_popover.clone();let m=style_menu.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||style_ui_test(&s,&m,&a));}
     if std::env::args().any(|a|a=="--styles-demo"||a=="--style-details-demo"||a=="--style-new-demo") {
         let menu=style_menu.clone();let s=style_popover.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{
-            menu.popup();if std::env::args().any(|a|a=="--style-details-demo"){s.show_detail("Heading1");}
+            menu.popup();if std::env::args().any(|a|a=="--pin-demo"){popover_pin(&menu.popover().unwrap()).set_active(true);style_click(&s,"style-apply-Title");}if std::env::args().any(|a|a=="--style-details-demo"){s.show_detail("Heading1");}
             if std::env::args().any(|a|a=="--style-new-demo"){s.show_form(None);}
         });
     }
