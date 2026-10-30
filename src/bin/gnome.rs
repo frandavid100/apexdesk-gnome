@@ -51,6 +51,7 @@ struct Ui {
     selection_zoom: Rc<Cell<f32>>,
     drag_anchor: RefCell<Option<Pos>>,
     dirty: Cell<bool>,
+    thumbnail_refresh_pending: Cell<bool>,
     closing_confirmed: Cell<bool>,
     tab_page: RefCell<Option<adw::TabPage>>,
     closed: Cell<bool>,
@@ -214,13 +215,8 @@ fn after_content_change(ui: &Rc<Ui>) {
         let sizes: Vec<(f32, f32)> = layout.pages.iter().map(|p| (p.w, p.h)).collect();
         let needs_rebuild = sizes != doc.sizes;
         if !needs_rebuild {
-            doc.painted_pages.clear();
-            doc.painted_thumbs.clear();
-            for picture in &doc.pages {
-                picture.set_paintable(None::<&gdk::Paintable>);
-            }
-            for picture in &doc.thumbs {
-                picture.set_paintable(None::<&gdk::Paintable>);
+            for index in doc.painted_pages.drain() {
+                doc.pages[index].set_paintable(None::<&gdk::Paintable>);
             }
         }
         (needs_rebuild, doc.zoom, doc.fit_to_width, ui.scroll.vadjustment().value())
@@ -254,7 +250,7 @@ fn after_content_change(ui: &Rc<Ui>) {
         }
     } else {
         refresh_pages(ui);
-        refresh_thumbnails(ui);
+        schedule_thumbnail_refresh(ui);
         refresh_selection(ui);
         let ui = ui.clone();
         glib::idle_add_local_once(move || caret_ensure_visible(&ui));
@@ -1088,7 +1084,7 @@ fn build_tab(
         selection_data: Rc::new(RefCell::new(SelectionGeometry::default())),
         selection_zoom: Rc::new(Cell::new(1.0)),
         drag_anchor: RefCell::new(None),
-        dirty: Cell::new(false),
+        dirty: Cell::new(false), thumbnail_refresh_pending: Cell::new(false),
         closing_confirmed: Cell::new(false),
         tab_page: RefCell::new(Some(tab_page.clone())), closed: Cell::new(false),
         restoring: Cell::new(false), autosave_error: RefCell::new(None),
@@ -1732,4 +1728,22 @@ fn main() {
         make_window(app, sample_on_start, sidebar_on_start, narrow_on_start, dark_on_start, selection_demo, editing_demo, formatting_demo, None);
     });
     app.run_with_args(&["wordcraft-gnome"]);
+}
+
+/// Coalesce thumbnail rasterization while typing; keep the last preview until
+/// the next refresh so the sidebar does not flash on every keystroke.
+fn schedule_thumbnail_refresh(ui: &Rc<Ui>) {
+    if ui.thumbnail_refresh_pending.replace(true) { return; }
+    let weak=Rc::downgrade(ui);
+    glib::timeout_add_local_once(std::time::Duration::from_millis(120),move || {
+        let Some(ui)=weak.upgrade() else { return; };
+        ui.thumbnail_refresh_pending.set(false);
+        if ui.closed.get() { return; }
+        if let Some(doc)=ui.current.borrow_mut().as_mut() {
+            for index in doc.painted_thumbs.drain() {
+                doc.thumbs[index].set_paintable(None::<&gdk::Paintable>);
+            }
+        }
+        refresh_thumbnails(&ui);
+    });
 }
