@@ -4,7 +4,7 @@ use adw::prelude::*;
 use adw::{Application, ApplicationWindow, HeaderBar, StatusPage, Toast, ToastOverlay, ToolbarView, WindowTitle};
 use glib::value::ToValue;
 use gtk::{gdk, gio, glib};
-use std::{cell::{Cell, RefCell}, collections::HashSet, path::Path, rc::Rc};
+use std::{cell::{Cell, RefCell}, collections::HashSet, path::{Path, PathBuf}, rc::Rc};
 use wordcraft_doc::Pos;
 use wordcraft_gnome::selection::{self, SelectionGeometry};
 use wordcraft_gnome::editing::{self, Edit};
@@ -54,6 +54,8 @@ struct Ui {
     drag_anchor: RefCell<Option<Pos>>,
     dirty: Cell<bool>,
     closing_confirmed: Cell<bool>,
+    save_path: RefCell<Option<PathBuf>>,
+    source_path: RefCell<Option<PathBuf>>,
     format_toolbar: gtk::ScrolledWindow,
     format_bold: gtk::ToggleButton,
     format_italic: gtk::ToggleButton,
@@ -211,7 +213,11 @@ fn after_content_change(ui: &Rc<Ui>) {
         let prior = ui.current.borrow_mut().take();
         if let Some(previous) = prior {
             let name = ui.title.title().to_string();
+            let saved_path = ui.save_path.borrow().clone();
+            let source_path = ui.source_path.borrow().clone();
             opened(ui, previous.session, &name);
+            ui.save_path.replace(saved_path);
+            ui.source_path.replace(source_path);
             if !fit_width_mode {
                 if let Some(doc) = ui.current.borrow_mut().as_mut() {
                     doc.fit_to_width = false;
@@ -238,7 +244,7 @@ fn after_content_change(ui: &Rc<Ui>) {
         glib::idle_add_local_once(move || caret_ensure_visible(&ui));
     }
     ui.dirty.set(true);
-    ui.title.set_subtitle("● Cambios sin guardar · Fase 3C");
+    ui.title.set_subtitle("● Cambios sin guardar · Fase 3D");
 }
 
 fn apply_user_edit(ui: &Rc<Ui>, edit: Edit) {
@@ -252,7 +258,7 @@ fn apply_user_edit(ui: &Rc<Ui>, edit: Edit) {
             after_content_change(ui);
             if first_edit {
                 ui.toasts.add_toast(Toast::new(
-                    "Edición en memoria: todavía no se puede guardar el documento.",
+                    "Cambios pendientes. Usa Guardar para conservarlos en una copia.",
                 ));
             }
         }
@@ -280,7 +286,7 @@ fn apply_user_format(ui: &Rc<Ui>, action: Format) {
             after_content_change(ui);
             if first {
                 ui.toasts.add_toast(Toast::new(
-                    "El formato se aplica en memoria. Guardar llegará en otra fase.",
+                    "Formato modificado. Usa Guardar para conservarar los cambios.",
                 ));
             }
         },
@@ -318,29 +324,99 @@ fn format_menu(
     menu
 }
 
-/// Never silently discard in-memory edits. Saving to disk comes in phase 3D.
-fn ask_discard(
-    ui: &Rc<Ui>,
-    parent: &ApplicationWindow,
-    action: impl FnOnce() + 'static,
-) {
+/// Continue only after a successful save or an explicit discard.
+fn ask_discard(ui: &Rc<Ui>, parent: &ApplicationWindow, action: impl FnOnce() + 'static) {
     if !ui.dirty.get() { action(); return; }
-    let dialog = adw::MessageDialog::new(
-        Some(parent),
-        Some("¿Descartar los cambios?"),
-        Some("Esta versión aún no guarda documentos. Los cambios se perderán si abres otro archivo. Puedes copiarlos antes con Ctrl+A y Ctrl+C."),
-    );
+    let dialog = adw::MessageDialog::new(Some(parent), Some("¿Guardar los cambios?"),
+        Some("Si continúas sin guardar, se perderán los cambios del documento."));
     dialog.add_response("cancel", "Cancelar");
-    dialog.add_response("discard", "Descartar cambios");
+    dialog.add_response("discard", "Descartar");
+    dialog.add_response("save", "Guardar");
     dialog.set_response_appearance("discard", adw::ResponseAppearance::Destructive);
+    dialog.set_response_appearance("save", adw::ResponseAppearance::Suggested);
+    dialog.set_default_response(Some("save"));
     dialog.set_close_response("cancel");
     let once = Rc::new(RefCell::new(Some(action)));
+    let ui = ui.clone();
+    let parent = parent.clone();
     dialog.connect_response(None, move |_, response| {
         if response == "discard" {
             if let Some(action) = once.borrow_mut().take() { action(); }
+        } else if response == "save" {
+            let once = once.clone();
+            save_document(&ui, &parent, false, Box::new(move || {
+                if let Some(action) = once.borrow_mut().take() { action(); }
+            }));
         }
     });
     dialog.present();
+}
+
+fn save_to(ui: &Rc<Ui>, path: &Path) -> bool {
+    // Protect the originally opened file during this experimental phase.
+    let original = ui.source_path.borrow().clone();
+    if original.as_ref().is_some_and(|p| p == path ||
+        p.canonicalize().ok().zip(path.canonicalize().ok()).is_some_and(|(a,b)| a == b)) {
+        ui.toasts.add_toast(Toast::new("Elige otro nombre para proteger el documento original."));
+        return false;
+    }
+    let result = {
+        let mut state = ui.current.borrow_mut();
+        let Some(doc) = state.as_mut() else { return false };
+        wordcraft_gnome::saving::save(&mut doc.session, path)
+    };
+    match result {
+        Ok(()) => {
+            ui.save_path.replace(Some(path.to_path_buf()));
+            ui.dirty.set(false);
+            ui.title.set_title(&path.file_name().unwrap_or_default().to_string_lossy());
+            ui.title.set_subtitle("Guardado · Fase 3D");
+            ui.toasts.add_toast(Toast::new("Documento guardado"));
+            true
+        }
+        Err(e) => { ui.toasts.add_toast(Toast::new(&format!("No se ha guardado: {e}"))); false }
+    }
+}
+
+fn save_document(ui: &Rc<Ui>, parent: &ApplicationWindow, save_as: bool, done: Box<dyn FnOnce()>) {
+    if ui.current.borrow().is_none() { return; }
+    let existing = ui.save_path.borrow().clone();
+    if !save_as {
+        if let Some(path) = existing { if save_to(ui, &path) { done(); } return; }
+    }
+    let dialog = gtk::FileDialog::new();
+    dialog.set_title("Guardar una copia — DOCX u ODT");
+    dialog.set_modal(true);
+    let filter = gtk::FileFilter::new();
+    filter.set_name(Some("Documentos (.docx, .odt)"));
+    filter.add_pattern("*.docx"); filter.add_pattern("*.odt");
+    let filters = gio::ListStore::new::<gtk::FileFilter>(); filters.append(&filter);
+    dialog.set_filters(Some(&filters));
+    let source = existing.or_else(|| ui.source_path.borrow().clone());
+    let name = source.as_ref().and_then(|p| p.file_stem()).map(|x| x.to_string_lossy().into_owned())
+        .unwrap_or_else(|| "Documento".into());
+    let ext = source.as_ref().and_then(|p| p.extension()).and_then(|x| x.to_str()).unwrap_or("docx");
+    dialog.set_initial_name(Some(&format!("{name}-copia.{ext}")));
+    if let Some(folder) = source.as_ref().and_then(|p| p.parent()) {
+        dialog.set_initial_folder(Some(&gio::File::for_path(folder)));
+    }
+    let ui = ui.clone();
+    dialog.save(Some(parent), None::<&gio::Cancellable>, move |result| {
+        match result {
+            Ok(file) => {
+                let Some(path) = file.path() else {
+                    ui.toasts.add_toast(Toast::new("Elige un archivo local")); return;
+                };
+                // Require an extension so GTK's overwrite confirmation covers the actual target.
+                if path.extension().is_none() {
+                    ui.toasts.add_toast(Toast::new("Incluye .docx o .odt en el nombre del archivo")); return;
+                }
+                if save_to(&ui, &path) { done(); }
+            }
+            Err(e) if e.matches(gtk::DialogError::Dismissed) || e.matches(gtk::DialogError::Cancelled) => {},
+            Err(e) => ui.toasts.add_toast(Toast::new(&format!("No se pudo abrir el guardado: {e}"))),
+        }
+    });
 }
 
 fn clear_box(parent: &gtk::Box) {
@@ -634,7 +710,9 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     ui.selection_zoom.set(zoom);
     ui.title.set_title(label);
     ui.dirty.set(false);
-    ui.title.set_subtitle("WordCraft · edición experimental · sin guardar");
+    ui.save_path.replace(None);
+    ui.source_path.replace(ui.current.borrow().as_ref().and_then(|d| d.session.path.clone()));
+    ui.title.set_subtitle("WordCraft · Fase 3D · guarda una copia");
     ui.format_toolbar.set_visible(true);
     ui.stack.set_visible_child_name("pages");
     ui.scroll.vadjustment().set_value(0.0);
@@ -722,6 +800,11 @@ fn make_window(
     let open_button = gtk::Button::from_icon_name("document-open-symbolic");
     open_button.set_tooltip_text(Some("Abrir documento (Ctrl+O)"));
     header.pack_start(&open_button);
+    let save_button = gtk::Button::from_icon_name("document-save-symbolic");
+    save_button.set_tooltip_text(Some("Guardar (Ctrl+S)"));
+    header.pack_start(&save_button);
+    let save_as_button = gtk::Button::with_label("Guardar como…");
+
 
     let page_label = gtk::Label::new(Some("Sin documento"));
     page_label.add_css_class("page-indicator");
@@ -744,6 +827,7 @@ fn make_window(
     menu_content.set_margin_bottom(12);
     menu_content.set_margin_start(12);
     menu_content.set_margin_end(12);
+    menu_content.append(&save_as_button);
     menu_content.append(&zoom_label);
     menu_content.append(&fit_button);
     menu_content.append(&normal_zoom);
@@ -907,6 +991,8 @@ fn make_window(
         drag_anchor: RefCell::new(None),
         dirty: Cell::new(false),
         closing_confirmed: Cell::new(false),
+        save_path: RefCell::new(None),
+        source_path: RefCell::new(None),
         format_toolbar,
         format_bold: bold_button.clone(),
         format_italic: italic_button.clone(),
@@ -917,6 +1003,12 @@ fn make_window(
         page_label, zoom_label, zoom_out, zoom_in, previous, next, stack, title, toasts,
     });
 
+
+    for (button, save_as) in [(save_button, false), (save_as_button, true)] {
+        let ui = ui.clone();
+        let parent = window.clone();
+        button.connect_clicked(move |_| save_document(&ui, &parent, save_as, Box::new(|| {})));
+    }
 
     // All formatting commands preserve the selection and return keyboard
     // focus to the editable document.
@@ -1125,6 +1217,7 @@ fn make_window(
     {
         let ui = ui.clone();
         let open_button = open_button.clone();
+        let save_parent = window.clone();
         let controller = gtk::EventControllerKey::new();
         // GTK supplies dead-key composition, accents and input methods.
         // Committed text enters WordCraft; ordinary shortcuts remain in
@@ -1186,6 +1279,10 @@ fn make_window(
             }
             if !modifiers.contains(gdk::ModifierType::CONTROL_MASK) {
                 return glib::Propagation::Proceed;
+            }
+            if key == gdk::Key::s || key == gdk::Key::S {
+                save_document(&ui, &save_parent, shift, Box::new(|| {}));
+                return glib::Propagation::Stop;
             }
             if key == gdk::Key::o || key == gdk::Key::O {
                 open_button.emit_clicked();
@@ -1329,24 +1426,12 @@ fn make_window(
             if !ui.dirty.get() || ui.closing_confirmed.get() {
                 return glib::Propagation::Proceed;
             }
-            let dialog = adw::MessageDialog::new(
-                Some(&parent),
-                Some("¿Cerrar sin guardar?"),
-                Some("Los cambios realizados en esta versión experimental no se pueden guardar todavía. Cópialos antes si deseas conservarlos."),
-            );
-            dialog.add_response("cancel", "Continuar editando");
-            dialog.add_response("discard", "Cerrar sin guardar");
-            dialog.set_response_appearance("discard", adw::ResponseAppearance::Destructive);
-            dialog.set_close_response("cancel");
-            let ui = ui.clone();
-            let parent = parent.clone();
-            dialog.connect_response(None, move |_, response| {
-                if response == "discard" {
-                    ui.closing_confirmed.set(true);
-                    parent.close();
-                }
+            let next = ui.clone();
+            let closing_parent = parent.clone();
+            ask_discard(&ui, &parent, move || {
+                next.closing_confirmed.set(true);
+                closing_parent.close();
             });
-            dialog.present();
             glib::Propagation::Stop
         });
     }
@@ -1419,7 +1504,7 @@ fn make_window(
 
 fn main() {
     if std::env::args().any(|arg| arg == "--version") {
-        println!("WordCraft GNOME · herramientas de formato · fase 3C");
+        println!("WordCraft GNOME · guardado DOCX y ODT · fase 3D");
         return;
     }
     let sample_on_start = std::env::args().any(|arg| arg == "--sample");
