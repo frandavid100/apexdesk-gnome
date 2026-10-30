@@ -61,3 +61,5 @@ pub mod viewer_layout;
 pub mod selection;
 
 pub mod editing;
+
+pub mod formatting;
