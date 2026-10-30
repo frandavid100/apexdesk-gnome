@@ -3,6 +3,7 @@
 use adw::prelude::*;
 use adw::{Application, ApplicationWindow, HeaderBar, StatusPage, Toast, ToastOverlay, ToolbarView, WindowTitle};
 use glib::value::ToValue;
+use glib::variant::ToVariant;
 use gtk::{gdk, gio, glib};
 use std::{cell::{Cell, RefCell}, collections::HashSet, path::{Path, PathBuf}, rc::Rc};
 use wordcraft_doc::Pos;
@@ -42,6 +43,10 @@ struct Ui {
     sidebar: adw::OverlaySplitView,
     sidebar_button: gtk::ToggleButton,
     sidebar_pages: gtk::Stack,
+    navigation_pages: gtk::Stack,
+    outline: RefCell<Option<Rc<OutlinePanel>>>,
+    host: std::rc::Weak<Workspace>,
+    open_button: gtk::Button,
     search: RefCell<Option<Rc<SearchPanel>>>,
     paragraph: RefCell<Option<Rc<ParagraphPopover>>>,
     search_highlights: Rc<RefCell<Vec<selection::Rect>>>,
@@ -141,6 +146,7 @@ fn refresh_format_controls(ui: &Rc<Ui>) {
         ui.undo_button.set_sensitive(doc.session.can_undo());
         ui.redo_button.set_sensitive(doc.session.can_redo());
     }
+    if let Some(host)=ui.host.upgrade(){refresh_main_actions(&host);}
     let Some(state) = state else { return };
     ui.format_syncing.set(true);
     for (button, property) in [
@@ -290,6 +296,7 @@ fn after_content_change(ui: &Rc<Ui>) {
         glib::idle_add_local_once(move || caret_ensure_visible(&ui));
     }
     if let Some(s)=ui.search.borrow().as_ref(){s.schedule();}
+    if let Some(s)=ui.outline.borrow().as_ref(){s.schedule();}
     ui.dirty.set(true);
 
     sync_tab(ui);
@@ -657,6 +664,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     ui.caret_motion.borrow_mut().retarget(None, 0, false);
     ui.search_highlights.borrow_mut().clear();
     if let Some(s)=ui.search.borrow().as_ref(){s.schedule();}
+    if let Some(s)=ui.outline.borrow().as_ref(){s.schedule();}
     clear_canvas(&ui.document_box);
     clear_box(&ui.thumbnails_box);
 
@@ -779,6 +787,10 @@ fn install_css() {
       .thumbnail-sheet { background: white; box-shadow: 0 1px 3px alpha(black, 0.16); }
       .thumbnail-button { padding: 8px; min-width: 0; min-height: 0; }
       .thumbnail-button.selected-thumb { background: alpha(@window_fg_color, 0.09); }
+      .sidebar-selector button { border-radius: 10px; }
+      .sidebar-selector button:checked { background: alpha(@window_fg_color, 0.12); }
+      button.outline-expander { min-width: 18px; min-height: 24px; padding: 0; }
+      .search-options > button { background: transparent; box-shadow: none; }
       button.search-replace { min-width: 24px; min-height: 24px; padding: 0; }
       .style-popover button, .format-popover button { font-weight: normal; }
       .style-row.current-style { background: alpha(@window_fg_color, 0.14); border-radius: 6px; }
@@ -797,6 +809,8 @@ include!("../gnome_format_panels.rs");
 include!("../gnome_tables.rs");
 include!("../gnome_styles.rs");
 include!("../gnome_search.rs");
+include!("../gnome_navigation.rs");
+include!("../gnome_menus.rs");
 include!("../gnome_paragraph.rs");
 include!("../gnome_view_tests.rs");
 
@@ -825,29 +839,8 @@ fn build_tab(
     side_header.set_title_widget(Some(&side_title));
     let search_toggle=gtk::ToggleButton::new();search_toggle.set_icon_name("edit-find-symbolic");search_toggle.set_tooltip_text(Some("Buscar en el documento (Ctrl+F)"));side_header.pack_start(&search_toggle);
 
-    // Menú de aplicación, independiente del menú de documento.
-    let example_button = gtk::Button::with_label("Abrir ejemplo");
-    let open_button = gtk::Button::with_label("Abrir… (Ctrl+O)");
-    let new_window_button = gtk::Button::with_label("Nueva ventana (Ctrl+Shift+N)");
-    let app_popover = gtk::Popover::new();
-    let app_content = gtk::Box::new(gtk::Orientation::Vertical, 6);
-    app_content.set_margin_top(12);
-    app_content.set_margin_bottom(12);
-    app_content.set_margin_start(12);
-    app_content.set_margin_end(12);
-    app_content.append(&open_button);
-    app_content.append(&new_window_button);
-    app_content.append(&example_button);
-    let preferences_button=gtk::Button::with_label("Preferencias");
-    let recover_button=gtk::Button::with_label("Recuperar documentos…");
-    app_content.append(&recover_button);app_content.append(&preferences_button);
-    app_popover.set_child(Some(&app_content));
-    let app_menu = gtk::MenuButton::new();
-    app_menu.set_icon_name("open-menu-symbolic");
-    app_menu.set_tooltip_text(Some("Menú de la aplicación"));
-    app_menu.set_popover(Some(&app_popover));
-    side_header.pack_end(&app_menu);
-
+    let open_button=gtk::Button::with_label("Abrir…");
+    let app_menu=gtk::MenuButton::new();app_menu.set_icon_name("open-menu-symbolic");app_menu.set_tooltip_text(Some("Menú principal"));side_header.pack_end(&app_menu);
     let header = HeaderBar::new();
     let title = WindowTitle::new("WordCraft GNOME", "");
     header.set_title_widget(Some(&title));
@@ -889,26 +882,7 @@ fn build_tab(
     menu.set_child(Some(&menu_content));
     // Si el panel lateral está cerrado, su menú de aplicación debe seguir
     // accesible desde la cabecera principal.
-    let compact_example_button = gtk::Button::with_label("Abrir ejemplo");
-    let compact_app_popover = gtk::Popover::new();
-    let compact_content = gtk::Box::new(gtk::Orientation::Vertical, 6);
-    compact_content.set_margin_top(12);
-    compact_content.set_margin_bottom(12);
-    compact_content.set_margin_start(12);
-    compact_content.set_margin_end(12);
-    let compact_open = gtk::Button::with_label("Abrir… (Ctrl+O)");
-    let compact_new = gtk::Button::with_label("Nueva ventana (Ctrl+Shift+N)");
-    compact_content.append(&compact_open); compact_content.append(&compact_new);
-    compact_content.append(&compact_example_button);
-    let compact_preferences=gtk::Button::with_label("Preferencias");
-    let compact_recover=gtk::Button::with_label("Recuperar documentos…");
-    compact_content.append(&compact_recover);compact_content.append(&compact_preferences);
-    compact_app_popover.set_child(Some(&compact_content));
-    let compact_app_menu = gtk::MenuButton::new();
-    compact_app_menu.set_icon_name("open-menu-symbolic");
-    compact_app_menu.set_tooltip_text(Some("Menú de la aplicación"));
-    compact_app_menu.set_popover(Some(&compact_app_popover));
-    header.pack_end(&compact_app_menu);
+    let compact_app_menu=gtk::MenuButton::new();compact_app_menu.set_icon_name("open-menu-symbolic");compact_app_menu.set_tooltip_text(Some("Menú principal"));header.pack_end(&compact_app_menu);
 
     let menu_button = gtk::MenuButton::new();
     menu_button.set_icon_name("view-more-symbolic");
@@ -949,8 +923,13 @@ fn build_tab(
 
     let sidebar_toolbar = ToolbarView::new();
     sidebar_toolbar.add_top_bar(&side_header);
-    let sidebar_pages=gtk::Stack::new();sidebar_pages.add_named(&thumbnails_scroll,Some("thumbnails"));
-    sidebar_toolbar.set_content(Some(&sidebar_pages));
+    let sidebar_pages=gtk::Stack::new();sidebar_pages.set_transition_type(gtk::StackTransitionType::Crossfade);sidebar_pages.set_transition_duration(180);
+    let navigation_pages=gtk::Stack::new();navigation_pages.set_vexpand(true);navigation_pages.add_named(&thumbnails_scroll,Some("thumbnails"));
+    let navigation=gtk::Box::new(gtk::Orientation::Vertical,0);navigation.append(&navigation_pages);
+    let selector=gtk::Box::new(gtk::Orientation::Horizontal,6);selector.add_css_class("sidebar-selector");selector.set_margin_start(6);selector.set_margin_end(6);selector.set_margin_top(6);selector.set_margin_bottom(6);
+    let pages_toggle=gtk::ToggleButton::new();pages_toggle.set_child(Some(&sidebar_icon("pages")));pages_toggle.set_tooltip_text(Some("Páginas"));pages_toggle.set_hexpand(true);pages_toggle.add_css_class("flat");pages_toggle.set_widget_name("sidebar-pages");
+    let titles_toggle=gtk::ToggleButton::new();titles_toggle.set_child(Some(&sidebar_icon("outline")));titles_toggle.set_tooltip_text(Some("Títulos"));titles_toggle.set_hexpand(true);titles_toggle.add_css_class("flat");titles_toggle.set_widget_name("sidebar-outline");titles_toggle.set_group(Some(&pages_toggle));pages_toggle.set_active(true);
+    selector.append(&pages_toggle);selector.append(&titles_toggle);navigation.append(&selector);sidebar_pages.add_named(&navigation,Some("navigation"));sidebar_toolbar.set_content(Some(&sidebar_pages));
 
     let zoom_buttons = gtk::Box::new(gtk::Orientation::Vertical, 8);
     zoom_buttons.set_halign(gtk::Align::End);
@@ -1118,7 +1097,8 @@ fn build_tab(
         undo_button: undo_button.clone(), redo_button: redo_button.clone(),
         font_button: font_button.clone(), size_input: size_input.clone(),
         document_box, thumbnails_box, scroll, thumbnails_scroll,
-        sidebar, sidebar_button, sidebar_pages,
+        sidebar, sidebar_button, sidebar_pages, navigation_pages,
+        outline:RefCell::new(None),host:Rc::downgrade(host),open_button:open_button.clone(),
         search: RefCell::new(None), paragraph: RefCell::new(None), search_highlights: Rc::new(RefCell::new(Vec::new())),
         document_name:RefCell::new(String::new()),layout_pending:Cell::new(false),viewport_width:Cell::new(0),
         zoom_label, zoom_out, zoom_in, stack, title, toasts,
@@ -1163,22 +1143,16 @@ fn build_tab(
             });
         });
     }
+    let outline_panel=install_outline(&ui,&pages_toggle,&titles_toggle);ui.outline.replace(Some(outline_panel.clone()));
     let search_panel=install_search_panel(&ui,&search_toggle,&compact_search);ui.search.replace(Some(search_panel.clone()));
     let style_popover=install_style_popover(&ui,&style_menu);
     let table_menu=install_table_controls(&ui,&window,&format_bar);
     host.docs.borrow_mut().push((tab_page,ui.clone()));
+    install_main_menu(&app_menu);install_main_menu(&compact_app_menu);refresh_main_actions(host);
     install_autosave(&ui);
     {
         let app=app.clone();let host=host.clone();
         new_document.connect_clicked(move |_| blank_tab(&app,&host));
-    }
-    for button in [preferences_button,compact_preferences] {
-        let parent=window.clone();let pop1=app_popover.clone();let pop2=compact_app_popover.clone();
-        button.connect_clicked(move |_| {pop1.popdown();pop2.popdown();show_preferences(&parent);});
-    }
-    for button in [recover_button,compact_recover] {
-        let ui=ui.clone();let parent=window.clone();let app=app.clone();let host=host.clone();
-        button.connect_clicked(move |_| show_recovery(&ui,&parent,&app,&host));
     }
     for (button, edit) in [(undo_button, Edit::Undo), (redo_button, Edit::Redo)] {
         let ui = ui.clone();
@@ -1214,26 +1188,10 @@ fn build_tab(
             apply_format_operation(&ui, |session| formatting::size(session, size));
         });
     }
-    for (proxy, target, popover) in [
-        (compact_open, open_button.clone(), compact_app_popover.clone()),
-        (compact_new, new_window_button.clone(), compact_app_popover.clone()),
-    ] {
-        proxy.connect_clicked(move |_| { popover.popdown(); target.emit_clicked(); });
-    }
-
     for (button, save_as) in [(save_button, false), (save_as_button, true)] {
         let ui = ui.clone();
         let parent = window.clone();
         button.connect_clicked(move |_| save_document(&ui, &parent, save_as, Box::new(|| {})));
-    }
-
-    {
-        let app = app.clone();
-        let popover = app_popover.clone();
-        new_window_button.connect_clicked(move |_| {
-            popover.popdown();
-            make_window(&app, false, false, false, false, false, false, false, None);
-        });
     }
 
     // All formatting commands preserve the selection and return keyboard
@@ -1330,30 +1288,6 @@ fn build_tab(
 
     {
         let ui = ui.clone();
-        let parent = window.clone();
-        let app_popover = app_popover.clone();
-        example_button.connect_clicked(move |_| {
-            app_popover.popdown();
-            let next = ui.clone();
-            ask_discard(&ui, &parent, move || {
-                opened(&next, sample_session(), "Documento de ejemplo");
-            });
-        });
-    }
-    {
-        let ui = ui.clone();
-        let parent = window.clone();
-        let compact_app_popover = compact_app_popover.clone();
-        compact_example_button.connect_clicked(move |_| {
-            compact_app_popover.popdown();
-            let next = ui.clone();
-            ask_discard(&ui, &parent, move || {
-                opened(&next, sample_session(), "Documento de ejemplo");
-            });
-        });
-    }
-    {
-        let ui = ui.clone();
         ui.sidebar_button.connect_toggled({
             let ui = ui.clone();
             move |button| ui.sidebar.set_show_sidebar(button.is_active())
@@ -1429,7 +1363,6 @@ fn build_tab(
         let open_button = open_button.clone();
         let save_parent = window.clone();
         let key_host=host.clone();let key_app=app.clone();
-        let new_window_button = new_window_button.clone();
         let controller = gtk::EventControllerKey::new();
         // GTK supplies dead-key composition, accents and input methods.
         // Committed text enters WordCraft; ordinary shortcuts remain in
@@ -1506,9 +1439,11 @@ fn build_tab(
                 return glib::Propagation::Proceed;
             }
             if key == gdk::Key::n || key == gdk::Key::N {
-                if shift {new_window_button.emit_clicked();} else {blank_tab(&key_app,&key_host);}
+                if shift {make_window(&key_app,false,false,false,false,false,false,false,None);} else {blank_tab(&key_app,&key_host);}
                 return glib::Propagation::Stop;
             }
+            if key==gdk::Key::t || key==gdk::Key::T {blank_tab(&key_app,&key_host);return glib::Propagation::Stop;}
+            if shift && (key==gdk::Key::o || key==gdk::Key::O){key_host.overview.set_open(true);return glib::Propagation::Stop;}
             if key == gdk::Key::w || key == gdk::Key::W {
                 if let Some(page)=key_host.tabs.selected_page(){key_host.tabs.close_page(&page);}
                 return glib::Propagation::Stop;
@@ -1629,9 +1564,7 @@ fn build_tab(
         let parent = window.clone();
         let app = app.clone();
         let host=host.clone();
-        let popover = app_popover.clone();
         open_button.connect_clicked(move |_| {
-            popover.popdown();
             let dialog = gtk::FileDialog::new();
             dialog.set_title("Abrir documento");
             let filter = gtk::FileFilter::new();
@@ -1706,6 +1639,10 @@ fn build_tab(
     if std::env::args().any(|a|a=="--search-ui-test") {let s=search_panel.clone();let ui=ui.clone();let app=app.clone();let host=host.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||search_ui_test(&ui,&s,&app,&host));}
     if std::env::args().any(|a|a=="--view-pointer-test"){let u=ui.clone();let m=style_menu.clone();let w=window.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1300),move||view_pointer_test(&u,&m,&w,&a));}
     if std::env::args().any(|a|a=="--spreads-demo"){window.set_default_size(1800,950);let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1300),move||{if let Some(d)=u.current.borrow_mut().as_mut(){d.fit_to_width=false;}zoom_to(&u,1.0);});}
+    if std::env::args().any(|a|a=="--outline-demo"){let b=titles_toggle.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||b.set_active(true));}
+    if std::env::args().any(|a|a=="--main-menu-demo"){let m=app_menu.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||m.popup());}
+    if std::env::args().any(|a|a=="--overview-demo"){let h=host.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||{blank_tab(&app,&h);h.overview.set_open(true);});}
+    if std::env::args().any(|a|a=="--nav-ui-test"){let u=ui.clone();let h=host.clone();let app=app.clone();let s=outline_panel.clone();let b=titles_toggle.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||navigation_ui_test(&u,&s,&b,&h,&app));}
     if std::env::args().any(|a|a=="--advanced-text-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_text_options(&u,&w));}
     if std::env::args().any(|a|a=="--advanced-paragraph-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_paragraph_options(&u,&w));}
     if std::env::args().any(|a|a=="--styles-ui-test") {let s=style_popover.clone();let m=style_menu.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||style_ui_test(&s,&m,&a));}
