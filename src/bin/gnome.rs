@@ -319,7 +319,7 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     header.pack_start(&example_button);
 
     let sidebar_button = gtk::ToggleButton::new();
-    sidebar_button.set_icon_name("sidebar-show-symbolic");
+    sidebar_button.set_label("Miniaturas");
     sidebar_button.set_tooltip_text(Some("Mostrar u ocultar miniaturas"));
     header.pack_start(&sidebar_button);
 
@@ -335,14 +335,14 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     nav.append(&page_label);
     nav.append(&next);
 
-    let zoom_out = gtk::Button::from_icon_name("zoom-out-symbolic");
+    let zoom_out = gtk::Button::with_label("−");
     zoom_out.set_tooltip_text(Some("Reducir zoom (Ctrl+-)"));
-    let zoom_in = gtk::Button::from_icon_name("zoom-in-symbolic");
+    let zoom_in = gtk::Button::with_label("+");
     zoom_in.set_tooltip_text(Some("Ampliar zoom (Ctrl++)"));
     let zoom_label = gtk::Label::new(Some("100 %"));
     zoom_label.set_width_chars(6);
     zoom_label.add_css_class("zoom-value");
-    let fit_button = gtk::Button::from_icon_name("zoom-fit-best-symbolic");
+    let fit_button = gtk::Button::with_label("Ajustar");
     fit_button.set_tooltip_text(Some("Ajustar al ancho disponible (Ctrl+0)"));
     let zoom_controls = gtk::Box::new(gtk::Orientation::Horizontal, 2);
     zoom_controls.append(&zoom_out);
