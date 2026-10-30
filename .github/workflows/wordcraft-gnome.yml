@@ -24,7 +24,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev xvfb xauth scrot xdotool adwaita-icon-theme poppler-utils
       - name: Tests sin interfaz
-        run: cargo test
+        run: cargo test --locked
       - name: Validar árbol sin egui/eframe
         run: |
           cargo tree --features gui --edges normal --prefix none --format '{p}' | tee dependencies.txt
