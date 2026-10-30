@@ -20,7 +20,8 @@ fn close_workspace(host: &Rc<Workspace>) {
             ui.closed.set(true);
             if let Some(doc) = ui.current.borrow_mut().as_mut() { doc.session.finish_recovery(); }
         }
-        host.allow_close.set(true); host.window.close();
+        host.allow_close.set(true);
+        let window=host.window.clone();glib::idle_add_local_once(move ||window.close());
     }
 }
 
