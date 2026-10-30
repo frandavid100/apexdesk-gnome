@@ -89,3 +89,8 @@ pub mod caret_motion;
 pub mod search;
 
 pub mod navigation;
+
+
+pub mod pictures;
+pub mod document_properties;
+pub mod pdf_export;
