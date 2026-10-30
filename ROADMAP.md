@@ -8,7 +8,7 @@ Las fases siguientes son propuestas; no implican autorización para implementarl
 Recoger la prueba del usuario de formato avanzado y compilación optimizada en GNOME OS.
 Corregir los fallos que aparezcan antes de acumular funciones nuevas.
 
-## Estilos: rediseño autorizado
+## Estilos: rediseño implementado, pendiente de prueba manual
 
 El desplegable incluye todos los estilos de párrafo/texto del documento,
 búsqueda, aplicación por nombre y botón derecho para abrir una subpágina
