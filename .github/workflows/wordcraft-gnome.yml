@@ -33,14 +33,20 @@ jobs:
             exit 1
           fi
       - name: Compilar lector GNOME
-        run: cargo build --features gui --bin wordcraft-gnome
+        run: cargo build --release --locked --features gui --bin wordcraft-gnome
       - name: Vista del motor sin interfaz
         run: |
           cargo run -- --png muestra-wordcraft.png
           test -s muestra-wordcraft.png
+      - name: Comparar rendimiento reproducible
+        run: |
+          cargo run --locked --example performance > performance-debug.txt
+          cargo run --release --locked --example performance > performance-release.txt
+          cat performance-debug.txt performance-release.txt
+          diff <(grep '^CHECK' performance-debug.txt) <(grep '^CHECK' performance-release.txt)
       - name: Identificar versión de prueba
         run: |
-          ./target/debug/wordcraft-gnome --version | tee version.txt
+          ./target/release/wordcraft-gnome --version | tee version.txt
           grep -q "fase 3D" version.txt
       - name: Probar escritorio ancho, ventana estrecha, panel y tema oscuro
         run: |
@@ -50,7 +56,7 @@ jobs:
             run_case () {
               output="$1"
               shift
-              GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --sample "$@" \
+              GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample "$@" \
                 > "out-${output}.log" 2> "err-${output}.log" &
               pid=$!
               sleep 7
@@ -67,11 +73,11 @@ jobs:
             run_case vista-estilos.png --styles-demo
             run_case vista-preferencias.png --preferences-demo
             run_case vista-buscar.png --search-demo
-            GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --tabs-test 2> tabs.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --tabs-test 2> tabs.log
             grep -q TABS_OK tabs.log
             run_case vista-texto.png --text-menu-demo
             run_case vista-zoom.png --zoom-menu-demo
-            GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --multiwindow-test 2> multiwindow.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --multiwindow-test 2> multiwindow.log
             grep -q MULTIWINDOW_OK multiwindow.log
             run_case vista-gnome.png --sidebar
             run_case vista-seleccion.png --sidebar --select-demo
@@ -81,10 +87,10 @@ jobs:
             run_case vista-estrecha-panel.png --narrow --sidebar
             run_case vista-estrecha.png --narrow
             run_case vista-oscura.png --dark --sidebar
-            GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --sample >gui-out.log 2>gui-err.log &
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample >gui-out.log 2>gui-err.log &
             pid=$!
             sleep 2
-            GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --sample >gui2-out.log 2>gui2-err.log &
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample >gui2-out.log 2>gui2-err.log &
             pid2=$!
             sleep 2
             kill -0 "$pid"
@@ -108,7 +114,7 @@ jobs:
           PY
       - name: Preparar ejecutable ligero sin símbolos de depuración
         run: |
-          cp target/debug/wordcraft-gnome wordcraft-gnome
+          cp target/release/wordcraft-gnome wordcraft-gnome
           echo "Antes de strip:"
           ls -lh wordcraft-gnome
           strip --strip-unneeded wordcraft-gnome
@@ -143,4 +149,6 @@ jobs:
             dependencies.txt
             Cargo.lock
             version.txt
+            performance-debug.txt
+            performance-release.txt
           if-no-files-found: warn
