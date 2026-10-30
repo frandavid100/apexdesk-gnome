@@ -22,7 +22,7 @@ jobs:
       - name: Instalar bibliotecas GNOME y pantalla virtual
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev xvfb xauth scrot xdotool adwaita-icon-theme
+          sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev xvfb xauth scrot xdotool adwaita-icon-theme poppler-utils
       - name: Tests sin interfaz
         run: cargo test
       - name: Validar árbol sin egui/eframe
@@ -149,6 +149,24 @@ jobs:
             scrot vista-dividido-subpagina.png
             kill "$split_pid"
             wait "$split_pid" || true
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --document-tools-test 2> document-tools.log &
+            tools_pid=$!
+            for attempt in $(seq 1 300); do
+              if grep -q IMAGE_POINTER_READY document-tools.log; then break; fi
+              kill -0 "$tools_pid"
+              sleep 0.1
+            done
+            read marker ix iy < <(grep IMAGE_POINTER_READY document-tools.log | tail -n1)
+            tools_window=$(xdotool search --onlyvisible --pid "$tools_pid" | head -n1)
+            xdotool windowfocus --sync "$tools_window"
+            xdotool mousemove --window "$tools_window" "$ix" "$iy" click 1
+            wait "$tools_pid" || { cat document-tools.log; exit 1; }
+            grep -q DOCUMENT_TOOLS_OK document-tools.log
+            pdftoppm -scale-to 1200 -png -singlefile document-tools-test.pdf vista-pdf-exportado
+            pdfinfo document-tools-test.pdf
+            run_case vista-imagen.png --picture-demo
+            run_case vista-imagen-estrecha.png --picture-demo --narrow
+            run_case vista-propiedades-documento.png --document-properties-demo
             run_case vista-parrafo.png --paragraph-demo
             run_case vista-interlineado.png --paragraph-spacing-demo
             run_case vista-parrafo-estrecha.png --paragraph-demo --narrow
@@ -259,6 +277,12 @@ jobs:
             vista-parrafo-oscura.png
             search-sidebar.log
             paragraph-popover.log
+            document-tools.log
+            document-tools-test.pdf
+            vista-pdf-exportado.png
+            vista-imagen.png
+            vista-imagen-estrecha.png
+            vista-propiedades-documento.png
             split-states.log
             vista-dividido-reposo.png
             vista-dividido-cuerpo.png
@@ -288,5 +312,6 @@ jobs:
             performance-debug.txt
             performance-release.txt
           if-no-files-found: warn
+
 
 
