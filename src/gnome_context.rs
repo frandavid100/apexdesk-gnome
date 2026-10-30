@@ -100,7 +100,7 @@ fn show_document_context(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32,kind:D
     root.append_section(None,&specific);
     // GtkModelButton closes before activating its action helper. Keep the
     // hierarchy and action muxer alive until that signal has fully returned.
-    pop.connect_closed(|p|{let p=p.clone();glib::idle_add_local_once(move||{if !p.is_visible(){p.unparent();}});});pop.popup();pop
+    pop.connect_closed(|p|{let p=p.clone();glib::idle_add_local_once(move||{if !p.is_visible()&&p.parent().is_some(){p.unparent();}});});pop.popup();pop
 }
 fn show_table_context_at(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32){
     let kind=ui.current.borrow().as_ref().map(|d|if pictures::selected(&d.session).is_some(){DocumentContext::Picture}else if wordcraft_gnome::tables::in_table(&d.session){DocumentContext::Table}else{DocumentContext::Text});
