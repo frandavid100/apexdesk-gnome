@@ -22,9 +22,9 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 - Abrir y Nueva ventana pertenecen al menú general del panel lateral.
 - Panel lateral estrecho y abierto por defecto desde su construcción, sin apertura diferida. Miniaturas con esquinas de 6 px y borde fino como Papers; margen uniforme de 12 px alrededor de imagen y número, ambos dentro del botón seleccionado; filas a altura natural. Selector inferior en AdwToolbarView, con altura compartida con la barra de edición y sombras nativas al desplazar contenido. Fondo del visor del color de la ventana; hojas blancas.
 - Cabecera del documento de una línea: nombre y ● a su izquierda cuando hay cambios pendientes, sin subtítulo ni contador de páginas.
-- Barra de edición abajo, como Apostrophe. Deshacer y Rehacer a la izquierda.
+- Barra adaptable: en ancho, Deshacer/Rehacer arriba a la izquierda y Estilo/Párrafo/Texto arriba a la derecha, solo iconos con nombres accesibles. En estrecho los mismos cinco controles pasan abajo; no hay duplicados.
 - Los tres desplegables de barra (Estilo, Párrafo, Texto) y los dos paneles contextuales (Tabla e Imagen) comparten un grupo por pestaña: solo uno puede estar abierto y la chincheta se conserva al pasar de uno a otro. La modalidad GTK es siempre no modal; fijar/desfijar solo cambia la política de cierre, sin ocultar, recrear ni volver a mostrar la superficie. Sin fijar se cierra al aplicar o pulsar fuera. Cabecera única con nombre, vuelta atrás contextual y chincheta. Controles divididos de Párrafo con AdwSplitButton plano: fondo compartido al pasar el puntero y resaltado independiente de cuerpo/chevrón, como Nautilus; subopciones en la misma subpágina, sin otro popup.
-- Orden de la barra: Estilo → Párrafo → Texto. Tabla e Imagen se insertan desde Añadir en el menú del documento y se editan con clic derecho. Estilos y Párrafo se gestionan en desplegables con subpáginas internas; Texto conserva su panel ampliado.
+- Orden de formato: Estilo → Párrafo → Texto, en la cabecera o en la barra inferior según el ancho útil del documento. Tabla e Imagen se insertan desde Añadir en el menú del documento y se editan con clic derecho. Estilos y Párrafo se gestionan en desplegables con subpáginas internas; Texto conserva su panel ampliado.
 - Zoom a la derecha: +, − y un tercer botón con 100 % y Ajustar al ancho.
 - Sin botones Página anterior/siguiente; navegación mediante scroll y miniaturas.
 - Selector inferior del panel lateral con iconos Páginas/Títulos, inspirado en Papers. Títulos jerárquicos con secciones contraíbles, numeración y navegación al texto mediante WordCraft.
@@ -175,3 +175,15 @@ La regresión busca filas solo en la página visible del GtkStack nativo: GtkPop
 Los paneles contextuales de tabla/imagen permanecen como hijos del lienzo al reconstruir páginas o abrir el documento. clear_canvas elimina las páginas, no los GtkPopover: desmontarlos durante opened dejaba sus superficies sin una ventana nativa. La prueba normal (sin anclas de diagnóstico en barra) cubre esa apertura y conservación tras reconstrucción.
 
 Entrega correctiva validada: código 7cd6debaa1ec55b4f44783966f2b22c56daad8c5; CI 41137708372 completada correctamente. cargo test --locked y compilación release superados. CONTEXT_UI_OK incluye clic real en Copiar, filas nativas para Cortar/Pegar/Seleccionar todo, apertura de Estilo/Párrafo/Texto, submenú visible de selección de columna y paneles normales de tabla/imagen tras abrir documentos. DOCUMENT_CHROME_OK verifica Añadir → Tabla/Imagen y ausencia de sus botones en la barra normal. También pasan POPOVER_PIN_OK, VIEW_POINTER_OK y DOCUMENT_TOOLS_OK. Capturas de contexto sin punta y menú de documento con Añadir revisadas. Pendiente de confirmación manual del usuario en su GNOME OS.
+
+
+
+## Trabajo actual autorizado: barra adaptable y contexto contenido
+
+El usuario autoriza conjuntamente mover los cinco controles a la cabecera con iconos, recuperar la barra inferior cuando no caben, animar tamaño/navegación como Añadir y abrir Estilo/Párrafo/Texto dentro del propio contexto. Implementación en revisión, aún sin sustituir la descarga validada anterior. Código de integración 3c225058025de0622bc5fcd5ff3d6aa7c37e05c2 (comprobar commits posteriores) y CI de esa revisión en curso.
+
+`gnome_adaptive.rs` mueve las mismas dos cajas de widgets: historial a la izquierda y formato a la derecha. Se usa el ancho real del viewport, no un tick continuo; histéresis 640/680 px para evitar oscilaciones. Al recolocar un panel abierto se conserva la subpágina y la chincheta; se captura antes de ocultar la barra. No modifica documento, selección ni historial. Iconos vectoriales con nombres accesibles y tooltips.
+
+Los tres menús usan GtkStack con interpolate-size y SlideLeftRight, respetando el movimiento reducido. Texto conserva todos los comandos avanzados, ahora en páginas internas (caracteres, color/efectos y anotaciones), con selector de color nativo y entrada RGB opcional.
+
+El contexto usa submenús nativos GMenu y custom slots oficiales de GtkPopoverMenu para alojar temporalmente los árboles de widgets existentes. No abre el popover de la barra. Un préstamo restaura cada árbol al cerrar; las acciones y estados siguen compartidos. Se oculta únicamente la cabecera atrás nativa duplicada para conservar una sola fila atrás/título/chincheta. Revalidar esa detección de GtkStack/GtkModelButton al actualizar GTK. El host contextual mantiene autohide=false desde antes de mapearse: la chincheta no remapea la superficie. No hay cambios en WordCraft ni dependencias.
