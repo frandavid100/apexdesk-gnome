@@ -411,6 +411,23 @@ fn make_window(
     menu_content.append(&previous);
     menu_content.append(&next);
     menu.set_child(Some(&menu_content));
+    // Si el panel lateral está cerrado, su menú de aplicación debe seguir
+    // accesible desde la cabecera principal.
+    let compact_example_button = gtk::Button::with_label("Abrir ejemplo");
+    let compact_app_popover = gtk::Popover::new();
+    let compact_content = gtk::Box::new(gtk::Orientation::Vertical, 6);
+    compact_content.set_margin_top(12);
+    compact_content.set_margin_bottom(12);
+    compact_content.set_margin_start(12);
+    compact_content.set_margin_end(12);
+    compact_content.append(&compact_example_button);
+    compact_app_popover.set_child(Some(&compact_content));
+    let compact_app_menu = gtk::MenuButton::new();
+    compact_app_menu.set_icon_name("open-menu-symbolic");
+    compact_app_menu.set_tooltip_text(Some("Menú de la aplicación"));
+    compact_app_menu.set_popover(Some(&compact_app_popover));
+    header.pack_end(&compact_app_menu);
+
     let menu_button = gtk::MenuButton::new();
     menu_button.set_icon_name("view-more-symbolic");
     menu_button.set_tooltip_text(Some("Opciones del documento"));
@@ -504,6 +521,14 @@ fn make_window(
     }
     {
         let ui = ui.clone();
+        let compact_app_popover = compact_app_popover.clone();
+        compact_example_button.connect_clicked(move |_| {
+            opened(&ui, sample_session(), "Documento de ejemplo");
+            compact_app_popover.popdown();
+        });
+    }
+    {
+        let ui = ui.clone();
         ui.sidebar_button.connect_toggled({
             let ui = ui.clone();
             move |button| ui.sidebar.set_show_sidebar(button.is_active())
@@ -512,8 +537,10 @@ fn make_window(
     {
         let ui = ui.clone();
         let split = ui.sidebar.clone();
+        let compact_menu = compact_app_menu.clone();
         split.connect_show_sidebar_notify(move |split| {
             let visible = split.shows_sidebar();
+            compact_menu.set_visible(!visible);
             if ui.sidebar_button.is_active() != visible {
                 ui.sidebar_button.set_active(visible);
             }
