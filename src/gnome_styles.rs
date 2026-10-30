@@ -13,6 +13,7 @@ struct StylePopover {
     detail: gtk::Box,
     form: gtk::Box,
     message: gtk::Label,
+    header:Rc<FormatHeader>,
 }
 impl StylePopover {
     fn report(&self,text:&str){self.message.set_text(text);self.message.set_visible(!text.is_empty());}
@@ -47,12 +48,11 @@ impl StylePopover {
         }
         if count==0{let label=gtk::Label::new(Some("No se encontraron estilos"));label.add_css_class("dim-label");label.set_margin_top(18);label.set_margin_bottom(18);self.list.append(&label);}
     }
-    fn main(self:&Rc<Self>){self.report("");self.refresh_list();self.stack.set_visible_child_name("list");}
+    fn main(self:&Rc<Self>){self.header.home();self.report("");self.refresh_list();self.stack.set_visible_child_name("list");}
     fn back(self:&Rc<Self>,container:&gtk::Box,label:&str,id:Option<String>){
-        let b=gtk::Button::with_label(&format!("‹ {label}"));b.add_css_class("flat");b.set_widget_name("style-back");if let Some(l)=b.child().and_then(|c|c.downcast::<gtk::Label>().ok()){l.set_xalign(0.0);l.set_ellipsize(gtk::pango::EllipsizeMode::End);l.set_max_width_chars(28);}
-        container.append(&b);container.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
-        let weak=Rc::downgrade(self);b.connect_clicked(move|_|{if let Some(s)=weak.upgrade(){if let Some(id)=&id{s.show_detail(id);}else{s.main();}}});
+        let _=container;let weak=Rc::downgrade(self);self.header.back(label,move||{if let Some(s)=weak.upgrade(){if let Some(id)=&id{s.show_detail(id);}else{s.main();}}});
     }
+
     fn style(self:&Rc<Self>,id:&str)->Option<wordcraft_doc::styles::Style>{
         let ui=self.ui.upgrade()?;let state=ui.current.borrow();state.as_ref()?.session.doc.styles.get(id).cloned()
     }
@@ -95,7 +95,7 @@ impl StylePopover {
 fn install_style_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<StylePopover>{
     let pop=gtk::Popover::new();pop.add_css_class("style-popover");let root=gtk::Box::new(gtk::Orientation::Vertical,6);root.set_width_request(330);
     root.set_margin_top(8);root.set_margin_bottom(8);root.set_margin_start(8);root.set_margin_end(8);
-    let changing=format_popover_header(&pop,&root,"Estilo");
+    let header=format_popover_header(&pop,&root,"Estilo",&ui.format_group);header.button.set_widget_name("style-back");
     let stack=gtk::Stack::new();stack.set_transition_type(gtk::StackTransitionType::SlideLeftRight);stack.set_vhomogeneous(false);
     let main=gtk::Box::new(gtk::Orientation::Vertical,6);let search=gtk::SearchEntry::new();search.set_placeholder_text(Some("Buscar estilos"));search.set_widget_name("style-search");main.append(&search);
     let list=gtk::Box::new(gtk::Orientation::Vertical,0);let scroll=gtk::ScrolledWindow::new();scroll.set_policy(gtk::PolicyType::Never,gtk::PolicyType::Automatic);scroll.set_min_content_height(240);scroll.set_max_content_height(340);scroll.set_propagate_natural_height(true);scroll.set_child(Some(&list));main.append(&scroll);
@@ -103,10 +103,10 @@ fn install_style_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<StylePopover>{
     let detail=gtk::Box::new(gtk::Orientation::Vertical,6);let form=gtk::Box::new(gtk::Orientation::Vertical,8);
     stack.add_named(&main,Some("list"));stack.add_named(&detail,Some("detail"));stack.add_named(&form,Some("form"));root.append(&stack);
     let message=gtk::Label::new(None);message.set_wrap(true);message.set_max_width_chars(36);message.set_xalign(0.0);message.set_visible(false);root.append(&message);pop.set_child(Some(&root));
-    let state=Rc::new(StylePopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,list,search:search.clone(),detail,form,message});
+    let state=Rc::new(StylePopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,list,search:search.clone(),detail,form,message,header});
     let weak=Rc::downgrade(&state);search.connect_search_changed(move|_|{if let Some(s)=weak.upgrade(){s.refresh_list();}});
     let weak=Rc::downgrade(&state);create.connect_clicked(move|_|{if let Some(s)=weak.upgrade(){s.show_form(None);}});
-    let s=state.clone();pop.connect_show(move|_|{if !changing.get(){s.main();}});menu.set_popover(Some(&pop));state
+    let s=state.clone();pop.connect_show(move|_|s.main());menu.set_popover(Some(&pop));state
 }
 
 // Exercise actual widget callbacks on every subpage without opening a dialog.
@@ -121,7 +121,7 @@ fn style_ui_test(s:&Rc<StylePopover>,menu:&gtk::MenuButton,app:&Application){
     style_click(s,"style-manage-Heading1");assert_eq!(s.stack.visible_child_name().as_deref(),Some("detail"));
     assert!(style_widget(&s.detail,"style-preview").is_some());assert!(!style_widget(&s.detail,"style-delete").unwrap().is_sensitive());
     assert_eq!(ui.current.borrow().as_ref().unwrap().session.rev(),revision);
-    style_widget(&s.detail,"style-back").unwrap().downcast::<gtk::Button>().unwrap().emit_clicked();
+    s.header.button.emit_clicked();
     style_click(s,"style-new");let name=style_widget(&s.form,"style-name").unwrap().downcast::<gtk::Entry>().unwrap();name.set_text("Prueba del desplegable");style_click(s,"style-commit");
     let id=ui.current.borrow().as_ref().unwrap().session.doc.styles.find("Prueba del desplegable").unwrap().id.clone();
     assert!(style_widget(&s.list,&format!("style-manage-{id}")).is_some());
@@ -133,4 +133,5 @@ fn style_ui_test(s:&Rc<StylePopover>,menu:&gtk::MenuButton,app:&Application){
     style_click(s,"style-apply-Heading9");assert_eq!(ui.current.borrow().as_ref().unwrap().session.doc.para_at(&ui.current.borrow().as_ref().unwrap().session.sel.focus).unwrap().props.style.as_deref(),Some("Heading9"));
     assert_eq!(app.windows().len(),1,"style actions must stay inside the popover");eprintln!("STYLES_POPOVER_OK");app.quit();
 }
+
 
