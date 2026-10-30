@@ -5,9 +5,9 @@ La primera operación propone una copia y protege el archivo abierto originalmen
 El nombre debe incluir .docx o .odt; cambiar la extensión elige el formato.
 Los guardados siguientes actualizan la copia. El selector nativo confirma sobrescrituras.
 Al cerrar un documento modificado, ofrece Cancelar, Descartar o Guardar.
-Abrir un archivo conserva el documento actual y abre otra ventana independiente.
-Ctrl+N abre una ventana vacía; Ctrl+W cierra la ventana actual.
-La barra inferior agrupa formato y tamaños en Texto, junto a Estilo y Alineación.
+Abrir un archivo conserva el documento actual y añade otra pestaña.
+Ctrl+N crea una pestaña vacía; Ctrl+W cierra la pestaña actual.
+La barra inferior agrupa formato y tamaños en Texto, junto a Estilo y Párrafo.
 Junto a + y −, el tercer botón abre 100 % y Ajustar al ancho.
 La navegación entre páginas se realiza mediante scroll o miniaturas.
 Cancelar el selector o fallar el guardado mantiene abierto el documento con sus cambios.
@@ -55,3 +55,17 @@ Buscar y Buscar/reemplazar están en el menú del documento (Ctrl+F / Ctrl+H).
 Las sustituciones pasan por el motor y se pueden deshacer.
 
 Véase UPDATING_WORDCRAFT.md para la separación de capas y la actualización del motor.
+
+## Compilación optimizada
+
+Para distribuir o usar a diario:
+
+```sh
+cargo build --release --locked --features gui --bin wordcraft-gnome
+./target/release/wordcraft-gnome
+```
+
+El perfil de producción optimiza también el motor, usa ThinLTO y elimina
+símbolos. La interfaz reutiliza los píxeles nativos del renderizador, busca
+páginas mediante búsqueda binaria y agrupa las actualizaciones de miniaturas.
+Las pruebas de interfaz se ejecutan sobre este mismo ejecutable de producción.
