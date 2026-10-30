@@ -135,5 +135,6 @@ jobs:
             vista-oscura.png
             gui-err.log
             dependencies.txt
+            Cargo.lock
             version.txt
           if-no-files-found: warn
