@@ -68,7 +68,8 @@ fn show_document_context(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32,kind:D
     let edit=gio::Menu::new();
     context_item(&edit,&group,&pop,ui,"Cortar","cut",selected,|u|{if context_copy(u){apply_user_edit(u,Edit::Delete);}});
     context_item(&edit,&group,&pop,ui,"Copiar","copy",selected,|u|{context_copy(u);});
-    let can_paste=ui.document_box.clipboard().formats().contain_gtype(String::static_type());
+    let formats=ui.document_box.clipboard().formats();
+    let can_paste=formats.contains_type(String::static_type())||formats.contain_mime_type("text/plain")||formats.contain_mime_type("text/plain;charset=utf-8");
     context_item(&edit,&group,&pop,ui,"Pegar","paste",can_paste,context_paste);
     context_item(&edit,&group,&pop,ui,"Seleccionar todo","select-all",true,|u|selected_command(u,"select-all",false));root.append_section(None,&edit);
     let specific=gio::Menu::new();
