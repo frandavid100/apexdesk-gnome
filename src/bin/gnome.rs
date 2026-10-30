@@ -244,25 +244,9 @@ fn selected_command(ui: &Rc<Ui>, action: &str, extend: bool) {
     caret_ensure_visible(ui);
 }
 
-fn copy_selection(ui: &Rc<Ui>) {
-    let result = {
-        let mut value = ui.current.borrow_mut();
-        value.as_mut().map(|doc| selection::copy_text(&mut doc.session))
-    };
-    match result {
-        Some(Ok(text)) if !text.is_empty() => {
-            if let Some(display) = gdk::Display::default() {
-                display.clipboard().set_text(&text);
-            }
-        }
-        Some(Err(e)) => ui.toasts.add_toast(Toast::new(&e)),
-        _ => (),
-    }
-}
+fn copy_selection(ui:&Rc<Ui>){context_copy(ui);}
 
 
-/// Reflow using the existing WordCraft session. Rebuild the page widgets only
-/// when the pagination or the dimensions really changed.
 fn after_content_change(ui: &Rc<Ui>) {
     let (rebuild, old_zoom, fit_width_mode, old_scroll) = {
         let mut state = ui.current.borrow_mut();
@@ -824,6 +808,7 @@ include!("../gnome_host.rs");
 include!("../gnome_document_tools.rs");
 include!("../gnome_format_panels.rs");
 include!("../gnome_tables.rs");
+include!("../gnome_context.rs");
 include!("../gnome_styles.rs");
 include!("../gnome_popover_pin.rs");
 include!("../gnome_search.rs");
@@ -1147,9 +1132,10 @@ fn build_tab(
     {let g=Rc::downgrade(&format_group);let w=window.downgrade();let outside=gtk::GestureClick::new();outside.set_propagation_phase(gtk::PropagationPhase::Capture);outside.set_button(0);outside.connect_pressed(move|c,_,x,y|{if let (Some(g),Some(w))=(g.upgrade(),w.upgrade()){g.outside(c,&w,x,y);}});window.add_controller(outside);}
     let outline_panel=install_outline(&ui,&pages_toggle,&titles_toggle);ui.outline.replace(Some(outline_panel.clone()));
     let search_panel=install_search_panel(&ui,&search_toggle,&compact_search);ui.search.replace(Some(search_panel.clone()));
+    style_menu.set_widget_name("style-menu");align_menu.set_widget_name("paragraph-menu");text_menu.set_widget_name("text-menu");
     let style_popover=install_style_popover(&ui,&style_menu);
     let table_menu=install_table_controls(&ui,&window,&format_bar);
-    let (picture_menu,picture_panel)=install_picture_controls(&ui,&window,&format_bar);ui.picture.replace(Some(picture_panel.clone()));
+    let (picture_menu,picture_panel)=install_picture_controls(&ui,&window,&format_bar);picture_menu.set_widget_name("picture-menu");ui.picture.replace(Some(picture_panel.clone()));
     host.docs.borrow_mut().push((tab_page,ui.clone()));
     install_main_menu(&app_menu);install_main_menu(&compact_app_menu);refresh_main_actions(host);
     install_autosave(&ui);
@@ -1498,27 +1484,14 @@ fn build_tab(
                     return glib::Propagation::Stop;
                 }
                 if key == gdk::Key::v || key == gdk::Key::V {
-                    let ui = ui.clone();
-                    if let Some(display) = gdk::Display::default() {
-                        display.clipboard().read_text_async(
-                            None::<&gio::Cancellable>,
-                            move |result| {
-                                if let Ok(Some(text)) = result {
-                                    if ui.document_box.has_focus() {
-                                        apply_user_edit(&ui, Edit::Paste(text.to_string()));
-                                    }
-                                }
-                            },
-                        );
-                    }
+                    context_paste(&ui);
                     return glib::Propagation::Stop;
                 }
                 if key == gdk::Key::x || key == gdk::Key::X {
                     let has_selected = ui.current.borrow().as_ref()
                         .is_some_and(|doc| !doc.session.sel.is_collapsed());
                     if has_selected {
-                        copy_selection(&ui);
-                        apply_user_edit(&ui, Edit::Delete);
+                        if context_copy(&ui){apply_user_edit(&ui, Edit::Delete);}
                     }
                     return glib::Propagation::Stop;
                 }
@@ -1601,6 +1574,7 @@ fn build_tab(
     else {opened(&ui,Session::new(wordcraft_doc::Document::new()),"Documento nuevo");}
     window.present();
     install_table_context_menu(&ui,&window);
+    if std::env::args().any(|a|a=="--context-ui-test"){let u=ui.clone();let w=window.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||context_ui_test(&u,&w,&a));}
     if std::env::args().any(|a|a=="--table-keyboard-test") {
         let u=ui.clone();let app=app.clone();
         glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{
@@ -1801,6 +1775,7 @@ fn schedule_thumbnail_refresh(ui: &Rc<Ui>) {
         refresh_thumbnails(&ui);
     });
 }
+
 
 
 
