@@ -313,8 +313,7 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
 
     // Un panel lateral con cabecera propia, al estilo de GNOME Papers.
     let side_header = gtk::HeaderBar::new();
-    side_header.set_show_start_title_buttons(false);
-    side_header.set_show_end_title_buttons(false);
+    side_header.set_show_title_buttons(false);
     let side_title = gtk::Label::new(Some("Visor de documentos"));
     side_title.add_css_class("heading");
     side_header.set_title_widget(Some(&side_title));
