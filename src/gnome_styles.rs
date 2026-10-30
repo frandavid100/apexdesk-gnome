@@ -96,7 +96,7 @@ fn install_style_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<StylePopover>{
     let pop=gtk::Popover::new();pop.add_css_class("style-popover");let root=gtk::Box::new(gtk::Orientation::Vertical,6);root.set_width_request(330);
     root.set_margin_top(8);root.set_margin_bottom(8);root.set_margin_start(8);root.set_margin_end(8);
     let header=format_popover_header(&pop,&root,"Estilo",&ui.format_group);header.button.set_widget_name("style-back");
-    let stack=gtk::Stack::new();stack.set_transition_type(gtk::StackTransitionType::SlideLeftRight);stack.set_vhomogeneous(false);
+    let stack=gtk::Stack::new();stack.set_transition_type(gtk::StackTransitionType::SlideLeftRight);stack.set_vhomogeneous(false);stack.set_hhomogeneous(false);stack.set_interpolate_size(true);
     let main=gtk::Box::new(gtk::Orientation::Vertical,6);let search=gtk::SearchEntry::new();search.set_placeholder_text(Some("Buscar estilos"));search.set_widget_name("style-search");main.append(&search);
     let list=gtk::Box::new(gtk::Orientation::Vertical,0);let scroll=gtk::ScrolledWindow::new();scroll.set_policy(gtk::PolicyType::Never,gtk::PolicyType::Automatic);scroll.set_min_content_height(240);scroll.set_max_content_height(340);scroll.set_propagate_natural_height(true);scroll.set_child(Some(&list));main.append(&scroll);
     main.append(&gtk::Separator::new(gtk::Orientation::Horizontal));let create=style_menu_button("Nuevo estilo…");create.set_widget_name("style-new");create.add_css_class("flat");main.append(&create);
@@ -106,7 +106,7 @@ fn install_style_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<StylePopover>{
     let state=Rc::new(StylePopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,list,search:search.clone(),detail,form,message,header});
     let weak=Rc::downgrade(&state);search.connect_search_changed(move|_|{if let Some(s)=weak.upgrade(){s.refresh_list();}});
     let weak=Rc::downgrade(&state);create.connect_clicked(move|_|{if let Some(s)=weak.upgrade(){s.show_form(None);}});
-    let s=state.clone();pop.connect_show(move|_|s.main());menu.set_popover(Some(&pop));state
+    let s=state.clone();pop.connect_show(move|_|{if !s.ui.upgrade().is_some_and(|u|u.format_reflowing.get()){s.main();}});menu.set_popover(Some(&pop));state
 }
 
 // Exercise actual widget callbacks on every subpage without opening a dialog.
@@ -133,5 +133,6 @@ fn style_ui_test(s:&Rc<StylePopover>,menu:&gtk::MenuButton,app:&Application){
     style_click(s,"style-apply-Heading9");assert_eq!(ui.current.borrow().as_ref().unwrap().session.doc.para_at(&ui.current.borrow().as_ref().unwrap().session.sel.focus).unwrap().props.style.as_deref(),Some("Heading9"));
     assert_eq!(app.windows().len(),1,"style actions must stay inside the popover");eprintln!("STYLES_POPOVER_OK");app.quit();
 }
+
 
 
