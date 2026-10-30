@@ -20,10 +20,10 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 
 - Documentos en pestañas; Pestaña nueva en el menú principal y Ctrl+N/Ctrl+T crean una pestaña vacía. También hay ventanas independientes. Sin botones de nueva pestaña ni guardar en la cabecera.
 - Abrir y Nueva ventana pertenecen al menú general del panel lateral.
-- Panel lateral estrecho y abierto por defecto desde su construcción, sin apertura diferida. Miniaturas con margen uniforme de 12 px alrededor de imagen y número, ambos dentro del botón seleccionado; filas a altura natural. Selector inferior en AdwToolbarView, con altura compartida con la barra de edición y sombras nativas al desplazar contenido. Fondo del visor del color de la ventana; hojas blancas.
+- Panel lateral estrecho y abierto por defecto desde su construcción, sin apertura diferida. Miniaturas con esquinas de 6 px y borde fino como Papers; margen uniforme de 12 px alrededor de imagen y número, ambos dentro del botón seleccionado; filas a altura natural. Selector inferior en AdwToolbarView, con altura compartida con la barra de edición y sombras nativas al desplazar contenido. Fondo del visor del color de la ventana; hojas blancas.
 - Cabecera del documento de una línea: nombre y ● a su izquierda cuando hay cambios pendientes, sin subtítulo ni contador de páginas.
 - Barra de edición abajo, como Apostrophe. Deshacer y Rehacer a la izquierda.
-- Los cuatro desplegables de edición (Estilo, Párrafo, Texto y Tabla) comparten un grupo por pestaña: solo uno puede estar abierto y la chincheta se conserva al pasar de uno a otro. La modalidad GTK es siempre no modal; fijar/desfijar solo cambia la política de cierre, sin ocultar, recrear ni volver a mostrar la superficie. Sin fijar se cierra al aplicar o pulsar fuera. Cabecera única con nombre, vuelta atrás contextual y chincheta. Botones de subopciones de Párrafo independientes, con fondo y esquinas nativos, no enlazados/planos.
+- Los cuatro desplegables de edición (Estilo, Párrafo, Texto y Tabla) comparten un grupo por pestaña: solo uno puede estar abierto y la chincheta se conserva al pasar de uno a otro. La modalidad GTK es siempre no modal; fijar/desfijar solo cambia la política de cierre, sin ocultar, recrear ni volver a mostrar la superficie. Sin fijar se cierra al aplicar o pulsar fuera. Cabecera única con nombre, vuelta atrás contextual y chincheta. Controles divididos de Párrafo con AdwSplitButton plano: fondo compartido al pasar el puntero y resaltado independiente de cuerpo/chevrón, como Nautilus; subopciones en la misma subpágina, sin otro popup.
 - Orden de formato: Estilo → Párrafo → Texto. Estilos y Párrafo se gestionan en desplegables con subpáginas internas; Texto conserva su panel ampliado.
 - Zoom a la derecha: +, − y un tercer botón con 100 % y Ajustar al ancho.
 - Sin botones Página anterior/siguiente; navegación mediante scroll y miniaturas.
@@ -53,6 +53,10 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 Las funciones de formato son las expuestas por el motor, sin equivalencia completa con Microsoft Word.
 Las tablas existentes y nuevas pueden editarse con los controles nativos. No hay todavía
 tiradores de tamaño con ratón, fórmulas ni una interfaz dedicada para insertar imágenes.
+
+## Cambio en validación
+
+Revisión `cff930451b7426a6fbaa8fcae0898886b9eb30df`: botones divididos nativos AdwSplitButton planos en Párrafo y miniaturas redondeadas a 6 px como Papers. La CI incluye capturas con puntero fuera, sobre cuerpo y sobre chevrón, y clic real para abrir la subpágina. Pendiente del resultado de la ejecución 41121116046; no sustituye todavía a la entrega validada indicada abajo.
 
 ## Última entrega y pruebas
 
@@ -134,3 +138,8 @@ Registrar en ROADMAP los cambios de prioridad para que el plan sobreviva al chat
 
 
 
+
+
+## Prioridad de MVP acordada
+
+Completar el documento mínimo: imágenes (insertar, conservar proporción al redimensionar y eliminar), configuración de tamaño/orientación/márgenes y exportación PDF. Después, distribución instalable; combinar pruebas de documentos reales con primeros usuarios y mantenimiento. El rediseño completo de Texto no bloquea este orden. Flathub requiere colaboración humana para el manifiesto y la solicitud conforme a su política de IA revisada; no presentar la publicación como garantizada.
