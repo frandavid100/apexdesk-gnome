@@ -2,7 +2,7 @@
 pub const PAGE_GAP: f64 = 22.0;
 pub const MIN_ZOOM: f32 = 0.5;
 pub const MAX_ZOOM: f32 = 2.0;
-pub const THUMB_SCALE: f32 = 0.21;
+pub const THUMB_SCALE: f32 = 0.28;
 
 pub fn zoom_clamped(value: f32) -> f32 {
     if value.is_finite() { value.clamp(MIN_ZOOM, MAX_ZOOM) } else { 1.0 }

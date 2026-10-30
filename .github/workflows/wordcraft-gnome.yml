@@ -1,4 +1,4 @@
-name: "WordCraft GNOME — visor continuo"
+name: "WordCraft GNOME — estilo Papers"
 on:
   push:
     branches: [wordcraft-migration, wordcraft-viewer]
@@ -53,12 +53,21 @@ jobs:
             wait "$pid" || true
           '
           test -s vista-gnome.png
+      - name: Preparar ejecutable ligero sin símbolos de depuración
+        run: |
+          cp target/debug/wordcraft-gnome wordcraft-gnome
+          echo "Antes de strip:"
+          ls -lh wordcraft-gnome
+          strip --strip-unneeded wordcraft-gnome
+          echo "Después de strip:"
+          ls -lh wordcraft-gnome
+          test -s wordcraft-gnome
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: wordcraft-gnome-visor-continuo-linux
+          name: wordcraft-gnome-visor-papers-linux
           path: |
-            target/debug/wordcraft-gnome
+            wordcraft-gnome
             muestra-wordcraft.png
             vista-gnome.png
             gui-err.log

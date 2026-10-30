@@ -7,15 +7,15 @@ independientes de egui. Código de desarrollo experimental.
 
 - `main`: prototipo anterior, basado en ApexDesk; permanece intacto.
 - `wordcraft-migration`: primera integración de WordCraft, visor de una sola página.
-- **`wordcraft-viewer`**: visor con páginas continuas, zoom y miniaturas.
+- **`wordcraft-viewer`**: visor con páginas continuas, zoom, miniaturas y cabecera organizada como GNOME Papers.
 
 ## Funciones de esta versión
 
 - Abrir documentos **DOCX y ODT** en modo solo lectura.
 - Desplazamiento vertical continuo entre páginas.
-- **Zoom** del 50 % al 200 % con botones, `Ctrl++`, `Ctrl+-` o `Ctrl+rueda`.
+- **Zoom** del 50 % al 200 % con botones flotantes, menú de opciones, `Ctrl++`, `Ctrl+-` o `Ctrl+rueda`.
 - **Ajustar al ancho** con el botón correspondiente o `Ctrl+0`.
-- Panel lateral de **miniaturas de página completa**, que se puede mostrar y ocultar.
+- Panel lateral con **cabecera independiente** y miniaturas completas, que se puede mostrar y ocultar (F9).
 - Pulsar en una miniatura para saltar a esa página.
 - Navegación por páginas mediante los botones de cabecera.
 - Renderizado bajo demanda de las páginas y miniaturas próximas a la zona visible para contener el uso de memoria.
@@ -47,7 +47,9 @@ cargo run --features gui --bin wordcraft-gnome -- --sample --sidebar
 El [workflow CI](.github/workflows/wordcraft-gnome.yml) ejecuta pruebas
 del motor y de la geometría del visor, comprueba que no haya egui/eframe,
 compila la aplicación y la arranca bajo Xvfb. Publica una captura y un
-binario Linux de desarrollo como artefacto.
+binario Linux de desarrollo como artefacto. Para reducir el tamaño del ZIP se
+retiran los símbolos de depuración del binario distribuido; el código conserva
+las pruebas y la información necesaria en el repositorio.
 
 Los motores WordCraft están fijados a la revisión
 [`165d5725`](https://github.com/storytold/wordcraft/commit/165d5725dc25b4a7887d8025c3b1fe506ccc3dcc)
