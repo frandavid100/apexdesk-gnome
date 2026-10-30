@@ -61,7 +61,7 @@ struct Ui {
     format_syncing: Cell<bool>,
     undo_button: gtk::Button,
     redo_button: gtk::Button,
-    font_button: gtk::FontDialogButton,
+    font_button: gtk::Button,
     size_input: gtk::SpinButton,
 }
 
@@ -112,9 +112,8 @@ fn refresh_format_controls(ui: &Rc<Ui>) {
         button.set_active(active);
     }
     if let Some(font) = state["font"].as_str() {
-        let desc = gtk::pango::FontDescription::from_string(font);
-        ui.font_button.set_font_desc(&desc);
-    }
+        ui.font_button.set_label(font);
+    } else { ui.font_button.set_label("Varias fuentes"); }
     if let Some(size) = state["size"].as_f64() { ui.size_input.set_value(size); }
     else { ui.size_input.set_text(""); }
     ui.format_syncing.set(false);
@@ -942,6 +941,9 @@ fn make_window(
     format_bar.set_margin_bottom(5);
     let undo_button = gtk::Button::from_icon_name("edit-undo-symbolic");
     let redo_button = gtk::Button::from_icon_name("edit-redo-symbolic");
+    let icons = gtk::IconTheme::for_display(&window.display());
+    if !icons.has_icon("edit-undo-symbolic") { undo_button.set_label("Deshacer"); }
+    if !icons.has_icon("edit-redo-symbolic") { redo_button.set_label("Rehacer"); }
     undo_button.set_tooltip_text(Some("Deshacer (Ctrl+Z)"));
     redo_button.set_tooltip_text(Some("Rehacer (Ctrl+Shift+Z)"));
     undo_button.set_sensitive(false); redo_button.set_sensitive(false);
@@ -967,9 +969,8 @@ fn make_window(
     let font_label = gtk::Label::new(Some("Fuente")); font_label.set_halign(gtk::Align::Start);
     text_options.append(&font_label);
     let font_dialog = gtk::FontDialog::new(); font_dialog.set_title("Elegir fuente");
-    let font_button = gtk::FontDialogButton::new(Some(font_dialog));
-    font_button.set_level(gtk::FontLevel::Family);
-    font_button.set_use_font(false); font_button.set_use_size(false);
+    let font_button = gtk::Button::with_label("Elegir fuente…");
+    font_button.set_tooltip_text(Some("Elegir una familia tipográfica instalada"));
     text_options.append(&font_button);
     let size_label = gtk::Label::new(Some("Tamaño de letra"));
     size_label.set_halign(gtk::Align::Start);
@@ -1076,13 +1077,21 @@ fn make_window(
     }
     {
         let ui = ui.clone(); let popover = text_popover.clone();
-        font_button.connect_font_desc_notify(move |button| {
-            if ui.format_syncing.get() { return; }
-            let Some(desc) = button.font_desc() else { return };
-            if let Some(name) = desc.family() {
-                popover.popdown();
-                apply_format_operation(&ui, |session| formatting::font(session, &name));
-            }
+        let parent = window.clone();
+        font_button.connect_clicked(move |_| {
+            popover.popdown();
+            let ui = ui.clone();
+            font_dialog.choose_family(Some(&parent), None::<&gtk::pango::FontFamily>,
+                None::<&gio::Cancellable>, move |result| {
+                    match result {
+                        Ok(family) => {
+                            let name = family.name();
+                            apply_format_operation(&ui, |session| formatting::font(session, &name));
+                        }
+                        Err(e) if e.matches(gtk::DialogError::Dismissed) || e.matches(gtk::DialogError::Cancelled) => {},
+                        Err(e) => ui.toasts.add_toast(Toast::new(&format!("No se pudo elegir fuente: {e}"))),
+                    }
+                });
         });
     }
     {
