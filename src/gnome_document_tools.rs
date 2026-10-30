@@ -53,7 +53,7 @@ fn install_picture_controls(ui:&Rc<Ui>,parent:&ApplicationWindow,bar:&gtk::Box)-
     let root=gtk::Box::new(gtk::Orientation::Vertical,8);root.set_width_request(300);
     root.set_margin_top(8);root.set_margin_bottom(8);root.set_margin_start(8);root.set_margin_end(8);
     format_popover_header(&pop,&root,"Imagen",&ui.format_group);
-    let insert=style_menu_button("Insertar imagen…");insert.set_widget_name("picture-insert");root.append(&insert);
+    let insert=style_menu_button("Insertar imagen…");insert.set_widget_name("picture-insert");insert.set_visible(tool_diagnostics());root.append(&insert);
     let hint=gtk::Label::new(Some("Selecciona una imagen en el documento para modificarla."));hint.set_wrap(true);hint.set_max_width_chars(30);hint.add_css_class("dim-label");root.append(&hint);
     let context=gtk::Box::new(gtk::Orientation::Vertical,8);context.set_widget_name("picture-context");root.append(&context);
     context.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
@@ -162,3 +162,4 @@ fn document_tools_ui_test(ui:&Rc<Ui>,panel:&Rc<PicturePopover>,menu:&gtk::MenuBu
         });
     });
 }
+
