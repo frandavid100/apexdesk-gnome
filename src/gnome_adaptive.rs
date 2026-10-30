@@ -1,7 +1,6 @@
 // Shared controls move between two real toolbar positions; no duplicate actions.
-struct AdaptiveTools {ui:std::rc::Weak<Ui>,history:gtk::Box,formats:gtk::Box,top_history:gtk::Box,top_formats:gtk::Box,bottom:gtk::Box,separator:gtk::Separator,narrow:Cell<bool>,generation:Cell<u64>,pending_width:Cell<i32>,reflow_queued:Cell<bool>}
+struct AdaptiveTools {ui:std::rc::Weak<Ui>,history:gtk::Box,formats:gtk::Box,top_history:gtk::Box,top_formats:gtk::Box,bottom:gtk::Box,separator:gtk::Separator,narrow:Cell<bool>,generation:Cell<u64>}
 impl AdaptiveTools {
-    fn request_width(self:&Rc<Self>,width:i32){self.pending_width.set(width);if self.reflow_queued.replace(true){return;}let weak=Rc::downgrade(self);glib::idle_add_local_once(move||{if let Some(a)=weak.upgrade(){a.reflow_queued.set(false);a.sync_width(a.pending_width.get());}});}
     fn sync_width(self:&Rc<Self>,width:i32){
         if width<=0{return;}let narrow=tool_diagnostics()||if self.narrow.get(){width<680}else{width<640};
         let Some(ui)=self.ui.upgrade()else{return;};
