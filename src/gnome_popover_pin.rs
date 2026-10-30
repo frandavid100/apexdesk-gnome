@@ -20,7 +20,7 @@ impl FormatPopoverGroup {
     fn outside(&self,gesture:&gtk::GestureClick,window:&ApplicationWindow,x:f64,y:f64){
         if self.pinned.get(){return;}let surface=gesture.current_event().and_then(|e|e.surface());
         for(weak,_)in self.entries.borrow().iter(){if let Some(p)=weak.upgrade(){if !p.is_visible()||surface==p.surface(){continue;}
-            let anchor=p.parent().and_then(|w|w.compute_bounds(window));
+            let anchor=p.parent().filter(|w|w.is::<gtk::MenuButton>()).and_then(|w|w.compute_bounds(window));
             if anchor.is_some_and(|r|x>=r.x()as f64&&y>=r.y()as f64&&x<=(r.x()+r.width())as f64&&y<=(r.y()+r.height())as f64){continue;}p.popdown();
         }}
     }
@@ -62,4 +62,5 @@ fn pin_test_step(t:Rc<PinTest>,step:u8){
     }
     glib::timeout_add_local_once(std::time::Duration::from_millis(220),move||pin_test_step(t,step+1));
 }
+
 
