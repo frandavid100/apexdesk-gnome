@@ -774,6 +774,7 @@ fn install_css() {
 }
 
 include!("../gnome_host.rs");
+include!("../gnome_format_panels.rs");
 
 fn build_tab(
     app: &Application,
@@ -1010,6 +1011,8 @@ fn build_tab(
     let sizes = gtk::Grid::new();
     sizes.set_row_spacing(6); sizes.set_column_spacing(6);
     text_options.append(&sizes);
+    let more_text=gtk::Button::with_label("Más opciones de texto…");
+    text_options.append(&more_text);
     text_popover.set_child(Some(&text_options));
     let text_menu = gtk::MenuButton::new();
     text_menu.set_label("Texto");
@@ -1021,6 +1024,7 @@ fn build_tab(
     let mut format_actions: Vec<(gtk::Button, Format, gtk::Popover)> = Vec::new();
     let style_menu = format_menu("Estilo", &[
         ("Normal", Format::Normal),
+        ("Sin espaciado", Format::NoSpacing),
         ("Título 1", Format::Heading1),
         ("Título 2", Format::Heading2),
         ("Título 3", Format::Heading3),
@@ -1040,6 +1044,10 @@ fn build_tab(
         ("Aumentar sangría", Format::Indent),
         ("Reducir sangría", Format::Outdent),
     ], &mut format_actions);
+    let all_styles=gtk::Button::with_label("Todos los estilos y gestión…");
+    if let Some(pop)=style_menu.popover() {if let Some(child)=pop.child().and_then(|x|x.downcast::<gtk::Box>().ok()){child.append(&all_styles);}}
+    let more_paragraph=gtk::Button::with_label("Más opciones de párrafo…");
+    if let Some(pop)=align_menu.popover() {if let Some(child)=pop.child().and_then(|x|x.downcast::<gtk::Box>().ok()){child.append(&more_paragraph);}}
     format_bar.append(&style_menu);
     format_bar.append(&align_menu);
     let format_toolbar = gtk::ScrolledWindow::new();
@@ -1100,6 +1108,10 @@ fn build_tab(
     });
 
 
+    for (button,kind,popover) in [(more_text,0,text_popover.clone()),(more_paragraph,1,align_menu.popover().unwrap_or_else(gtk::Popover::new)),(all_styles,2,style_menu.popover().unwrap_or_else(gtk::Popover::new))] {
+        let ui=ui.clone();let parent=window.clone();
+        button.connect_clicked(move|_|{popover.popdown();match kind{0=>show_text_options(&ui,&parent),1=>show_paragraph_options(&ui,&parent),_=>show_styles(&ui,&parent)}});
+    }
     host.docs.borrow_mut().push((tab_page,ui.clone()));
     install_autosave(&ui);
     {
@@ -1595,6 +1607,9 @@ fn build_tab(
     } else if sample_on_start { opened(&ui, sample_session(), "Documento de ejemplo"); }
     else {opened(&ui,Session::new(wordcraft_doc::Document::new()),"Documento nuevo");}
     window.present();
+    if std::env::args().any(|a|a=="--advanced-text-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_text_options(&u,&w));}
+    if std::env::args().any(|a|a=="--advanced-paragraph-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_paragraph_options(&u,&w));}
+    if std::env::args().any(|a|a=="--styles-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_styles(&u,&w));}
     if std::env::args().any(|a|a=="--preferences-demo") {let w=window.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_preferences(&w));}
     if std::env::args().any(|a|a=="--search-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_search(&u,&w,true));}
     {
