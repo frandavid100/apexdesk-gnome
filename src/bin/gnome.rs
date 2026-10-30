@@ -1,5 +1,5 @@
 //! Editor experimental GNOME para WordCraft: motor y maquetación reutilizados.
-//! La fase 3B modifica el documento en memoria, pero aún no lo guarda.
+//! La fase 3D guarda copias DOCX/ODT mediante los comandos de WordCraft.
 use adw::prelude::*;
 use adw::{Application, ApplicationWindow, HeaderBar, StatusPage, Toast, ToastOverlay, ToolbarView, WindowTitle};
 use glib::value::ToValue;
@@ -286,7 +286,7 @@ fn apply_user_format(ui: &Rc<Ui>, action: Format) {
             after_content_change(ui);
             if first {
                 ui.toasts.add_toast(Toast::new(
-                    "Formato modificado. Usa Guardar para conservarar los cambios.",
+                    "Formato modificado. Usa Guardar para conservar los cambios.",
                 ));
             }
         },
@@ -789,7 +789,7 @@ fn make_window(
     side_header.pack_end(&app_menu);
 
     let header = HeaderBar::new();
-    let title = WindowTitle::new("WordCraft GNOME", "Formato experimental · sin guardar");
+    let title = WindowTitle::new("WordCraft GNOME", "Edición y guardado · Fase 3D");
     header.set_title_widget(Some(&title));
 
     let sidebar_button = gtk::ToggleButton::new();
