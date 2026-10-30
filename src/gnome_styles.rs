@@ -34,8 +34,8 @@ impl StylePopover {
             let apply=gtk::Button::new();apply.add_css_class("flat");apply.set_hexpand(true);apply.set_widget_name(&format!("style-apply-{}",st.id));
             let label=gtk::Label::new(Some(&st.name));label.set_xalign(0.0);label.set_hexpand(true);label.set_ellipsize(gtk::pango::EllipsizeMode::End);label.set_max_width_chars(28);
             let content=gtk::Box::new(gtk::Orientation::Horizontal,8);content.append(&label);
-            let kind=gtk::Label::new(Some(if st.kind==wordcraft_doc::styles::StyleKind::Paragraph{"¶"}else{"a"}));kind.add_css_class("dim-label");content.append(&kind);
-            if current.as_deref()==Some(st.id.as_str()){let check=gtk::Label::new(Some("✓"));content.append(&check);}
+            let kind=gtk::Label::new(Some(if st.kind==wordcraft_doc::styles::StyleKind::Paragraph{"¶"}else{"a"}));kind.add_css_class("dim-label");kind.set_tooltip_text(Some(if st.kind==wordcraft_doc::styles::StyleKind::Paragraph{"Estilo de párrafo"}else{"Estilo de carácter"}));content.append(&kind);
+            if current.as_deref()==Some(st.id.as_str()){let check=gtk::Label::new(Some("✓"));check.set_tooltip_text(Some("Estilo actual"));content.append(&check);}
             apply.set_child(Some(&content));row.append(&apply);
             let manage=gtk::Button::with_label("›");manage.add_css_class("flat");manage.set_tooltip_text(Some(&format!("Gestionar «{}»",st.name)));manage.set_widget_name(&format!("style-manage-{}",st.id));row.append(&manage);
             let weak=Rc::downgrade(self);let id=st.id.clone();apply.connect_clicked(move|_|{if let Some(s)=weak.upgrade(){
@@ -92,7 +92,7 @@ impl StylePopover {
     }
 }
 fn install_style_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<StylePopover>{
-    let pop=gtk::Popover::new();let root=gtk::Box::new(gtk::Orientation::Vertical,6);root.set_width_request(330);
+    let pop=gtk::Popover::new();pop.add_css_class("style-popover");let root=gtk::Box::new(gtk::Orientation::Vertical,6);root.set_width_request(330);
     root.set_margin_top(8);root.set_margin_bottom(8);root.set_margin_start(8);root.set_margin_end(8);
     let stack=gtk::Stack::new();stack.set_transition_type(gtk::StackTransitionType::SlideLeftRight);stack.set_vhomogeneous(false);
     let main=gtk::Box::new(gtk::Orientation::Vertical,6);let search=gtk::SearchEntry::new();search.set_placeholder_text(Some("Buscar estilos"));search.set_widget_name("style-search");main.append(&search);
