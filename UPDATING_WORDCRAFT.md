@@ -144,3 +144,17 @@ Sidebar navigation uses a nested AdwToolbarView bottom bar, not content padding.
 A retained vertical GtkSizeGroup aligns it with the editor toolbar. Both use Flat
 style for native scroll undershoots. Thumbnail buttons enclose image plus label
 with uniform 12px padding. These are host changes only, no engine updates.
+
+
+## Pinned editing popovers
+
+`gnome_popover_pin.rs` supplies the fixed title/pin header for Style, Paragraph,
+Text and Table. Pin state belongs to each GTK popover, never the document.
+Actions dismiss through close_format_popover only when autohide is enabled.
+GTK unrealizes an already visible popover when autohide changes; the helper
+explicitly hides it before changing autohide, then reopens through its
+GtkMenuButton under a synchronous guard so show handlers do not reset subpages
+or forms. Calling popup alone leaves a visible but unmapped widget. Tests wait
+for GTK frames and assert is_mapped, not just is_visible. Pinning makes it nonmodal, permitting document focus while it stays open.
+Small foreground-colour Cairo chevrons match the downward menu indicator and do
+not require extra icon-theme assets. No WordCraft changes or dependencies.
