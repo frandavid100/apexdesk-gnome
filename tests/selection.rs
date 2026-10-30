@@ -50,3 +50,20 @@ fn out_of_bounds_coordinates_cannot_corrupt_selection() {
     assert!(hit(&mut s, 0, f32::NAN, 5.0).is_none());
     assert!(move_caret(&mut s, "invalid", false).is_err());
 }
+
+#[test]
+fn selection_can_cross_wordcraft_pages() {
+    let mut session = wordcraft_gnome::sample_session();
+    let layout = session.layout();
+    assert!(layout.pages.len() >= 2, "sample document should span pages");
+    let p0 = &layout.pages[0];
+    let p1 = &layout.pages[1];
+    let a = hit(&mut session, 0, p0.w / 2.0, p0.h / 2.0).unwrap();
+    let b = hit(&mut session, 1, p1.w / 2.0, p1.h / 2.0).unwrap();
+    select_range(&mut session, &a, &b).unwrap();
+    let selection = geometry(&mut session);
+    assert!(selection.highlights.iter().any(|r| r.page == 0),
+        "selection should highlight page 1");
+    assert!(selection.highlights.iter().any(|r| r.page == 1),
+        "selection should highlight page 2");
+}
