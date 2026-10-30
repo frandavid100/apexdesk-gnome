@@ -73,3 +73,13 @@ fn long_table_paginates_and_renders_with_repeated_headers(){
  run(&mut s,"table.rowHeight",json!({"height":24}));let n=s.layout().pages.len();assert!(n>=2);
  let image=wordcraft_gnome::render_page_premultiplied(&mut s,n-1,0.28).unwrap();assert!(!image.rgba.is_empty());
 }
+
+#[test]
+fn moving_between_cells_keeps_redo_and_does_not_add_undo_steps(){
+ let mut s=fresh(2,2);run(&mut s,"text.insert",json!({"text":"Antes"}));
+ run(&mut s,"edit.undo",json!({}));assert!(s.can_redo());let rev=s.rev();
+ tables::navigate(&mut s,false,false).unwrap();assert_eq!(s.rev(),rev);assert!(s.can_redo());
+ run(&mut s,"edit.redo",json!({}));assert!(s.doc.plain_text(StoryRef::Body).contains("Antes"));
+ run(&mut s,"table.selectColumn",json!({}));tables::navigate(&mut s,false,false).unwrap();
+ assert!(s.cell_range().is_none());
+}
