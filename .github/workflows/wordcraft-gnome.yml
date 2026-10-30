@@ -83,6 +83,8 @@ jobs:
             xdotool key shift+Tab
             wait "$table_pid"
             grep -q TABLE_KEYBOARD_OK table-keyboard.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --motion-ui-test 2> motion-ui.log
+            grep -q MOTION_UI_OK motion-ui.log
             run_case vista-insertar-tabla.png --table-insert-demo
             run_case vista-menu-tabla.png --table-menu-demo
             run_case vista-propiedades-tabla.png --table-properties-demo
@@ -168,6 +170,7 @@ jobs:
             vista-estilo-nuevo.png
             vista-estilos-estrecha.png
             styles-popover.log
+            motion-ui.log
             vista-buscar.png
             vista-seleccion.png
             vista-edicion.png
