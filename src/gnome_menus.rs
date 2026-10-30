@@ -24,6 +24,8 @@ fn setup_main_actions(host:&Rc<Workspace>,app:&Application){
     window_action(host,"redo",|h|{if let Some(ui)=selected_ui(h){apply_user_edit(&ui,Edit::Redo);ui.document_box.grab_focus();}});
     window_action(host,"save",|h|{if let Some(ui)=selected_ui(h){save_document(&ui,&h.window,false,Box::new(||{}));}});
     window_action(host,"save-as",|h|{if let Some(ui)=selected_ui(h){save_document(&ui,&h.window,true,Box::new(||{}));}});
+    window_action(host,"document-properties",|h|{if let Some(ui)=selected_ui(h){show_document_properties(&ui,&h.window);}});
+    window_action(host,"export-pdf",|h|{if let Some(ui)=selected_ui(h){export_pdf_dialog(&ui,&h.window);}});
     window_action(host,"preferences",|h|show_preferences(&h.window));
     window_action(host,"shortcuts",|h|show_keyboard_shortcuts(&h.window));
     window_action(host,"help",|h|show_editor_help(&h.window));
@@ -48,7 +50,8 @@ fn install_main_menu(button:&gtk::MenuButton){
 fn install_document_menu(button:&gtk::MenuButton){
     let root=gio::Menu::new();
     let history=gio::Menu::new();menu_item(&history,"Deshacer","undo",Some("<Control>z"));menu_item(&history,"Rehacer","redo",Some("<Control><Shift>z"));root.append_section(None,&history);
-    let save=gio::Menu::new();menu_item(&save,"Guardar","save",Some("<Control>s"));menu_item(&save,"Guardar como…","save-as",Some("<Control><Shift>s"));root.append_section(None,&save);button.set_menu_model(Some(&root));
+    let save=gio::Menu::new();menu_item(&save,"Guardar","save",Some("<Control>s"));menu_item(&save,"Guardar como…","save-as",Some("<Control><Shift>s"));root.append_section(None,&save);
+    let properties=gio::Menu::new();menu_item(&properties,"Propiedades del documento…","document-properties",None);menu_item(&properties,"Exportar a PDF…","export-pdf",None);root.append_section(None,&properties);button.set_menu_model(Some(&root));
 }
 fn show_editor_help(parent:&ApplicationWindow){
     let w=adw::Window::builder().transient_for(parent).title("Ayuda de WordCraft GNOME").default_width(520).default_height(520).build();let toolbar=ToolbarView::new();toolbar.add_top_bar(&HeaderBar::new());
@@ -62,4 +65,5 @@ fn show_keyboard_shortcuts(parent:&ApplicationWindow){
     for(title,shortcuts)in groups{xml.push_str(&format!("<child><object class=\"GtkShortcutsGroup\"><property name=\"title\">{}</property>",glib::markup_escape_text(title)));for(title,key)in shortcuts{xml.push_str(&format!("<child><object class=\"GtkShortcutsShortcut\"><property name=\"title\">{}</property><property name=\"accelerator\">{}</property></object></child>",glib::markup_escape_text(title),glib::markup_escape_text(key)));}xml.push_str("</object></child>");}
     xml.push_str("</object></child></object></interface>");let builder=gtk::Builder::from_string(&xml);let w=builder.object::<gtk::ShortcutsWindow>("shortcuts").unwrap();w.set_transient_for(Some(parent));w.present();
 }
+
 
