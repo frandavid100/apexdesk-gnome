@@ -25,3 +25,15 @@ chmod +x wordcraft-gnome
 Documentación revisada:
 https://docs.gtk.org/gtk4/method.FileDialog.save.html
 https://developer.gnome.org/hig/patterns/feedback/dialogs.html
+
+## Edición básica ampliada
+
+La barra inferior empieza con Deshacer/Rehacer y refleja su disponibilidad.
+Texto incluye el selector nativo de familias instaladas y tamaño libre de
+1 a 1638 puntos, con decimales (botón Aplicar), además de B/I/U y tamaños rápidos.
+Párrafo agrupa alineación, listas de viñetas/numeradas y aumentar/reducir sangría.
+Atajos: Ctrl+M / Ctrl+Shift+M para sangría y Ctrl+Shift+L para viñetas.
+Abrir y Nueva ventana pertenecen al menú general encima del panel lateral;
+el mismo menú sigue disponible cuando el panel está oculto.
+El fondo del documento usa el color de ventana de Adwaita, como la cabecera
+plana. Las hojas permanecen blancas.
