@@ -133,6 +133,8 @@ jobs:
             grep -q SIDEBAR_NAVIGATION_OK sidebar-navigation.log
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --chrome-ui-test 2> document-chrome.log
             grep -q DOCUMENT_CHROME_OK document-chrome.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --pin-ui-test 2> popover-pin.log
+            grep -q POPOVER_PIN_OK popover-pin.log
             run_case vista-titulos.png --outline-demo
             run_case vista-menu-principal.png --main-menu-demo
             run_case vista-menu-documento.png --document-menu-demo
@@ -234,6 +236,7 @@ jobs:
             view-pointer.log
             sidebar-navigation.log
             document-chrome.log
+            popover-pin.log
             vista-titulos.png
             vista-menu-principal.png
             vista-menu-documento.png
@@ -254,4 +257,5 @@ jobs:
             performance-debug.txt
             performance-release.txt
           if-no-files-found: warn
+
 
