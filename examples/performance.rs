@@ -1,6 +1,6 @@
 //! Identical workload and pixel checksum for development/production comparison.
 use std::time::Instant;
-use wordcraft_gnome::{sample_session, render_page};
+use wordcraft_gnome::{sample_session, render_page_premultiplied as render_page};
 fn main() {
     let start = Instant::now();
     let mut session = sample_session();
