@@ -149,3 +149,6 @@ y seguir escribiendo; sin fijar se cierra al aplicar o pulsar fuera.
 Las subpáginas tienen una sola cabecera con vuelta atrás, nombre y chincheta.
 Los botones de subopciones de Párrafo tienen fondo y esquinas nativos como
 Nautilus, con chevrones pequeños hacia abajo.
+
+
+Los botones divididos de Párrafo usan AdwSplitButton plano: fondo compartido y resaltado independiente de cada mitad como Nautilus. Las miniaturas tienen esquinas de 6 px como Papers.
