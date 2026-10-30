@@ -177,3 +177,11 @@ replacement during pin toggles, and exclusive switching with pin inheritance.
 `document_properties.rs` clones each target section, updates only paper/margins, prevalidates all sections, and calls layout.pageSetup for each. The engine checkpoint/join/merge and edit_snapshot/restore APIs provide one undo and rollback on errors; existing headers, footers, columns and other settings stay distinct. Temporary caret commands restore the user's selection. Millimetre display rounding does not dirty unchanged fields.
 `pdf_export.rs` uses pure file.exportPdf with an explicit .pdf destination. The GUI clones the document and creates a separate Session inside a GIO blocking worker, retaining the live session's path, dirty state, selection and history. Native file dialogs confirm the exact output path; never silently append an extension after confirmation.
 `gnome_document_tools.rs` owns native popover, staged modal properties and file selectors. Async chooser callbacks validate document identity/revision before acting. No dependency or engine revision changes.
+
+
+
+## Native context menus and rich clipboard
+
+`gnome_context.rs` supplies a native GtkPopoverMenu/GMenu for text, table cells and pictures; the secondary-button gesture resolves the target with the same layout hit testing as primary clicks. An existing text or cell selection is retained when the pointer falls inside it. Otherwise the host selects only the clicked picture or moves the caret. Menu/Shift+F10 use the current selection. Actions reuse the host's existing adapters and public engine commands, never document mutations. The former table-only custom popover is removed.
+
+Copy publishes the engine's plain-text and HTML representations through a GdkContentProvider union. A single app-wide engine fragment allows rich paste across tabs/windows while GTK owns that exact provider; external clipboard changes invalidate it by provider identity. Native entry fields retain their own clipboard handling. Text fallback captures document identity/revision/selection, so asynchronous reads cannot paste into another tab or a moved selection. Cut deletes only after a successful clipboard write. Context actions and Ctrl+C/X/V share these functions. No new dependencies or engine changes.
