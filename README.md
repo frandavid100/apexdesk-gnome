@@ -110,3 +110,19 @@ el fondo de Adwaita. Las miniaturas tienen relleno simétrico y el número debaj
 La cabecera muestra una sola línea, con ● antes del nombre si hay cambios
 pendientes; no incluye subtítulo ni contador de páginas. La vuelta del foco
 desde los menús al documento conserva el desplazamiento del visor.
+
+## Navegación lateral y menú principal
+
+El selector inferior Páginas/Títulos sigue el aspecto de Papers. Títulos muestra
+la jerarquía de niveles de esquema del documento, con numeración, secciones que
+se pueden contraer y navegación al texto. La lupa alterna búsqueda/navegación
+con un fundido breve y recuerda la vista anterior. No muestra un contador de
+coincidencias. El botón junto al segundo campo reemplaza todos los resultados
+en un solo paso de deshacer; cada fila mantiene el reemplazo individual.
+
+El menú principal usa GMenu/GtkPopoverMenu, como Nautilus, con atajos a la derecha
+y acciones de historial sensibles al documento activo. Incluye ventana y pestaña
+nuevas, todas las pestañas, abrir, preferencias, atajos, ayuda y acerca de.
+Recuperación y ejemplo se encuentran en el submenú Documentos. La vista de todas
+las pestañas es el AdwTabOverview nativo. Se mantienen Ctrl+N para pestaña nueva
+y Ctrl+Mayús+N para ventana nueva; Ctrl+T también abre una pestaña.
