@@ -43,22 +43,25 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 | Documentos | Pestañas y ventanas, nuevo documento y apertura conservando documentos existentes. |
 | Autoguardado | Preferencia persistente; recuperación cada 10 s por defecto, propio archivo cada 30 s; recuperación tras cierre inesperado. |
 | Búsqueda | Buscar y reemplazar una/todas las coincidencias, con deshacer. |
+| Tablas | Inserción, filas/columnas, selección de celdas, combinar/dividir, tamaño, alineación, bordes, sombreado y cabeceras; menú inferior y contextual. |
 | Optimización | Release con ThinLTO, píxeles premultiplicados directos a GTK, búsqueda binaria de páginas y miniaturas agrupadas a 120 ms. |
 
 Las funciones de formato son las expuestas por el motor, sin equivalencia completa con Microsoft Word.
-Las tablas de documentos existentes pueden representarse; todavía no hay una interfaz dedicada
-para insertar y editar su estructura. Tampoco hay una interfaz dedicada para insertar imágenes.
+Las tablas existentes y nuevas pueden editarse con los controles nativos. No hay todavía
+tiradores de tamaño con ratón, fórmulas ni una interfaz dedicada para insertar imágenes.
 
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `c0493a3fe213a32ecad1b084db667c8fbe9cbb61`.
+Código del último ejecutable validado: `d0a9341722db86c4e8a857771fca5b9f1d06980b`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41057985488).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `12976989747`.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41068082749).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `12982819765`.
+Ejecutable actual con tablas: 33.611.432 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
+Medidas de la entrega optimizada anterior (antes de las tablas):
 Ejecutable: 33.554.600 bytes frente a 92.516.752 del desarrollo anterior.
 ZIP entregado: 15.642.305 bytes. Benchmark sobre el mismo runner y adaptador:
 20 imágenes de páginas/miniaturas, desarrollo 1463,016 ms, release 21,464 ms.
@@ -69,7 +72,7 @@ También se comparó una región de la página en las capturas anterior/actual s
 Pasaron los tests de integración con el motor, de los adaptadores y de búsqueda de páginas frente al recorrido anterior;
 la CI compiló y probó el ejecutable release en ventanas, pestañas y paneles nativos.
 
-**Pendiente de confirmación del usuario:** formato avanzado y última optimización en su
+**Pendiente de confirmación del usuario:** tablas, formato avanzado y última optimización en su
 GNOME OS Preview 51. Había confirmado que las entregas anteriores funcionaban.
 No interpretar el éxito de la CI como una prueba manual del usuario.
 
@@ -80,12 +83,17 @@ La fidelidad depende de los importadores/exportadores de WordCraft. La prueba am
 de formato avanzado cubre DOCX; no extrapolar esa cobertura íntegra a ODT.
 Probar texto con tildes/IME, selecciones entre páginas, deshacer, recuperación y varias pestañas.
 Los estilos recién creados aparecen en la lista al volver a abrir el panel.
+Las pruebas de tablas cubren estructura y texto en DOCX/ODT, sombreado y anchos,
+selecciones vacías, combinar/dividir, historial, varias páginas y teclado real.
+Probar manualmente tablas importadas complejas y los controles en ventana estrecha.
 
 ## Mapa del código
 
 - `src/bin/gnome.rs`: widgets GTK, selección visual, entrada y vista de páginas.
 - `src/gnome_host.rs`: pestañas, ventanas, preferencias, búsqueda y recuperación.
 - `src/gnome_format_panels.rs`: paneles de formato avanzado y estilos.
+- `src/gnome_tables.rs`: inserción, menú de tabla, propiedades y menú contextual.
+- `src/tables.rs`: navegación entre celdas sin ensuciar el documento ni el historial.
 - `src/lib.rs`: apertura y adaptador de renderizado; conserva API de RGBA recto y nativo premultiplicado.
 - `src/{selection,editing,formatting,saving,preferences,viewer_layout}.rs`: adaptadores y geometría.
 - `tests/`: regresiones funcionales; `examples/performance.rs`: comparación de renderizado.
