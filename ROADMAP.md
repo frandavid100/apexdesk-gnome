@@ -76,3 +76,9 @@ No modificar el motor por comodidad de la interfaz ni distribuir binarios de des
 
 
 
+
+
+
+## Ajuste previo a la instalación: clic derecho
+
+Autorizados e implementados menús contextuales nativos para texto, tablas e imágenes, con conservación de selección y portapapeles enriquecido entre documentos. Validación de entrega en PROJECT_STATUS.md. Antes de retirar botones inferiores, resolver la propuesta del usuario: Tabla/Imagen dejarían la barra y su inserción pasaría a Añadir en el menú del documento; la gestión seguiría accesible desde el contexto. Esta retirada aún no está autorizada de forma definitiva ni implementada.
