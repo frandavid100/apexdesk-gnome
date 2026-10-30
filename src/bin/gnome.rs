@@ -668,6 +668,7 @@ fn make_window(
     {
         let click = gtk::GestureClick::new();
         click.set_button(gdk::BUTTON_PRIMARY);
+        let document_box = ui.document_box.clone();
         let ui = ui.clone();
         click.connect_pressed(move |gesture, count, x, y| {
             let Some(pos) = pos_at_canvas(&ui, x, y) else { return };
@@ -691,7 +692,7 @@ fn make_window(
             if let Err(e) = result { ui.toasts.add_toast(Toast::new(&e)); }
             refresh_selection(&ui);
         });
-        ui.document_box.add_controller(click);
+        document_box.add_controller(click);
     }
     // One drag gesture for the entire document, including page boundaries.
     {
