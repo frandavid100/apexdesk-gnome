@@ -306,13 +306,22 @@ fn install_css() {
     }
 }
 
-fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool) {
+fn make_window(
+    app: &Application,
+    sample_on_start: bool,
+    sidebar_on_start: bool,
+    narrow_on_start: bool,
+    dark_on_start: bool,
+) {
+    if dark_on_start {
+        adw::StyleManager::default().set_color_scheme(adw::ColorScheme::ForceDark);
+    }
     install_css();
     let window = ApplicationWindow::builder()
         .application(app)
         .title("WordCraft GNOME")
-        .default_width(1140)
-        .default_height(840)
+        .default_width(if narrow_on_start { 640 } else { 1140 })
+        .default_height(if narrow_on_start { 600 } else { 840 })
         .build();
 
     // Composición oficial: panel adaptable y dos páginas de barras nativas.
@@ -636,11 +645,15 @@ fn main() {
     }
     let sample_on_start = std::env::args().any(|arg| arg == "--sample");
     let sidebar_on_start = std::env::args().any(|arg| arg == "--sidebar");
+    let narrow_on_start = std::env::args().any(|arg| arg == "--narrow");
+    let dark_on_start = std::env::args().any(|arg| arg == "--dark");
     // Permite probar versiones simultáneas sin activar una ventana anterior por D-Bus.
     let app = Application::builder()
         .application_id(APP_ID)
         .flags(gio::ApplicationFlags::NON_UNIQUE)
         .build();
-    app.connect_activate(move |app| make_window(app, sample_on_start, sidebar_on_start));
+    app.connect_activate(move |app| {
+        make_window(app, sample_on_start, sidebar_on_start, narrow_on_start, dark_on_start)
+    });
     app.run_with_args(&["wordcraft-gnome"]);
 }
