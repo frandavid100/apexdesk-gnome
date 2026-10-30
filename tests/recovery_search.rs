@@ -21,7 +21,9 @@ fn engine_recovery_keeps_an_unsaved_document_and_discards_on_request() {
     let end=std::time::Instant::now()+std::time::Duration::from_secs(15);
     loop {
         s.recovery_tick();
-        let records=std::fs::read_dir(&root).unwrap().filter_map(Result::ok).filter(|x|x.path().extension().is_some_and(|e|e=="json")).count();
+        let records=std::fs::read_dir(&root).unwrap().filter_map(Result::ok)
+            .filter_map(|x|std::fs::read_dir(x.path()).ok()).flatten().filter_map(Result::ok)
+            .filter(|x|x.path().extension().is_some_and(|e|e=="json")).count();
         if s.recovery_ready() && !s.recovery_busy() && records>0 {break;}
         assert!(std::time::Instant::now()<end,"no recovery snapshot");
         std::thread::sleep(std::time::Duration::from_millis(30));
