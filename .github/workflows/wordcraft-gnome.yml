@@ -68,6 +68,22 @@ jobs:
               kill "$pid"
               wait "$pid" || true
             }
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --view-pointer-test 2> view-pointer.log &
+            view_pid=$!
+            for attempt in $(seq 1 300); do
+              if grep -q VIEW_POINTER_READY view-pointer.log; then break; fi
+              kill -0 "$view_pid"
+              sleep 0.1
+            done
+            grep -q VIEW_POINTER_READY view-pointer.log
+            read marker mx my tx ty < <(grep VIEW_POINTER_READY view-pointer.log | tail -n1)
+            view_window=$(xdotool search --onlyvisible --pid "$view_pid" | head -n1)
+            xdotool windowfocus --sync "$view_window"
+            xdotool mousemove --window "$view_window" "$mx" "$my" click 1
+            sleep 0.3
+            xdotool mousemove --window "$view_window" "$tx" "$ty" click 1
+            wait "$view_pid"
+            grep -q VIEW_POINTER_OK view-pointer.log
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --table-keyboard-test 2> table-keyboard.log &
             table_pid=$!
             for attempt in $(seq 1 300); do
@@ -146,6 +162,18 @@ jobs:
                   raise SystemExit(f"CAPTURA VACÍA: {name}")
               print(f"OK: {name}, ventana renderizada")
           PY
+      - name: Capturar vista doble al 100 por ciento
+        run: |
+          xvfb-run -a -s "-screen 0 1920x1080x24" bash -c '
+            set -e
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --spreads-demo > spread-out.log 2> spread-err.log &
+            pid=$!
+            sleep 7
+            kill -0 "$pid"
+            scrot vista-paginas-dobles.png
+            kill "$pid"
+            wait "$pid" || true
+          '
       - name: Preparar ejecutable ligero sin símbolos de depuración
         run: |
           cp target/release/wordcraft-gnome wordcraft-gnome
@@ -188,6 +216,8 @@ jobs:
             vista-parrafo-oscura.png
             search-sidebar.log
             paragraph-popover.log
+            view-pointer.log
+            vista-paginas-dobles.png
             vista-seleccion.png
             vista-edicion.png
             vista-formato.png
