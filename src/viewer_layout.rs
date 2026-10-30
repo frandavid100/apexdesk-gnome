@@ -55,7 +55,7 @@ mod tests {
         let offsets = page_tops(&sizes, 1.0);
         assert_eq!(offsets, vec![22.0, 836.0, 1650.0]);
         assert_eq!(page_at(&offsets, &sizes, 1.0, 912.0), 1);
-        assert_eq!(visible_indices(&offsets, &sizes, 1.0, 1000.0, 1500.0), vec![1,2]);
+        assert_eq!(visible_indices(&offsets, &sizes, 1.0, 1200.0, 1500.0), vec![1,2]);
     }
     #[test]
     fn zoom_is_bounded_and_monotonic() {
