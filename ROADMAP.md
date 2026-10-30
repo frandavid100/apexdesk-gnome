@@ -15,7 +15,7 @@ Revisión solicitada tras probar la chincheta: eliminar el parpadeo al fijar/des
 
 Cabeceras con nombre y chincheta en los cuatro desplegables de edición. La chincheta permite aplicar varias opciones sin cerrar el panel; al desfijar se recupera el cierre normal. Chevrones pequeños como Nautilus en Párrafo/Texto y coherentes en los botones inferiores. No implica reorganizar todavía todas las opciones de Texto.
 
-Último ajuste autorizado: usar AdwSplitButton plano como Nautilus, con resaltado conjunto y por mitad, conservando navegación interna; redondear las hojas de miniatura a 6 px como Papers.
+Último ajuste implementado y validado en CI 41122192743, pendiente de prueba del usuario: usar AdwSplitButton plano como Nautilus, con resaltado conjunto y por mitad, conservando navegación interna; redondear las hojas de miniatura a 6 px como Papers.
 
 Prioridad acordada del MVP: completar imágenes, configuración de página y exportación PDF; después aplicación instalable, y pruebas con usuarios/documentos reales junto al mantenimiento. El rediseño completo de Texto queda aplazado. La publicación en Flathub requiere participación humana para manifiesto y solicitud según la política de IA revisada.
 
