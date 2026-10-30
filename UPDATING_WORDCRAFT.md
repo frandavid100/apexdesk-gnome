@@ -118,3 +118,16 @@ the document and must not be automatically panned into view on popover dismissal
 Keyboard caret visibility remains an explicit host operation. CI reproduces a
 bottom menu click, its native dismissing click, and a subsequent text click on
 a later page with xdotool. Both dismissal and canvas focus must preserve scroll.
+
+## Outline sidebar and native main menu
+
+`navigation.rs` reads resolved outline levels through the public document/style
+API and advances the engine's public numbering counters. TOC styles are omitted;
+font size and localized style names are never used to guess headings. The host
+only selects the heading position; collapse state belongs to each sidebar.
+Search/navigation share a native GtkStack crossfade. Bulk replacement invokes
+one literal edit.replaceAll command in the body, retaining one undo step.
+`gnome_menus.rs` uses GMenu and window actions rather than styled GtkButtons.
+Menu accelerator attributes display Undo/Redo shortcuts without globally
+intercepting Ctrl+Z in native search/name fields. Other window actions dispatch
+to the selected tab. AdwTabOverview supplies the native all-tabs view.
