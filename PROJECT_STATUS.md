@@ -20,7 +20,8 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 
 - Documentos en pestañas; `+` y Ctrl+N crean una pestaña. También hay ventanas independientes.
 - Abrir y Nueva ventana pertenecen al menú general del panel lateral.
-- Panel lateral estrecho y abierto por defecto desde su construcción, sin apertura diferida. Fondo del visor del color de la ventana; hojas blancas.
+- Panel lateral estrecho y abierto por defecto desde su construcción, sin apertura diferida. Miniaturas con margen uniforme de 8 px y número fuera del fondo seleccionado; filas a altura natural para no repartir espacio vacío entre ellas. Fondo del visor del color de la ventana; hojas blancas.
+- Cabecera del documento de una línea: nombre y ● a su izquierda cuando hay cambios pendientes, sin subtítulo ni contador de páginas.
 - Barra de edición abajo, como Apostrophe. Deshacer y Rehacer a la izquierda.
 - Orden de formato: Estilo → Párrafo → Texto. Estilos y Párrafo se gestionan en desplegables con subpáginas internas; Texto conserva su panel ampliado.
 - Zoom a la derecha: +, − y un tercer botón con 100 % y Ajustar al ancho.
@@ -33,7 +34,7 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 
 | Área | Estado |
 | --- | --- |
-| Visualización | Páginas, miniaturas bajo demanda, zoom, ajuste al ancho, tema oscuro y ventana estrecha. |
+| Visualización | Una o dos páginas por fila según ancho disponible y zoom, sin reducirlo para forzar la vista doble. Miniaturas bajo demanda, zoom, ajuste al ancho, tema oscuro y ventana estrecha. |
 | Fase 3A | Cursor con desplazamiento visual suave de 100 ms, selección con ratón/teclado, doble/triple clic y copiar. |
 | Fase 3B | Escritura Unicode, borrar, párrafos, saltos, portapapeles, deshacer y rehacer. |
 | Fase 3C | Fuente, tamaño, negrita, cursiva, subrayados, colores, resaltado, tachados, sub/superíndice, espaciado y efectos admitidos por WordCraft. |
@@ -52,12 +53,12 @@ tiradores de tamaño con ratón, fórmulas ni una interfaz dedicada para inserta
 
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `8edbbf62d608c3cb6ea98a14f734d0dda7324eab`.
+Código del último ejecutable validado: `f145de5b27f92f30589b888e9f1f6c9b432f9ba1`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41089020631).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `12994295475`.
-Ejecutable actual con búsqueda lateral y Párrafo: 33.784.056 bytes.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41094124112).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `12995882126`.
+Ejecutable actual con ajustes de cabecera, miniaturas y vista doble: 33.807.768 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
@@ -71,13 +72,15 @@ También se comparó una región de la página en las capturas anterior/actual s
 
 Pasaron los tests de integración con el motor, de los adaptadores y de búsqueda de páginas frente al recorrido anterior;
 la CI compiló y probó el ejecutable release en ventanas, pestañas y paneles nativos.
+Las pruebas del visor verifican geometría de filas simples/dobles, alturas mixtas y páginas impares; márgenes simétricos de miniaturas y título de una línea con cambios pendientes. La regresión de foco usa clics reales para abrir un menú, cerrarlo y situar el cursor en una página posterior sin alterar el scroll. Capturas revisadas en una columna y en vista doble al 100 %.
 Las pruebas de búsqueda verifican texto Unicode, mayúsculas, sustituciones literales y vacías con deshacer, tablas, varias páginas, conservación de selección, rechazo de resultados antiguos e independencia de pestañas. Las pruebas de Párrafo recorren botones, subpáginas y vuelta atrás, aplicando formato sin abrir ventanas adicionales. Se han revisado capturas anchas, estrechas y oscuras.
 Las pruebas del cursor verifican movimientos consecutivos, fin de animación con el reloj de GTK, ausencia de cambios de historial, movimiento reducido y arranque del panel sin alternar su visibilidad.
 Las pruebas de estilos verifican previsualización sin cambios, gestión completa,
 validación de nombres y el recorrido real de botones/subpáginas sin ventanas adicionales.
 
 **Confirmación del usuario:** el desplegable de estilos funciona y su distribución le gusta; solicita quitar la negrita general. Se mantienen ¶/a para tipo con explicaciones; el estilo actual se distingue con fondo de selección en vez de ✓.
-**Pendiente de confirmación del usuario:** búsqueda lateral, rediseño de Párrafo y fondo del estilo activo; movimiento suave del cursor, arranque del panel sin animación, tablas, formato avanzado y última optimización en su GNOME OS Preview 51.
+**Corrección solicitada por el usuario:** salto a la primera página al cerrar un menú y pulsar el texto. El visor usa un GtkViewport explícito con scroll-to-focus desactivado; desplazar el cursor con teclado sigue usando la geometría del motor.
+**Pendiente de confirmación del usuario:** cabecera simplificada, márgenes de miniaturas, páginas dobles y corrección de foco; búsqueda lateral, rediseño de Párrafo y fondo del estilo activo; movimiento suave del cursor, arranque del panel sin animación, tablas, formato avanzado y última optimización en su GNOME OS Preview 51.
 No interpretar el éxito de la CI como una prueba manual del usuario.
 
 ## Límites y comprobación pendiente
@@ -93,7 +96,8 @@ Probar manualmente tablas importadas complejas y los controles en ventana estrec
 
 ## Mapa del código
 
-- `src/bin/gnome.rs`: widgets GTK, selección visual, entrada y vista de páginas.
+- `src/bin/gnome.rs`: widgets GTK, selección visual, entrada y lienzo Fixed de páginas.
+- `src/gnome_view_tests.rs`: regresión GTK de foco/clic tras menús, vista doble y márgenes de miniaturas.
 - `src/gnome_host.rs`: pestañas, ventanas, preferencias, búsqueda y recuperación.
 - `src/gnome_format_panels.rs`: paneles de texto y funciones comunes de formato.
 - `src/gnome_paragraph.rs`: iconos y subpáginas de Párrafo.
