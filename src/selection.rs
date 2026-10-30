@@ -69,6 +69,9 @@ pub fn geometry(session: &mut Session) -> SelectionGeometry {
     let lay = session.layout();
     let selection = session.sel.clone();
     let mut out = SelectionGeometry::default();
+    if let Some((pos,wordcraft_doc::para::InlineObject::Image{..}))=wordcraft_engine::cmd::objects::object_selection(session){
+        if let Some(hit)=lay.object(&pos,session.page_hint){let r=hit.bounds();out.highlights.push(Rect{page:hit.page,x:r.x as f64,y:r.y as f64,width:r.w as f64,height:r.h as f64});return out;}
+    }
     if let Some(range)=session.cell_range() {
         let cells=session.doc.table(range.story,&range.table).map(|t|range.cells(t)).unwrap_or_default();
         for (page, p) in lay.pages.iter().enumerate() {
@@ -97,3 +100,4 @@ pub fn geometry(session: &mut Session) -> SelectionGeometry {
     }
     out
 }
+
