@@ -22,7 +22,7 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 - Abrir y Nueva ventana pertenecen al menú general del panel lateral.
 - Panel lateral estrecho y abierto por defecto. Fondo del visor del color de la ventana; hojas blancas.
 - Barra de edición abajo, como Apostrophe. Deshacer y Rehacer a la izquierda.
-- Formato agrupado en Texto, Estilo y Párrafo, con opciones ampliadas en paneles nativos.
+- Orden de formato: Estilo → Párrafo → Texto. Estilos se gestiona íntegramente en el desplegable y subpáginas internas; texto/párrafo mantienen opciones ampliadas.
 - Zoom a la derecha: +, − y un tercer botón con 100 % y Ajustar al ancho.
 - Sin botones Página anterior/siguiente; navegación mediante scroll y miniaturas.
 - Buscar/reemplazar en el menú de tres puntos del documento.
@@ -38,7 +38,7 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 | Fase 3B | Escritura Unicode, borrar, párrafos, saltos, portapapeles, deshacer y rehacer. |
 | Fase 3C | Fuente, tamaño, negrita, cursiva, subrayados, colores, resaltado, tachados, sub/superíndice, espaciado y efectos admitidos por WordCraft. |
 | Párrafos | Alineación/dirección, sangrías, interlineado, espaciado, listas multinivel, ordenación, bordes, sombreado, tabulaciones y marcas ¶. |
-| Estilos | Aplicar estilos de párrafo/carácter; crear desde selección, actualizar, renombrar y eliminar personalizados. |
+| Estilos | Lista completa con búsqueda, aplicar por nombre, gestión en subpáginas con vuelta atrás, muestra real, crear/actualizar/renombrar/eliminar sin ventanas adicionales. |
 | Fase 3D | Abrir y guardar DOCX/ODT, guardar como, cambios pendientes y confirmaciones de cierre. |
 | Documentos | Pestañas y ventanas, nuevo documento y apertura conservando documentos existentes. |
 | Autoguardado | Preferencia persistente; recuperación cada 10 s por defecto, propio archivo cada 30 s; recuperación tras cierre inesperado. |
@@ -52,12 +52,12 @@ tiradores de tamaño con ratón, fórmulas ni una interfaz dedicada para inserta
 
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `d0a9341722db86c4e8a857771fca5b9f1d06980b`.
+Código del último ejecutable validado: `23596f6a38be7a527ac604cd5c1d2b1f7b892b3e`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41068082749).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `12982819765`.
-Ejecutable actual con tablas: 33.611.432 bytes.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41077508772).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `12988132751`.
+Ejecutable actual con el nuevo desplegable: 33.681.224 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
@@ -71,8 +71,10 @@ También se comparó una región de la página en las capturas anterior/actual s
 
 Pasaron los tests de integración con el motor, de los adaptadores y de búsqueda de páginas frente al recorrido anterior;
 la CI compiló y probó el ejecutable release en ventanas, pestañas y paneles nativos.
+Las pruebas de estilos verifican previsualización sin cambios, gestión completa,
+validación de nombres y el recorrido real de botones/subpáginas sin ventanas adicionales.
 
-**Pendiente de confirmación del usuario:** tablas, formato avanzado y última optimización en su
+**Pendiente de confirmación del usuario:** rediseño de estilos, tablas, formato avanzado y última optimización en su
 GNOME OS Preview 51. Había confirmado que las entregas anteriores funcionaban.
 No interpretar el éxito de la CI como una prueba manual del usuario.
 
@@ -82,7 +84,7 @@ Probar documentos reales, especialmente guardar/reabrir DOCX y ODT con formato c
 La fidelidad depende de los importadores/exportadores de WordCraft. La prueba ampliada
 de formato avanzado cubre DOCX; no extrapolar esa cobertura íntegra a ODT.
 Probar texto con tildes/IME, selecciones entre páginas, deshacer, recuperación y varias pestañas.
-Los estilos recién creados aparecen en la lista al volver a abrir el panel.
+La lista de estilos se actualiza tras crear, renombrar o eliminar. La muestra se renderiza en una sesión aislada y no modifica el documento.
 Las pruebas de tablas cubren estructura y texto en DOCX/ODT, sombreado y anchos,
 selecciones vacías, combinar/dividir, historial, varias páginas y teclado real.
 Probar manualmente tablas importadas complejas y los controles en ventana estrecha.
@@ -91,7 +93,9 @@ Probar manualmente tablas importadas complejas y los controles en ventana estrec
 
 - `src/bin/gnome.rs`: widgets GTK, selección visual, entrada y vista de páginas.
 - `src/gnome_host.rs`: pestañas, ventanas, preferencias, búsqueda y recuperación.
-- `src/gnome_format_panels.rs`: paneles de formato avanzado y estilos.
+- `src/gnome_format_panels.rs`: paneles de texto y párrafo.
+- `src/gnome_styles.rs`: lista, gestión y formularios dentro del desplegable de estilos.
+- `src/styles.rs`: comandos de estilos y previsualización aislada.
 - `src/gnome_tables.rs`: inserción, menú de tabla, propiedades y menú contextual.
 - `src/tables.rs`: navegación entre celdas sin ensuciar el documento ni el historial.
 - `src/lib.rs`: apertura y adaptador de renderizado; conserva API de RGBA recto y nativo premultiplicado.
