@@ -1,52 +1,60 @@
-# WordCraft GNOME — Fase 3A: cursor y selección
+# WordCraft GNOME — Fase 3B (edición en memoria)
 
-Esta rama (`wordcraft-selection`) incorpora la primera interacción real
-con texto sobre el visor GTK4/libadwaita.
+Rama experimental `wordcraft-editing` desarrollada sobre la fase 3A
+(`wordcraft-selection`) y los contenedores nativos libadwaita.
 
-**Qué puedes probar**
+## Lo que funciona
 
-- Clic sobre una palabra: posiciona el cursor según la maquetación de WordCraft.
-- Doble clic: selecciona una palabra. Triple clic: selecciona el párrafo.
-- Arrastrar sobre las páginas: selecciona texto, incluso entre páginas.
-- Flechas, Inicio, Fin y combinaciones con **Shift**: mover o extender la selección.
-- `Ctrl+Izquierda/Derecha`: mover por palabras; `Ctrl+Inicio/Fin`: principio/final.
-- `Ctrl+A`: seleccionar el documento; `Ctrl+C`: copiar texto al portapapeles.
-- Zoom, miniaturas, desplazamiento y la interfaz adaptativa de las fases anteriores.
+- Clic, selección, arrastre y copia de la fase 3A.
+- **Escritura** directamente en el documento mediante el contexto de entrada
+  de GTK. El motor de edición es WordCraft, no un GtkTextView.
+- **Intro**: párrafo nuevo; **Shift+Intro**: salto de línea.
+- **Retroceso/Supr**: borrar caracteres o reemplazar la selección.
+- **Ctrl+V**: pegar texto plano; **Ctrl+X**: cortar texto.
+- **Ctrl+Z**, **Ctrl+Shift+Z** y **Ctrl+Y**: deshacer y rehacer.
+- Repaginación y recálculo del cursor tras los cambios, incluidas las
+  modificaciones que hacen crecer o reducir el número de páginas.
+- Miniaturas, navegación y zoom siguen utilizando WordCraft.
 
-La posición y el resaltado proceden de las API `DocLayout::hit`,
-`DocLayout::caret_on` y `DocLayout::selection_rects` de WordCraft; el estado
-se modifica con sus comandos `caret.set`, `select.range` y `edit.copy`.
-No usamos `egui`.
+## Limitación importante: aún no se puede guardar
 
-**Limitaciones actuales:** el documento todavía no admite escritura, cambios
-de formato ni guardado. La selección mediante arrastre fuera de la ventana
-no dispone todavía de desplazamiento automático. `Ctrl+C` copia texto
-plano, no HTML ni formato enriquecido. La compatibilidad de selección
-en tablas complejas y documentos con varias orientaciones requiere pruebas.
+Este prototipo **no sobrescribe ni guarda en disco** los archivos DOCX/ODT.
+Los cambios existen únicamente durante la sesión. Verás un indicador de
+cambios sin guardar y se pedirá confirmación antes de cerrar o abrir otro
+documento. Si necesitas conservar el resultado provisional,
+**Ctrl+A → Ctrl+C** permite copiar el texto a otra aplicación.
 
-## Ejecución
+La fase 3D incorporará el guardado y recuperación. Hasta entonces usa
+**copias de documentos**, nunca archivos que contengan datos irremplazables.
 
-En GNOME con GTK4 >= 4.10 y libadwaita >= 1.4:
+La composición del teclado se conecta al `GtkIMMulticontext`, aunque aún
+quedan por probar el subrayado visual del texto en preedición IME,
+accesibilidad y ediciones grandes.
+
+## Ejecutar
+
+Extrae el artefacto Linux de GitHub en una carpeta nueva y ejecuta:
 
 ```sh
+chmod +x wordcraft-gnome
 ./wordcraft-gnome --version
 ./wordcraft-gnome --sample --sidebar
 ```
 
-Desde fuentes (Rust estable):
+La identificación debe incluir «fase 3B».
+
+La interfaz se compila y prueba automáticamente con:
 
 ```sh
 cargo test
-cargo run --features gui --bin wordcraft-gnome -- --sample --sidebar
+cargo build --features gui --bin wordcraft-gnome
 ```
 
-## Calidad y pruebas
+El workflow genera una captura adicional `vista-edicion.png` tras ejecutar
+una mutación real del documento en WordCraft.
 
-GitHub Actions compila el editor, verifica las pruebas del motor
-(incluido un test de selección entre páginas), comprueba ausencia de
-`egui` y genera capturas de pantalla con libadwaita. Eso no sustituye
-una prueba real de clic, arrastre, accesibilidad y portapapeles en GNOME OS.
+## Código y licencias
 
-El código está disponible en GitHub bajo GPL-3.0-or-later y reutiliza
-WordCraft [revisión 165d5725](https://github.com/storytold/wordcraft/commit/165d5725dc25b4a7887d8025c3b1fe506ccc3dcc)
-(MIT OR Apache-2.0). La rama anterior `adwaita-layout` permanece intacta.
+El motor WordCraft está fijado a
+[`165d5725`](https://github.com/storytold/wordcraft/commit/165d5725dc25b4a7887d8025c3b1fe506ccc3dcc)
+(MIT OR Apache-2.0). Este proyecto es GPL-3.0-or-later.
