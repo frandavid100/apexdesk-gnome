@@ -23,7 +23,7 @@ La fidelidad de documentos complejos depende del motor WordCraft; prueba con cop
 
 ```sh
 chmod +x wordcraft-gnome
-./wordcraft-gnome --sample --sidebar
+./wordcraft-gnome
 ```
 
 Documentación revisada:
@@ -32,7 +32,7 @@ https://developer.gnome.org/hig/patterns/feedback/dialogs.html
 
 ## Edición básica ampliada
 
-La barra inferior empieza con Deshacer/Rehacer y refleja su disponibilidad.
+La barra inferior empieza con Deshacer/Rehacer y refleja su disponibilidad. El historial también está en el menú nativo del documento, junto a Guardar y Guardar como.
 Texto incluye el selector nativo de familias instaladas y tamaño libre de
 1 a 1638 puntos, con decimales (botón Aplicar), además de B/I/U y tamaños rápidos.
 Párrafo agrupa iconos en tres filas: alineación; listas y sangrías; interlineado,
@@ -46,7 +46,7 @@ plana. Las hojas permanecen blancas.
 
 ## Pestañas, autoguardado y búsqueda
 
-+ y Ctrl+N crean un documento nuevo en una pestaña. Ctrl+W cierra la pestaña;
+Pestaña nueva en el menú principal y Ctrl+N/Ctrl+T crean un documento vacío en otra pestaña. Ctrl+W cierra la pestaña;
 Nueva ventana usa Ctrl+Shift+N. Abrir reutiliza una pestaña vacía o añade otra.
 El panel de miniaturas es más estrecho y se abre por defecto.
 
@@ -106,7 +106,7 @@ reflejan al momento; estas operaciones no abren ventanas adicionales.
 
 El visor coloca dos páginas consecutivas por fila cuando caben al zoom actual;
 al estrechar la ventana vuelve a una columna. Conserva las hojas blancas y
-el fondo de Adwaita. Las miniaturas tienen relleno simétrico y el número debajo.
+el fondo de Adwaita. Las miniaturas tienen 12 px de relleno simétrico alrededor de imagen y número, ambos dentro del botón.
 La cabecera muestra una sola línea, con ● antes del nombre si hay cambios
 pendientes; no incluye subtítulo ni contador de páginas. La vuelta del foco
 desde los menús al documento conserva el desplazamiento del visor.
@@ -121,8 +121,20 @@ coincidencias. El botón junto al segundo campo reemplaza todos los resultados
 en un solo paso de deshacer; cada fila mantiene el reemplazo individual.
 
 El menú principal usa GMenu/GtkPopoverMenu, como Nautilus, con atajos a la derecha
-y acciones de historial sensibles al documento activo. Incluye ventana y pestaña
+y acciones de ventana/aplicación. Incluye ventana y pestaña
 nuevas, todas las pestañas, abrir, preferencias, atajos, ayuda y acerca de.
-Recuperación y ejemplo se encuentran en el submenú Documentos. La vista de todas
+Recuperar documentos está en el menú principal. No hay opción de ejemplo. La vista de todas
 las pestañas es el AdwTabOverview nativo. Se mantienen Ctrl+N para pestaña nueva
 y Ctrl+Mayús+N para ventana nueva; Ctrl+T también abre una pestaña.
+
+
+## Barras inferiores y menú de documento
+
+El selector Páginas/Títulos y la barra de edición tienen la misma altura,
+compartida mediante GtkSizeGroup. Ambos usan AdwToolbarView y sus sombras de
+contenido desplazado. El menú de los tres puntos del documento usa GMenu y
+GtkPopoverMenu, con Deshacer/Rehacer y Guardar/Guardar como, con atajos y
+estado del historial del documento activo. La cabecera no tiene botones de
+pestaña nueva ni guardar. El arranque normal abre un documento vacío.
+El documento usado en CI es una fixture interna (--test-document), sin entrada
+en los menús ni ejemplo que deba abrirse para usar el editor.
