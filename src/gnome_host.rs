@@ -14,6 +14,7 @@ fn cancel_tab_close(ui:&Rc<Ui>) {
 struct Workspace {
     window: ApplicationWindow,
     tabs: adw::TabView,
+    overview: adw::TabOverview,
     docs: RefCell<Vec<(adw::TabPage, Rc<Ui>)>>,
     allow_close: Cell<bool>,
 }
@@ -40,8 +41,10 @@ fn make_window(app: &Application, sample: bool, sidebar: bool, narrow: bool, dar
     let tabs = adw::TabView::new();
     // Preserve the editor's Ctrl+Home/End and Ctrl+PageUp/Down behavior.
     tabs.remove_shortcuts(adw::TabViewShortcuts::CONTROL_HOME | adw::TabViewShortcuts::CONTROL_END);
-    window.set_content(Some(&tabs));
-    let host = Rc::new(Workspace {window:window.clone(),tabs,docs:RefCell::new(Vec::new()),allow_close:Cell::new(false)});
+    let overview=adw::TabOverview::new();overview.set_view(Some(&tabs));overview.set_child(Some(&tabs));overview.set_enable_new_tab(false);
+    window.set_content(Some(&overview));
+    let host = Rc::new(Workspace {window:window.clone(),tabs,overview,docs:RefCell::new(Vec::new()),allow_close:Cell::new(false)});
+    setup_main_actions(&host,app);
     {
         let host2 = host.clone();
         host.tabs.connect_close_page(move |view, page| {
