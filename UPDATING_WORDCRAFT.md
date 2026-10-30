@@ -6,10 +6,11 @@ There is no forked engine code, egui patch or copied renderer to merge.
 ## Boundary
 
 - `src/lib.rs`: opening and rasterization adapter.
-- `selection.rs`, `editing.rs`, `formatting.rs`, `saving.rs`: typed command adapters.
+- `selection.rs`, `editing.rs`, `formatting.rs`, `saving.rs`, `tables.rs`: command adapters.
 - `preferences.rs`: GNOME host settings; no engine internals.
 - `gnome_host.rs`: tab lifecycle, recovery scheduling and native host dialogs.
 - `gnome_format_panels.rs`: native advanced formatting via public engine commands.
+- `gnome_tables.rs`: native insertion, contextual table controls and properties.
 - `bin/gnome.rs`: GTK/libadwaita document view and input.
 
 The host uses public Session, DocLayout and command APIs. Recovery encoding,
@@ -49,3 +50,17 @@ while editing. These changes do not modify the upstream engine.
 exercise the same pages at full and thumbnail sizes. The benchmark excludes
 pixel checksum calculation from raster timing. Compare checksums and timings
 on the same runner; results describe the sample workload, not every document.
+
+## Table integration
+
+The pinned engine marks `text.tab` as a mutation even when only its selection
+changes. `tables::navigate` uses pure `caret.set`/`select.range` for existing
+cells, preserving dirty state, redo and typing boundaries. In the last cell it
+uses `text.tab` to let upstream add the row. Literal tabs use `text.insertTab`.
+Recheck this distinction on engine upgrades. The adapter never mutates the
+table structure itself. Cross-cell dragging uses extending caret commands so
+WordCraft owns rectangular cell selections; highlights use public layout boxes.
+
+Table regressions cover structure, undo/redo, selected-column shading, empty
+cell selection, merges/splits, DOCX/ODT common properties and multipage rendering.
+CI also sends real Tab/Shift+Tab and text input under Xvfb with xdotool.
