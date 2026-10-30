@@ -1,7 +1,7 @@
-name: "WordCraft GNOME — estilo Papers"
+name: "WordCraft GNOME — interfaz libadwaita"
 on:
   push:
-    branches: [wordcraft-migration, wordcraft-viewer]
+    branches: [wordcraft-migration, wordcraft-viewer, adwaita-layout]
   pull_request:
   workflow_dispatch:
 
@@ -41,7 +41,7 @@ jobs:
       - name: Identificar versión de prueba
         run: |
           ./target/debug/wordcraft-gnome --version | tee version.txt
-          grep -q "visor Papers" version.txt
+          grep -q "Adwaita adaptativa" version.txt
       - name: Iniciar GNOME en Xvfb y tomar captura
         run: |
           xvfb-run -a -s "-screen 0 1280x900x24" bash -c '
@@ -79,7 +79,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: wordcraft-gnome-visor-papers-linux
+          name: wordcraft-gnome-adwaita-linux
           path: |
             wordcraft-gnome
             muestra-wordcraft.png
