@@ -11,7 +11,7 @@ struct OutlinePanel{
     collapsed:RefCell<std::collections::HashSet<String>>,positions:RefCell<Vec<Pos>>,pending:Cell<bool>,
 }
 impl OutlinePanel{
-    fn schedule(self:&Rc<Self>){if self.pending.replace(true){return;}let weak=Rc::downgrade(self);
+    fn schedule(self:&Rc<Self>){if !self.ui.upgrade().is_some_and(|u|u.navigation_pages.visible_child_name().as_deref()==Some("outline")){return;}if self.pending.replace(true){return;}let weak=Rc::downgrade(self);
         glib::timeout_add_local_once(std::time::Duration::from_millis(160),move||{if let Some(s)=weak.upgrade(){s.pending.set(false);s.refresh();}});
     }
     fn refresh(self:&Rc<Self>){
@@ -26,7 +26,7 @@ impl OutlinePanel{
             let collapsed=self.collapsed.borrow().contains(&key);if collapsed&&has_children{hidden=Some(h.level);}
             let row=gtk::ListBoxRow::new();row.set_widget_name(&format!("outline-heading-{i}"));
             let content=gtk::Box::new(gtk::Orientation::Horizontal,2);content.set_margin_start(6+i32::from(h.level.min(8))*12);content.set_margin_end(8);content.set_margin_top(3);content.set_margin_bottom(3);
-            let arrow=gtk::Button::with_label(if collapsed{"›"}else{"⌄"});arrow.add_css_class("flat");arrow.add_css_class("outline-expander");arrow.set_visible(has_children);arrow.set_tooltip_text(Some(if collapsed{"Expandir sección"}else{"Contraer sección"}));content.append(&arrow);
+            let arrow=gtk::Button::with_label(if collapsed{"›"}else{"⌄"});arrow.add_css_class("flat");arrow.add_css_class("outline-expander");arrow.set_opacity(if has_children{1.0}else{0.0});arrow.set_can_target(has_children);arrow.set_focusable(has_children);arrow.set_tooltip_text(Some(if collapsed{"Expandir sección"}else{"Contraer sección"}));content.append(&arrow);
             let label=gtk::Label::new(Some(&h.text));label.set_xalign(0.0);label.set_hexpand(true);label.set_ellipsize(gtk::pango::EllipsizeMode::End);label.set_max_width_chars(1);label.set_tooltip_text(Some(&h.text));if h.level==0{label.add_css_class("heading");}content.append(&label);row.set_child(Some(&content));self.list.append(&row);
             let weak=Rc::downgrade(self);arrow.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){let mut keys=s.collapsed.borrow_mut();if !keys.remove(&key){keys.insert(key.clone());}drop(keys);s.refresh();}});
             self.positions.borrow_mut().push(h.pos.clone());
@@ -54,6 +54,9 @@ fn install_outline(ui:&Rc<Ui>,pages:&gtk::ToggleButton,titles:&gtk::ToggleButton
 fn navigation_ui_test(ui:&Rc<Ui>,s:&Rc<OutlinePanel>,titles:&gtk::ToggleButton,host:&Rc<Workspace>,app:&Application){
     let rev=ui.current.borrow().as_ref().unwrap().session.rev();titles.set_active(true);s.refresh();
     assert_eq!(ui.navigation_pages.visible_child_name().as_deref(),Some("outline"));assert!(!s.positions.borrow().is_empty());
+    let before=s.positions.borrow().len();
+    let expand=||s.list.row_at_index(0).unwrap().child().unwrap().first_child().unwrap().downcast::<gtk::Button>().unwrap().emit_clicked();
+    expand();assert!(s.positions.borrow().len()<before);expand();assert_eq!(s.positions.borrow().len(),before);
     let row=s.list.row_at_index(0).unwrap();row.emit_by_name::<()>("activate",&[]);
     assert_eq!(ui.current.borrow().as_ref().unwrap().session.sel.focus,s.positions.borrow()[0]);
     assert_eq!(ui.current.borrow().as_ref().unwrap().session.rev(),rev,"navigation must not edit");
