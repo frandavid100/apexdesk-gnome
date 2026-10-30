@@ -50,6 +50,7 @@ struct Ui {
     search: RefCell<Option<Rc<SearchPanel>>>,
     paragraph: RefCell<Option<Rc<ParagraphPopover>>>,
     picture: RefCell<Option<Rc<PicturePopover>>>,
+    table_popover: RefCell<Option<gtk::Popover>>,
     format_group:Rc<FormatPopoverGroup>,
     search_highlights: Rc<RefCell<Vec<selection::Rect>>>,
     document_name: RefCell<String>,
@@ -1085,7 +1086,7 @@ fn build_tab(
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button, sidebar_pages, navigation_pages,
         outline:RefCell::new(None),host:Rc::downgrade(host),open_button:open_button.clone(),
-        search: RefCell::new(None), paragraph: RefCell::new(None), picture:RefCell::new(None),format_group:format_group.clone(), search_highlights: Rc::new(RefCell::new(Vec::new())),
+        search: RefCell::new(None), paragraph: RefCell::new(None), picture:RefCell::new(None),table_popover:RefCell::new(None),format_group:format_group.clone(), search_highlights: Rc::new(RefCell::new(Vec::new())),
         document_name:RefCell::new(String::new()),layout_pending:Cell::new(false),viewport_width:Cell::new(0),
         zoom_label, zoom_out, zoom_in, stack, title, toasts,
     });
@@ -1135,7 +1136,10 @@ fn build_tab(
     style_menu.set_widget_name("style-menu");align_menu.set_widget_name("paragraph-menu");text_menu.set_widget_name("text-menu");
     let style_popover=install_style_popover(&ui,&style_menu);
     let table_menu=install_table_controls(&ui,&window,&format_bar);
+    let table_pop=table_menu.popover().unwrap();ui.table_popover.replace(Some(table_pop.clone()));
+    if !tool_diagnostics(){table_menu.set_popover(None::<&gtk::Popover>);format_bar.remove(&table_menu);table_pop.set_parent(&ui.document_box);}
     let (picture_menu,picture_panel)=install_picture_controls(&ui,&window,&format_bar);picture_menu.set_widget_name("picture-menu");ui.picture.replace(Some(picture_panel.clone()));
+    if !tool_diagnostics(){picture_menu.set_popover(None::<&gtk::Popover>);format_bar.remove(&picture_menu);picture_panel.pop.set_parent(&ui.document_box);}
     host.docs.borrow_mut().push((tab_page,ui.clone()));
     install_main_menu(&app_menu);install_main_menu(&compact_app_menu);refresh_main_actions(host);
     install_autosave(&ui);
@@ -1775,6 +1779,7 @@ fn schedule_thumbnail_refresh(ui: &Rc<Ui>) {
         refresh_thumbnails(&ui);
     });
 }
+
 
 
 
