@@ -145,6 +145,7 @@ jobs:
             scrot vista-dividido-flecha.png
             xdotool click 1
             sleep 0.4
+            grep -q SPLIT_SUBPAGE_OK split-states.log
             scrot vista-dividido-subpagina.png
             kill "$split_pid"
             wait "$split_pid" || true
