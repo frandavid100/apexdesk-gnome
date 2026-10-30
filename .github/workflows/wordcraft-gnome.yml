@@ -97,6 +97,15 @@ jobs:
             run_case vista-estilo-nuevo.png --style-new-demo
             run_case vista-estilos-estrecha.png --styles-demo --narrow
             run_case vista-preferencias.png --preferences-demo
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --search-ui-test 2> search-sidebar.log
+            grep -q SEARCH_SIDEBAR_OK search-sidebar.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --paragraph-ui-test 2> paragraph-popover.log
+            grep -q PARAGRAPH_POPOVER_OK paragraph-popover.log
+            run_case vista-parrafo.png --paragraph-demo
+            run_case vista-interlineado.png --paragraph-spacing-demo
+            run_case vista-parrafo-estrecha.png --paragraph-demo --narrow
+            run_case vista-parrafo-oscura.png --paragraph-demo --dark
+            run_case vista-buscar-estrecha.png --search-demo --narrow
             run_case vista-buscar.png --search-demo
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --tabs-test 2> tabs.log
             grep -q TABS_OK tabs.log
@@ -172,6 +181,13 @@ jobs:
             styles-popover.log
             motion-ui.log
             vista-buscar.png
+            vista-buscar-estrecha.png
+            vista-parrafo.png
+            vista-interlineado.png
+            vista-parrafo-estrecha.png
+            vista-parrafo-oscura.png
+            search-sidebar.log
+            paragraph-popover.log
             vista-seleccion.png
             vista-edicion.png
             vista-formato.png
