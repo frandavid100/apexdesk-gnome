@@ -157,13 +157,13 @@ impl ParagraphPopover {
 fn install_paragraph_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<ParagraphPopover>{
     let pop=gtk::Popover::new();pop.add_css_class("format-popover");let root=gtk::Box::new(gtk::Orientation::Vertical,6);root.set_width_request(300);root.set_margin_top(8);root.set_margin_bottom(8);root.set_margin_start(8);root.set_margin_end(8);
     let header=format_popover_header(&pop,&root,"Párrafo",&ui.format_group);header.button.set_widget_name("paragraph-back");
-    let stack=gtk::Stack::new();stack.set_transition_type(gtk::StackTransitionType::SlideLeftRight);stack.set_vhomogeneous(false);
+    let stack=gtk::Stack::new();stack.set_transition_type(gtk::StackTransitionType::SlideLeftRight);stack.set_vhomogeneous(false);stack.set_hhomogeneous(false);stack.set_interpolate_size(true);
     let main=gtk::Box::new(gtk::Orientation::Vertical,6);let detail=gtk::Box::new(gtk::Orientation::Vertical,8);
     let scroll=gtk::ScrolledWindow::new();scroll.set_policy(gtk::PolicyType::Never,gtk::PolicyType::Automatic);scroll.set_max_content_height(420);scroll.set_propagate_natural_height(true);scroll.set_child(Some(&detail));
     let detail_page=gtk::Box::new(gtk::Orientation::Vertical,6);detail_page.append(&scroll);
     stack.add_named(&main,Some("main"));stack.add_named(&detail_page,Some("detail"));root.append(&stack);let message=gtk::Label::new(None);message.set_wrap(true);message.set_max_width_chars(35);message.set_visible(false);root.append(&message);pop.set_child(Some(&root));
     let s=Rc::new(ParagraphPopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,main,detail,message,header,spacing:Cell::new(1.5),shade:RefCell::new("FFF2CC".into()),border:RefCell::new(serde_json::json!({"kind":"outside","width":0.5,"color":"000000"}))});
-    let state=s.clone();pop.connect_show(move |_|state.home());menu.set_popover(Some(&pop));s
+    let state=s.clone();pop.connect_show(move |_|{if !state.ui.upgrade().is_some_and(|u|u.format_reflowing.get()){state.home();}});menu.set_popover(Some(&pop));s
 }
 fn show_paragraph_options(ui:&Rc<Ui>,_parent:&ApplicationWindow){if let Some(s)=ui.paragraph.borrow().as_ref(){if let Some(p)=s.popover.upgrade(){p.popup();}s.page("options");}}
 
@@ -187,6 +187,7 @@ fn paragraph_ui_test(s:&Rc<ParagraphPopover>,menu:&gtk::MenuButton,app:&Applicat
     assert_eq!(s.stack.visible_child_name().as_deref(),Some("main"));assert_eq!(app.windows().len(),1);
     assert!(ui.current.borrow().as_ref().unwrap().session.can_undo());eprintln!("PARAGRAPH_POPOVER_OK");app.quit();
 }
+
 
 
 
