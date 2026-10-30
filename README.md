@@ -35,7 +35,9 @@ https://developer.gnome.org/hig/patterns/feedback/dialogs.html
 La barra inferior empieza con Deshacer/Rehacer y refleja su disponibilidad.
 Texto incluye el selector nativo de familias instaladas y tamaño libre de
 1 a 1638 puntos, con decimales (botón Aplicar), además de B/I/U y tamaños rápidos.
-Párrafo agrupa alineación, listas de viñetas/numeradas y aumentar/reducir sangría.
+Párrafo agrupa iconos en tres filas: alineación; listas y sangrías; interlineado,
+sombreado y bordes. Las flechas abren subpáginas con vuelta atrás fija, y
+Más opciones conserva los ajustes menos frecuentes dentro del desplegable.
 Atajos: Ctrl+M / Ctrl+Shift+M para sangría y Ctrl+Shift+L para viñetas.
 Abrir y Nueva ventana pertenecen al menú general encima del panel lateral;
 el mismo menú sigue disponible cuando el panel está oculto.
@@ -55,8 +57,11 @@ sin nombre usan recuperación hasta que se guarden por primera vez.
 La preferencia persiste y se aplica también a las otras pestañas y ventanas.
 Recuperar documentos permite recuperar copias de una ejecución anterior.
 
-Buscar y Buscar/reemplazar están en el menú del documento (Ctrl+F / Ctrl+H).
-Las sustituciones pasan por el motor y se pueden deshacer.
+La lupa alterna miniaturas y búsqueda en el panel izquierdo (Ctrl+F / Ctrl+H).
+Cada resultado muestra contexto y página; al pulsarlo selecciona la coincidencia.
+Los tres puntos junto al campo permiten distinguir mayúsculas y activar Reemplazar.
+Este modo añade un segundo campo y un botón de reemplazo por resultado.
+Las sustituciones son literales y se pueden deshacer; cada pestaña conserva su búsqueda.
 
 Véase UPDATING_WORDCRAFT.md para la separación de capas y la actualización del motor.
 
@@ -90,7 +95,7 @@ sombreado, división de celdas y opciones de cabecera/paginación.
 ## Desplegable de estilos
 
 Estilo muestra todos los estilos de párrafo y de texto del documento, con
-búsqueda y el estilo actual marcado. Pulsar el nombre aplica el estilo; el
+búsqueda y el estilo actual marcado con fondo de selección. Pulsar el nombre aplica el estilo; el
 botón derecho abre su gestión dentro del mismo desplegable. La fila superior
 permite volver. Incluye una muestra renderizada por WordCraft, actualizar
 según la selección, renombrar y eliminar estilos personalizados. Nuevo estilo
