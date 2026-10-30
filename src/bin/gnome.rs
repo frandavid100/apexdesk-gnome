@@ -776,6 +776,7 @@ fn install_css() {
 include!("../gnome_host.rs");
 include!("../gnome_format_panels.rs");
 include!("../gnome_tables.rs");
+include!("../gnome_styles.rs");
 
 fn build_tab(
     app: &Application,
@@ -1020,16 +1021,9 @@ fn build_tab(
     text_menu.set_tooltip_text(Some("Negrita, cursiva, subrayado y tamaño de letra"));
     text_menu.set_popover(Some(&text_popover));
     text_menu.set_direction(gtk::ArrowType::Up);
-    format_bar.append(&text_menu);
 
     let mut format_actions: Vec<(gtk::Button, Format, gtk::Popover)> = Vec::new();
-    let style_menu = format_menu("Estilo", &[
-        ("Normal", Format::Normal),
-        ("Sin espaciado", Format::NoSpacing),
-        ("Título 1", Format::Heading1),
-        ("Título 2", Format::Heading2),
-        ("Título 3", Format::Heading3),
-    ], &mut format_actions);
+    let style_menu=gtk::MenuButton::new();style_menu.set_label("Estilo");style_menu.set_direction(gtk::ArrowType::Up);style_menu.set_tooltip_text(Some("Aplicar y gestionar estilos"));
     for (index, size) in [10u8, 11, 12, 14, 16, 18, 24, 36].iter().enumerate() {
         let button = gtk::Button::with_label(&format!("{size} pt"));
         sizes.attach(&button, (index % 4) as i32, (index / 4) as i32, 1, 1);
@@ -1045,12 +1039,11 @@ fn build_tab(
         ("Aumentar sangría", Format::Indent),
         ("Reducir sangría", Format::Outdent),
     ], &mut format_actions);
-    let all_styles=gtk::Button::with_label("Todos los estilos y gestión…");
-    if let Some(pop)=style_menu.popover() {if let Some(child)=pop.child().and_then(|x|x.downcast::<gtk::Box>().ok()){child.append(&all_styles);}}
     let more_paragraph=gtk::Button::with_label("Más opciones de párrafo…");
     if let Some(pop)=align_menu.popover() {if let Some(child)=pop.child().and_then(|x|x.downcast::<gtk::Box>().ok()){child.append(&more_paragraph);}}
     format_bar.append(&style_menu);
     format_bar.append(&align_menu);
+    format_bar.append(&text_menu);
     let format_toolbar = gtk::ScrolledWindow::new();
     format_toolbar.set_policy(gtk::PolicyType::Automatic, gtk::PolicyType::Never);
     format_toolbar.set_child(Some(&format_bar));
@@ -1109,10 +1102,11 @@ fn build_tab(
     });
 
 
-    for (button,kind,popover) in [(more_text,0,text_popover.clone()),(more_paragraph,1,align_menu.popover().unwrap_or_else(gtk::Popover::new)),(all_styles,2,style_menu.popover().unwrap_or_else(gtk::Popover::new))] {
+    for (button,kind,popover) in [(more_text,0,text_popover.clone()),(more_paragraph,1,align_menu.popover().unwrap_or_else(gtk::Popover::new))] {
         let ui=ui.clone();let parent=window.clone();
-        button.connect_clicked(move|_|{popover.popdown();match kind{0=>show_text_options(&ui,&parent),1=>show_paragraph_options(&ui,&parent),_=>show_styles(&ui,&parent)}});
+        button.connect_clicked(move|_|{popover.popdown();match kind{0=>show_text_options(&ui,&parent),1=>show_paragraph_options(&ui,&parent),_=>unreachable!()}});
     }
+    let style_popover=install_style_popover(&ui,&style_menu);
     let table_menu=install_table_controls(&ui,&window,&format_bar);
     host.docs.borrow_mut().push((tab_page,ui.clone()));
     install_autosave(&ui);
@@ -1653,7 +1647,13 @@ fn build_tab(
     }
     if std::env::args().any(|a|a=="--advanced-text-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_text_options(&u,&w));}
     if std::env::args().any(|a|a=="--advanced-paragraph-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_paragraph_options(&u,&w));}
-    if std::env::args().any(|a|a=="--styles-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_styles(&u,&w));}
+    if std::env::args().any(|a|a=="--styles-ui-test") {let s=style_popover.clone();let m=style_menu.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||style_ui_test(&s,&m,&a));}
+    if std::env::args().any(|a|a=="--styles-demo"||a=="--style-details-demo"||a=="--style-new-demo") {
+        let menu=style_menu.clone();let s=style_popover.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{
+            menu.popup();if std::env::args().any(|a|a=="--style-details-demo"){s.show_detail("Heading1");}
+            if std::env::args().any(|a|a=="--style-new-demo"){s.show_form(None);}
+        });
+    }
     if std::env::args().any(|a|a=="--preferences-demo") {let w=window.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_preferences(&w));}
     if std::env::args().any(|a|a=="--search-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_search(&u,&w,true));}
     {
