@@ -131,3 +131,16 @@ one literal edit.replaceAll command in the body, retaining one undo step.
 Menu accelerator attributes display Undo/Redo shortcuts without globally
 intercepting Ctrl+Z in native search/name fields. Other window actions dispatch
 to the selected tab. AdwTabOverview supplies the native all-tabs view.
+
+
+## Native document chrome
+
+The document menu uses the same GMenu/GtkPopoverMenu pipeline as the main menu,
+but owns Undo/Redo and Save/Save As entries. Window actions resolve the selected
+tab at activation time; history accelerator labels do not intercept native text
+field shortcuts. New tab and Save have no header buttons. The example action is
+removed; --test-document is an internal CI fixture, normal startup stays blank.
+Sidebar navigation uses a nested AdwToolbarView bottom bar, not content padding.
+A retained vertical GtkSizeGroup aligns it with the editor toolbar. Both use Flat
+style for native scroll undershoots. Thumbnail buttons enclose image plus label
+with uniform 12px padding. These are host changes only, no engine updates.
