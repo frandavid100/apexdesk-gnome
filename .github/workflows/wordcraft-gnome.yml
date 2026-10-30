@@ -82,7 +82,14 @@ jobs:
             xdotool mousemove --window "$view_window" "$mx" "$my" click 1
             sleep 0.3
             xdotool mousemove --window "$view_window" "$tx" "$ty" click 1
-            wait "$view_pid"
+            for attempt in $(seq 1 100); do
+              if grep -q VIEW_POINTER_DISMISSED view-pointer.log; then break; fi
+              kill -0 "$view_pid"
+              sleep 0.1
+            done
+            grep -q VIEW_POINTER_DISMISSED view-pointer.log
+            xdotool mousemove --window "$view_window" "$tx" "$ty" click 1
+            wait "$view_pid" || { scrot view-pointer-failure.png; cat view-pointer.log; exit 1; }
             grep -q VIEW_POINTER_OK view-pointer.log
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --table-keyboard-test 2> table-keyboard.log &
             table_pid=$!
@@ -217,6 +224,7 @@ jobs:
             search-sidebar.log
             paragraph-popover.log
             view-pointer.log
+            view-pointer-failure.png
             vista-paginas-dobles.png
             vista-seleccion.png
             vista-edicion.png
