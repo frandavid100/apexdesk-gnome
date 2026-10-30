@@ -190,7 +190,7 @@ Copy publishes the engine's plain-text and HTML representations through a GdkCon
 
 ### Native row activation lifetime
 
-GtkModelButton closes its ancestor popover before calling GtkActionHelper.activate. Never unparent a context popover synchronously in its closed handler: this detaches the action muxer before native row dispatch. Defer unparenting to an idle callback and retain the popover through it. Tests must exercise the GtkModelButton clicked/activate path (and a real pointer click), not widget.activate_action, which bypasses that ordering. Nautilus context popovers use has-arrow=false and halign=start; shortcut attributes use the native accelerator column.
+GtkModelButton closes its ancestor popover before invoking its action-dispatch handler. Never unparent a context popover synchronously in its closed handler: this detaches the action muxer before native row dispatch. Defer unparenting to an idle callback and retain the popover through it. Tests must exercise the GtkModelButton clicked/activate path (and a real pointer click), not widget.activate_action, which bypasses that ordering. Nautilus context popovers use has-arrow=false and halign=start; shortcut attributes use the native accelerator column.
 
 Normal startup anchors table/picture tool popovers directly to the document canvas instead of exposing toolbar menu buttons. Their pointing rectangle is updated from the context click. The shared outside-click policy exempts an anchor only when it is a MenuButton, never the whole canvas. Public engine operations and dependencies remain unchanged.
 
