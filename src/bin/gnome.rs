@@ -17,6 +17,7 @@ struct Current {
     sizes: Vec<(f32, f32)>,
     tops: Vec<f64>,
     zoom: f32,
+    fit_to_width: bool,
     pages: Vec<gtk::Picture>,
     thumbs: Vec<gtk::Picture>,
     thumb_buttons: Vec<gtk::Button>,
@@ -194,7 +195,17 @@ fn zoom_step(ui: &Rc<Ui>, positive: bool) {
     } else {
         STEPS.iter().copied().rev().find(|&v| v < zoom - 0.005).unwrap_or(0.5)
     };
+    if let Some(doc) = ui.current.borrow_mut().as_mut() {
+        doc.fit_to_width = false;
+    }
     zoom_to(ui, next);
+}
+
+fn refit_if_needed(ui: &Rc<Ui>) {
+    let fit = ui.current.try_borrow().ok()
+        .and_then(|s| s.as_ref().map(|d| d.fit_to_width))
+        .unwrap_or(false);
+    if fit { fit_width(ui); }
 }
 
 fn fit_width(ui: &Rc<Ui>) {
@@ -203,6 +214,9 @@ fn fit_width(ui: &Rc<Ui>) {
     });
     let Some(width) = max_width else { return };
     let available = (ui.scroll.allocated_width() as f32 - 54.0).max(250.0);
+    if let Some(doc) = ui.current.borrow_mut().as_mut() {
+        doc.fit_to_width = true;
+    }
     zoom_to(ui, available / width);
 }
 
@@ -269,7 +283,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     }
 
     ui.current.replace(Some(Current {
-        session, sizes, tops, zoom, pages, thumbs, thumb_buttons,
+        session, sizes, tops, zoom, fit_to_width: true, pages, thumbs, thumb_buttons,
         painted_pages: HashSet::new(),
         painted_thumbs: HashSet::new(),
         active: 0,
@@ -426,11 +440,10 @@ fn make_window(
     zoom_buttons.set_valign(gtk::Align::End);
     zoom_buttons.set_margin_end(16);
     zoom_buttons.set_margin_bottom(16);
-    zoom_buttons.add_css_class("osd");
+    zoom_in.add_css_class("osd");
+    zoom_out.add_css_class("osd");
     zoom_in.add_css_class("circular");
     zoom_out.add_css_class("circular");
-    zoom_in.add_css_class("flat");
-    zoom_out.add_css_class("flat");
     zoom_buttons.append(&zoom_in);
     zoom_buttons.append(&zoom_out);
     let canvas_overlay = gtk::Overlay::new();
@@ -498,6 +511,12 @@ fn make_window(
                 let ui = ui.clone();
                 glib::idle_add_local_once(move || refresh_thumbnails(&ui));
             }
+            // Ajustar al ancho sigue siendo un modo, no un zoom fijo. Tras
+            // la animación del panel el ancho disponible puede cambiar.
+            let ui = ui.clone();
+            glib::timeout_add_local_once(std::time::Duration::from_millis(400), move || {
+                refit_if_needed(&ui);
+            });
         });
     }
     {
@@ -554,6 +573,9 @@ fn make_window(
         let ui = ui.clone();
         let menu = menu.clone();
         normal_zoom.connect_clicked(move |_| {
+            if let Some(doc) = ui.current.borrow_mut().as_mut() {
+                doc.fit_to_width = false;
+            }
             zoom_to(&ui, 1.0);
             menu.popdown();
         });
@@ -640,6 +662,10 @@ fn make_window(
             ui.sidebar.set_show_sidebar(true);
             ui.sidebar_button.set_active(true);
             refresh_thumbnails(&ui);
+            let ui2 = ui.clone();
+            glib::timeout_add_local_once(std::time::Duration::from_millis(420), move || {
+                refit_if_needed(&ui2);
+            });
         });
     }
     if sample_on_start {
