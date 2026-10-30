@@ -81,13 +81,12 @@ Las pruebas de interfaz se ejecutan sobre este mismo ejecutable de producción.
 
 ## Tablas
 
-Tabla > Insertar tabla abre una cuadrícula y tamaños personalizados. Dentro
-de una tabla, el mismo menú ofrece selección de celdas/filas/columnas, inserción
-y eliminación, combinación, división de tabla y propiedades. También hay
-menú contextual con clic derecho o Mayús+F10.
+Añadir > Tabla, en el menú del documento, abre una cuadrícula y tamaños personalizados. Dentro
+de una tabla, el clic derecho o Mayús+F10 ofrece selección de celdas/filas/columnas,
+inserción y eliminación, combinación y propiedades. Más opciones de tabla abre
+el panel completo con división de tabla y los demás controles.
 
 Tab avanza entre celdas y crea una fila al final; Mayús+Tab retrocede.
-El menú contextual permite insertar una tabulación literal dentro de la celda.
 Arrastrar entre celdas selecciona un rectángulo, incluidas celdas vacías.
 Las propiedades incluyen anchos, alturas, autoajuste, alineación, bordes,
 sombreado, división de celdas y opciones de cabecera/paginación.
@@ -142,7 +141,7 @@ en los menús ni ejemplo que deba abrirse para usar el editor.
 
 ## Fijar desplegables
 
-Estilo, Párrafo, Texto y Tabla comparten la chincheta y solo uno puede estar
+Estilo, Párrafo, Texto y los paneles contextuales de Tabla e Imagen comparten la chincheta y solo uno puede estar
 abierto. Abrir otro sustituye al anterior y conserva la fijación. Fijar/desfijar
 no oculta ni recrea el panel. Al fijarlo se mantiene abierto al aplicar opciones
 y seguir escribiendo; sin fijar se cierra al aplicar o pulsar fuera.
@@ -156,9 +155,13 @@ Los botones divididos de Párrafo usan AdwSplitButton plano: fondo compartido y 
 
 ## Imágenes, propiedades y PDF
 
-Imagen, a la derecha de Tabla, permite insertar una imagen en línea, seleccionarla con un clic y cambiar su tamaño en milímetros. Mantener proporción está activado por defecto; también permite restaurar tamaño original, sustituir y eliminar. Comparte la chincheta con los demás desplegables.
+Añadir > Imagen, en el menú del documento, permite insertar una imagen en línea. Se selecciona con un clic y el menú contextual permite abrir su panel para cambiar el tamaño en milímetros. Mantener proporción está activado por defecto; también permite restaurar tamaño original, sustituir y eliminar. Comparte la chincheta con los demás desplegables.
 El menú del documento incluye Propiedades del documento (papel, orientación y márgenes; sección actual o todo el documento) y Exportar a PDF. La exportación trabaja en segundo plano y no cambia el archivo que se sigue editando y guardando. Los selectores requieren el sufijo del formato para confirmar sobrescrituras sobre el destino exacto.
 
 
 
 El clic derecho sobre texto, tablas e imágenes abre un menú contextual nativo. Conserva la selección si se pulsa dentro de ella; fuera sitúa el cursor o selecciona la imagen correspondiente. Menú o Mayús+F10 abre las opciones de la selección actual. Copiar y pegar dentro de la aplicación conserva el formato, las tablas y las imágenes, también entre documentos. El texto procedente de otras aplicaciones sigue admitiéndose.
+
+
+
+Tabla e Imagen se insertan desde Añadir en el menú del documento (tres puntos). Sus opciones de edición están en el clic derecho. El menú contextual no repite Deshacer/Rehacer; conserva los accesos al portapapeles y al formato con el aspecto nativo de Nautilus.
