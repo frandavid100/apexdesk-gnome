@@ -53,10 +53,23 @@ impl ParagraphPopover {
         let b=gtk::ToggleButton::new();b.set_child(Some(&paragraph_icon(icon)));b.set_tooltip_text(Some(label));b.set_widget_name(name);b.set_active(active);b.set_hexpand(true);b.add_css_class("flat");
         let weak=Rc::downgrade(self);b.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.execute(command,args.clone());}});b
     }
-    fn split(self:&Rc<Self>,row:&gtk::Box,button:&impl IsA<gtk::Widget>,page:&'static str,label:&str){
-        let group=gtk::Box::new(gtk::Orientation::Horizontal,2);group.set_hexpand(true);group.append(button);
-        let more=gtk::Button::new();more.set_child(Some(&format_chevron()));more.set_tooltip_text(Some(&format!("Opciones de {label}")));more.set_widget_name(&format!("paragraph-more-{page}"));more.add_css_class("image-button");group.append(&more);row.append(&group);
-        let weak=Rc::downgrade(self);more.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.page(page);}});
+    fn split(self:&Rc<Self>,row:&gtk::Box,button:&gtk::ToggleButton,page:&'static str,label:&str){
+        // AdwSplitButton owns native shared hover, separator and half-button states.
+        let split=adw::SplitButton::new();split.add_css_class("flat");split.add_css_class("image-button");split.set_hexpand(true);
+        let icon=button.child().unwrap();button.set_child(None::<&gtk::Widget>);split.set_child(Some(&icon));
+        split.set_tooltip_text(button.tooltip_text().as_deref());split.set_dropdown_tooltip(&format!("Opciones de {label}"));
+        // The documented CSS hierarchy exposes the two GTK controls. Route the
+        // dropdown's lazy popup callback to our existing stack, not another popup.
+        let main=split.first_child().unwrap().downcast::<gtk::Button>().unwrap();
+        main.set_widget_name(&button.widget_name());main.add_css_class("split-action");
+        if button.is_active(){main.set_state_flags(gtk::StateFlags::CHECKED,false);}
+        let action=button.clone();split.connect_clicked(move |_|action.emit_clicked());
+        let more=main.next_sibling().unwrap().next_sibling().unwrap().downcast::<gtk::MenuButton>().unwrap();
+        more.first_child().unwrap().set_widget_name(&format!("paragraph-more-{page}"));
+        let weak=Rc::downgrade(self);more.set_create_popup_func(move|m|{
+            m.popdown();if let Some(s)=weak.upgrade(){s.page(page);}
+        });
+        row.append(&split);
     }
     fn home(self:&Rc<Self>){self.header.home();
         clear_box(&self.main);let Some(ui)=self.ui.upgrade()else{return;};let state=selection_paragraph(&ui);
@@ -157,6 +170,12 @@ fn show_paragraph_options(ui:&Rc<Ui>,_parent:&ApplicationWindow){if let Some(s)=
 fn paragraph_ui_test(s:&Rc<ParagraphPopover>,menu:&gtk::MenuButton,app:&Application){
     menu.popup();let ui=s.ui.upgrade().unwrap();
     let click=|name:&str|style_widget(&s.popover.upgrade().unwrap().child().unwrap(),name).unwrap_or_else(||panic!("missing {name}")).downcast::<gtk::Button>().unwrap().emit_clicked();
+    let body=style_widget(&s.main,"paragraph-indent").unwrap();
+    let split=body.parent().unwrap().downcast::<adw::SplitButton>().expect("native split button");
+    assert!(split.has_css_class("flat"));
+    let arrow=style_widget(&s.main,"paragraph-more-indents").unwrap();
+    assert!(arrow.parent().unwrap().is::<gtk::MenuButton>());
+    assert_eq!(arrow.parent().unwrap().parent().unwrap(),split.clone().upcast::<gtk::Widget>());
     click("paragraph-align-center");assert_eq!(selection_paragraph(&ui)["align"],"center");
     click("paragraph-indent");assert!(selection_paragraph(&ui)["indentLeft"].as_f64().unwrap()>0.0);
     click("paragraph-more-bullets");assert_eq!(s.stack.visible_child_name().as_deref(),Some("detail"));
@@ -168,5 +187,6 @@ fn paragraph_ui_test(s:&Rc<ParagraphPopover>,menu:&gtk::MenuButton,app:&Applicat
     assert_eq!(s.stack.visible_child_name().as_deref(),Some("main"));assert_eq!(app.windows().len(),1);
     assert!(ui.current.borrow().as_ref().unwrap().session.can_undo());eprintln!("PARAGRAPH_POPOVER_OK");app.quit();
 }
+
 
 
