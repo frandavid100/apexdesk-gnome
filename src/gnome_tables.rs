@@ -122,30 +122,3 @@ fn refresh_table_controls(ui:&Rc<Ui>,pop:&gtk::Popover){
     if let Some(w)=style_widget(&root,"table-context"){w.set_visible(doc.is_some_and(|d|wordcraft_gnome::tables::in_table(&d.session)));}
     if let Some(w)=style_widget(&root,"table-merge"){w.set_sensitive(doc.is_some_and(|d|wordcraft_gnome::tables::selected_cells(&d.session)>1));}
 }
-fn show_table_context_at(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32) {
-    let inside=ui.current.borrow().as_ref().is_some_and(|d|wordcraft_gnome::tables::in_table(&d.session));
-    if !inside{return;}
-    let pop=gtk::Popover::new();pop.set_parent(&ui.document_box);pop.set_pointing_to(Some(&gdk::Rectangle::new(x,y,1,1)));
-    let column=gtk::Box::new(gtk::Orientation::Vertical,3);column.set_margin_top(6);column.set_margin_bottom(6);column.set_margin_start(6);column.set_margin_end(6);
-    for(label,cmd)in[("Insertar tabulación en celda","text.insertTab"),("Seleccionar fila","table.selectRow"),("Seleccionar columna","table.selectColumn"),("Insertar fila debajo","table.insertRowBelow"),("Insertar columna a la derecha","table.insertColumnRight"),("Combinar celdas","table.merge")] {
-        let b=gtk::Button::with_label(label);b.add_css_class("flat");column.append(&b);
-        if cmd=="table.merge"{b.set_sensitive(ui.current.borrow().as_ref().is_some_and(|d|wordcraft_gnome::tables::selected_cells(&d.session)>1));}
-        let ui=ui.clone();let pop=pop.downgrade();b.connect_clicked(move|_|{if let Some(p)=pop.upgrade(){p.popdown();}table_command(&ui,cmd,serde_json::json!({}));});
-    }
-    let b=gtk::Button::with_label("Propiedades de la tabla…");b.add_css_class("flat");column.append(&b);
-    {let ui=ui.clone();let p=parent.clone();let pop=pop.downgrade();b.connect_clicked(move|_|{if let Some(p)=pop.upgrade(){p.popdown();}show_table_properties(&ui,&p);});}
-    pop.set_child(Some(&column));pop.connect_closed(|p|p.unparent());pop.popup();
-}
-fn install_table_context_menu(ui:&Rc<Ui>,parent:&ApplicationWindow) {
-    let click=gtk::GestureClick::new();click.set_button(gdk::BUTTON_SECONDARY);
-    let u=ui.clone();let p=parent.clone();click.connect_pressed(move|_,_,x,y|{
-        let Some(pos)=pos_at_canvas(&u,x,y)else{return;};if pos.path.cell().is_none(){return;}
-        {let mut state=u.current.borrow_mut();if let Some(d)=state.as_mut(){
-            let keep=pos.story==d.session.sel.focus.story && pos.path.cell().zip(d.session.sel.focus.path.cell()).is_some_and(|((tp,r,c),(current,_,_))|tp==current && wordcraft_engine::cmd::table::selected_cells(&d.session).contains(&(r,c)));
-            if !keep {if let Err(e)=selection::set_caret(&mut d.session,&pos,false){u.toasts.add_toast(Toast::new(&e));}}
-        }}
-        refresh_selection(&u);show_table_context_at(&u,&p,x as i32,y as i32);
-    });ui.document_box.add_controller(click);
-}
-
-
