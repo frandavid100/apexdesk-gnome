@@ -9,6 +9,7 @@ There is no forked engine code, egui patch or copied renderer to merge.
 - `selection.rs`, `editing.rs`, `formatting.rs`, `saving.rs`: typed command adapters.
 - `preferences.rs`: GNOME host settings; no engine internals.
 - `gnome_host.rs`: tab lifecycle, recovery scheduling and native host dialogs.
+- `gnome_format_panels.rs`: native advanced formatting via public engine commands.
 - `bin/gnome.rs`: GTK/libadwaita document view and input.
 
 The host uses public Session, DocLayout and command APIs. Recovery encoding,
@@ -30,3 +31,21 @@ choose when to tick recovery or save the document; these policies are host code.
 A source-compatible upstream update should be a revision bump plus validation.
 Command names, public Rust types, file fidelity or layout changes can require
 adapter changes. Avoid unpinned upstream main and changes to engine internals.
+
+## Production performance
+
+Distribute `cargo build --release --locked --features gui --bin wordcraft-gnome`,
+never a stripped development binary. The release profile enables speed
+optimization, ThinLTO, one codegen unit, and symbol stripping. Panic unwinding
+remains enabled because upstream catches panics in command and rendering paths.
+
+The GTK adapter consumes native premultiplied RGBA without an extra full-page
+copy. Straight RGBA remains available for headless callers. Page lookup uses
+binary search over ordered page positions; equivalence is checked against
+the original full scan. Cached thumbnail repainting is coalesced to 120 ms
+while editing. These changes do not modify the upstream engine.
+
+`cargo run --example performance` and `cargo run --release --example performance`
+exercise the same pages at full and thumbnail sizes. The benchmark excludes
+pixel checksum calculation from raster timing. Compare checksums and timings
+on the same runner; results describe the sample workload, not every document.
