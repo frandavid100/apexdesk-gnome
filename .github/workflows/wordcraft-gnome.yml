@@ -68,6 +68,9 @@ jobs:
               kill "$pid"
               wait "$pid" || true
             }
+            run_case vista-insertar-tabla.png --table-insert-demo
+            run_case vista-menu-tabla.png --table-menu-demo
+            run_case vista-propiedades-tabla.png --table-properties-demo
             run_case vista-texto-avanzado.png --advanced-text-demo
             run_case vista-parrafo-avanzado.png --advanced-paragraph-demo
             run_case vista-estilos.png --styles-demo
@@ -134,6 +137,9 @@ jobs:
             multiwindow.log
             tabs.log
             vista-preferencias.png
+            vista-insertar-tabla.png
+            vista-menu-tabla.png
+            vista-propiedades-tabla.png
             vista-texto-avanzado.png
             vista-parrafo-avanzado.png
             vista-estilos.png
