@@ -119,10 +119,10 @@ fn show_table_context_at(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32) {
     for(label,cmd)in[("Insertar tabulación en celda","text.insertTab"),("Seleccionar fila","table.selectRow"),("Seleccionar columna","table.selectColumn"),("Insertar fila debajo","table.insertRowBelow"),("Insertar columna a la derecha","table.insertColumnRight"),("Combinar celdas","table.merge")] {
         let b=gtk::Button::with_label(label);b.add_css_class("flat");column.append(&b);
         if cmd=="table.merge"{b.set_sensitive(ui.current.borrow().as_ref().is_some_and(|d|wordcraft_gnome::tables::selected_cells(&d.session)>1));}
-        let ui=ui.clone();let pop=pop.clone();b.connect_clicked(move|_|{pop.popdown();table_command(&ui,cmd,serde_json::json!({}));});
+        let ui=ui.clone();let pop=pop.downgrade();b.connect_clicked(move|_|{if let Some(p)=pop.upgrade(){p.popdown();}table_command(&ui,cmd,serde_json::json!({}));});
     }
     let b=gtk::Button::with_label("Propiedades de la tabla…");b.add_css_class("flat");column.append(&b);
-    {let ui=ui.clone();let p=parent.clone();let pop=pop.clone();b.connect_clicked(move|_|{pop.popdown();show_table_properties(&ui,&p);});}
+    {let ui=ui.clone();let p=parent.clone();let pop=pop.downgrade();b.connect_clicked(move|_|{if let Some(p)=pop.upgrade(){p.popdown();}show_table_properties(&ui,&p);});}
     pop.set_child(Some(&column));pop.connect_closed(|p|p.unparent());pop.popup();
 }
 fn install_table_context_menu(ui:&Rc<Ui>,parent:&ApplicationWindow) {
