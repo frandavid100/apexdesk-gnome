@@ -4,7 +4,9 @@ use adw::prelude::*;
 use adw::{Application, ApplicationWindow, HeaderBar, StatusPage, Toast, ToastOverlay, ToolbarView, WindowTitle};
 use glib::value::ToValue;
 use gtk::{gdk, gio, glib};
-use std::{cell::RefCell, collections::HashSet, path::Path, rc::Rc};
+use std::{cell::{Cell, RefCell}, collections::HashSet, path::Path, rc::Rc};
+use wordcraft_doc::Pos;
+use wordcraft_gnome::selection::{self, SelectionGeometry};
 use wordcraft_engine::Session;
 use wordcraft_gnome::{open_document, render_page, sample_session};
 use wordcraft_gnome::viewer_layout::{self, THUMB_SCALE};
@@ -19,6 +21,8 @@ struct Current {
     zoom: f32,
     fit_to_width: bool,
     pages: Vec<gtk::Picture>,
+    page_frames: Vec<gtk::Overlay>,
+    selection_areas: Vec<gtk::DrawingArea>,
     thumbs: Vec<gtk::Picture>,
     thumb_buttons: Vec<gtk::Button>,
     painted_pages: HashSet<usize>,
@@ -43,6 +47,9 @@ struct Ui {
     stack: gtk::Stack,
     title: WindowTitle,
     toasts: ToastOverlay,
+    selection_data: Rc<RefCell<SelectionGeometry>>,
+    selection_zoom: Rc<Cell<f32>>,
+    drag_anchor: RefCell<Option<Pos>>,
 }
 
 fn texture(img: wordcraft_gnome::PageImage) -> gdk::MemoryTexture {
@@ -174,6 +181,10 @@ fn zoom_to(ui: &Rc<Ui>, zoom: f32) {
         doc.tops = viewer_layout::page_tops(&doc.sizes, zoom);
         for (i, picture) in doc.pages.iter().enumerate() {
             picture.set_paintable(None::<&gdk::Paintable>);
+            doc.page_frames[i].set_size_request(
+                (doc.sizes[i].0 * zoom).ceil() as i32,
+                (doc.sizes[i].1 * zoom).ceil() as i32,
+            );
             picture.set_size_request(
                 (doc.sizes[i].0 * zoom).ceil() as i32,
                 (doc.sizes[i].1 * zoom).ceil() as i32,
@@ -181,6 +192,8 @@ fn zoom_to(ui: &Rc<Ui>, zoom: f32) {
         }
         doc.painted_pages.clear();
     }
+    ui.selection_zoom.set(zoom);
+    refresh_selection(ui);
     update_status(ui);
     let ui = ui.clone();
     // Ejecutarlo después de que GTK recalcule las dimensiones de las páginas.
@@ -243,6 +256,8 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     clear_box(&ui.thumbnails_box);
 
     let mut pages = Vec::with_capacity(sizes.len());
+    let mut page_frames = Vec::with_capacity(sizes.len());
+    let mut selection_areas = Vec::with_capacity(sizes.len());
     let mut thumbs = Vec::with_capacity(sizes.len());
     let mut thumb_buttons = Vec::with_capacity(sizes.len());
 
@@ -252,8 +267,41 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         picture.set_halign(gtk::Align::Center);
         picture.set_margin_top(11);
         picture.set_margin_bottom(11);
-        ui.document_box.append(&picture);
+        let frame = gtk::Overlay::new();
+        frame.set_size_request(width.ceil() as i32, height.ceil() as i32);
+        frame.set_halign(gtk::Align::Center);
+        frame.set_margin_top(11);
+        frame.set_margin_bottom(11);
+        picture.set_margin_top(0);
+        picture.set_margin_bottom(0);
+        frame.set_child(Some(&picture));
+        let area = gtk::DrawingArea::new();
+        area.set_can_target(false);
+        area.set_halign(gtk::Align::Fill);
+        area.set_valign(gtk::Align::Fill);
+        {
+            let data = ui.selection_data.clone();
+            let scale = ui.selection_zoom.clone();
+            area.set_draw_func(move |_, cr, _, _| {
+                let selection = data.borrow();
+                let z = f64::from(scale.get());
+                for r in selection.highlights.iter().filter(|r| r.page == i) {
+                    cr.set_source_rgba(0.20, 0.44, 0.88, 0.30);
+                    cr.rectangle(r.x*z, r.y*z, r.width*z, r.height*z);
+                    let _ = cr.fill();
+                }
+                if let Some(r) = selection.caret.as_ref().filter(|r| r.page == i) {
+                    cr.set_source_rgba(0.08, 0.30, 0.74, 1.0);
+                    cr.rectangle(r.x*z, r.y*z, (r.width*z).max(1.5), (r.height*z).max(2.0));
+                    let _ = cr.fill();
+                }
+            });
+        }
+        frame.add_overlay(&area);
+        ui.document_box.append(&frame);
         pages.push(picture);
+        page_frames.push(frame);
+        selection_areas.push(area);
 
         let thumb = gtk::Picture::new();
         thumb.set_can_shrink(false);
@@ -293,11 +341,14 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     }
 
     ui.current.replace(Some(Current {
-        session, sizes, tops, zoom, fit_to_width: true, pages, thumbs, thumb_buttons,
+        session, sizes, tops, zoom, fit_to_width: true,
+        pages, page_frames, selection_areas, thumbs, thumb_buttons,
         painted_pages: HashSet::new(),
         painted_thumbs: HashSet::new(),
         active: 0,
     }));
+    *ui.drag_anchor.borrow_mut() = None;
+    ui.selection_zoom.set(zoom);
     ui.title.set_title(label);
     ui.title.set_subtitle("WordCraft · visor Papers · solo lectura");
     ui.stack.set_visible_child_name("pages");
@@ -306,6 +357,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     update_status(ui);
     refresh_pages(ui);
     refresh_thumbnails(ui);
+    refresh_selection(ui);
     let ui = ui.clone();
     glib::idle_add_local_once(move || {
         refresh_pages(&ui);
@@ -445,6 +497,8 @@ fn make_window(
 
     let document_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
     document_box.set_halign(gtk::Align::Center);
+    document_box.set_focusable(true);
+    document_box.set_cursor_from_name(Some("text"));
     let scroll = gtk::ScrolledWindow::new();
     scroll.set_hexpand(true);
     scroll.set_vexpand(true);
@@ -506,6 +560,9 @@ fn make_window(
 
     let ui = Rc::new(Ui {
         current: RefCell::new(None),
+        selection_data: Rc::new(RefCell::new(SelectionGeometry::default())),
+        selection_zoom: Rc::new(Cell::new(1.0)),
+        drag_anchor: RefCell::new(None),
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button,
         page_label, zoom_label, zoom_out, zoom_in, previous, next, stack, title, toasts,
