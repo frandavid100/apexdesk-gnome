@@ -40,7 +40,7 @@ pub fn preview(source:&Session,id:&str)->Result<PageImage,String>{
     let mut sample=Session::new(doc);sample.view.proofing=false;
     sample.run("select.all",&json!({"whole":true})).map_err(|e|e.to_string())?;
     sample.run("para.style",&json!({"style":id})).map_err(|e|e.to_string())?;
-    let image=render_page_premultiplied(&mut sample,0,0.65)?;
+    let image=render_page_premultiplied(&mut sample,0,1.0)?;
     let mut x0=image.width;let mut y0=image.height;let mut x1=0;let mut y1=0;
     for y in 0..image.height{for x in 0..image.width{let i=((y*image.width+x)*4)as usize;let p=&image.rgba[i..i+4];
         if p[3]>0 && (p[0]<245||p[1]<245||p[2]<245){x0=x0.min(x);x1=x1.max(x);y0=y0.min(y);y1=y1.max(y);}
