@@ -4,6 +4,8 @@ struct SearchPanel {
     toggle: gtk::ToggleButton,
     query: gtk::SearchEntry,
     replacement: gtk::Entry,
+    replacement_row: gtk::Box,
+    replace_all: gtk::Button,
     match_case: gtk::CheckButton,
     replace_mode: gtk::CheckButton,
     list: gtk::ListBox,
@@ -28,13 +30,13 @@ impl SearchPanel {
     fn refresh(self:&Rc<Self>) {
         let Some(ui)=self.ui.upgrade().filter(|u|!u.closed.get())else{return;};
         let result={let mut state=ui.current.borrow_mut();state.as_mut().map(|d|wordcraft_gnome::search::query(&mut d.session,&self.query.text(),self.match_case.is_active()))};
-        let hits=match result {Some(Ok(h))=>h,Some(Err(e))=>{self.status.set_text(&e);Vec::new()},None=>Vec::new()};
+        let (hits,error)=match result {Some(Ok(h))=>(h,None),Some(Err(e))=>(Vec::new(),Some(e)),None=>(Vec::new(),None)};
         while let Some(child)=self.list.first_child(){self.list.remove(&child);}
         ui.search_highlights.borrow_mut().clear();
         if self.toggle.is_active(){*ui.search_highlights.borrow_mut()=hits.iter().flat_map(|h|h.rects.clone()).collect();}
-        if self.query.text().is_empty(){self.status.set_text("Escribe para buscar");}
-        else if hits.is_empty(){self.status.set_text("No hay coincidencias");}
-        else {self.status.set_text(&format!("{} coincidencias",hits.len()));}
+        self.status.set_visible(hits.is_empty());
+        self.status.set_text(error.as_deref().unwrap_or(if self.query.text().is_empty(){"Escribe para buscar"}else{"No hay coincidencias"}));
+        self.replace_all.set_sensitive(!hits.is_empty());
         for (index,hit) in hits.iter().enumerate(){
             let row=gtk::ListBoxRow::new();row.set_widget_name(&format!("search-hit-{index}"));
             let content=gtk::Box::new(gtk::Orientation::Horizontal,6);content.set_margin_top(1);content.set_margin_bottom(1);content.set_margin_start(8);content.set_margin_end(6);
@@ -60,6 +62,12 @@ impl SearchPanel {
         refresh_selection(&ui);caret_ensure_visible(&ui);
         if let Some(row)=self.list.row_at_index(index as i32){self.list.select_row(Some(&row));}
     }
+    fn replace_all(self:&Rc<Self>){
+        let Some(ui)=self.ui.upgrade()else{return;};
+        let result={let mut value=ui.current.borrow_mut();value.as_mut().map(|d|wordcraft_gnome::search::replace_all(&mut d.session,&self.query.text(),&self.replacement.text(),self.match_case.is_active()))};
+        match result{Some(Ok(n))if n>0=>after_content_change(&ui),Some(Err(e))=>ui.toasts.add_toast(Toast::new(&e)),_=>{}}
+        self.refresh();ui.document_box.grab_focus();
+    }
     fn replace_hit(self:&Rc<Self>,index:usize){
         let Some(ui)=self.ui.upgrade()else{return;};let Some(hit)=self.hits.borrow().get(index).cloned()else{return;};
         let result={let mut state=ui.current.borrow_mut();state.as_mut().map(|d|wordcraft_gnome::search::replace(&mut d.session,&hit,&self.replacement.text()))};
@@ -73,20 +81,23 @@ fn install_search_panel(ui:&Rc<Ui>,toggle:&gtk::ToggleButton,compact:&gtk::Butto
     let root=gtk::Box::new(gtk::Orientation::Vertical,6);root.set_margin_top(6);
     let query=gtk::SearchEntry::new();query.set_placeholder_text(Some("Buscar en el documento"));query.set_hexpand(true);query.set_width_chars(1);query.set_widget_name("document-search");
     let line=gtk::Box::new(gtk::Orientation::Horizontal,4);line.set_margin_start(6);line.set_margin_end(6);line.append(&query);
-    let options=gtk::MenuButton::new();options.set_icon_name("view-more-symbolic");options.set_tooltip_text(Some("Opciones de búsqueda"));line.append(&options);root.append(&line);
+    let options=gtk::MenuButton::new();options.set_icon_name("view-more-symbolic");options.add_css_class("flat");options.add_css_class("search-options");options.set_tooltip_text(Some("Opciones de búsqueda"));line.append(&options);root.append(&line);
     let pop=gtk::Popover::new();let choices=gtk::Box::new(gtk::Orientation::Vertical,8);choices.set_margin_top(8);choices.set_margin_bottom(8);choices.set_margin_start(8);choices.set_margin_end(8);
     let case=gtk::CheckButton::with_label("Distinguir mayúsculas");let replace=gtk::CheckButton::with_label("Reemplazar");choices.append(&case);choices.append(&replace);pop.set_child(Some(&choices));options.set_popover(Some(&pop));
-    let replacement=gtk::Entry::new();replacement.set_placeholder_text(Some("Reemplazar por"));replacement.set_margin_start(6);replacement.set_margin_end(6);replacement.set_visible(false);root.append(&replacement);
+    let replacement=gtk::Entry::new();replacement.set_placeholder_text(Some("Reemplazar por"));replacement.set_hexpand(true);replacement.set_width_chars(1);
+    let replacement_row=gtk::Box::new(gtk::Orientation::Horizontal,4);replacement_row.set_margin_start(6);replacement_row.set_margin_end(6);replacement_row.append(&replacement);
+    let replace_all=gtk::Button::new();replace_all.set_child(Some(&paragraph_icon("replace")));replace_all.add_css_class("flat");replace_all.set_tooltip_text(Some("Reemplazar todos los resultados"));replace_all.set_widget_name("search-replace-all");replacement_row.append(&replace_all);replacement_row.set_visible(false);root.append(&replacement_row);
     let status=gtk::Label::new(Some("Escribe para buscar"));status.add_css_class("dim-label");status.set_wrap(true);root.append(&status);
     let list=gtk::ListBox::new();list.set_activate_on_single_click(true);list.add_css_class("navigation-sidebar");
     let scroll=gtk::ScrolledWindow::new();scroll.set_policy(gtk::PolicyType::Never,gtk::PolicyType::Automatic);scroll.set_vexpand(true);scroll.set_child(Some(&list));root.append(&scroll);
     ui.sidebar_pages.add_named(&root,Some("search"));
-    let s=Rc::new(SearchPanel{ui:Rc::downgrade(ui),toggle:toggle.clone(),query:query.clone(),replacement:replacement.clone(),match_case:case.clone(),replace_mode:replace.clone(),list:list.clone(),status,hits:RefCell::new(Vec::new()),pending:Cell::new(false)});
+    let s=Rc::new(SearchPanel{ui:Rc::downgrade(ui),toggle:toggle.clone(),query:query.clone(),replacement:replacement.clone(),replacement_row,replace_all:replace_all.clone(),match_case:case.clone(),replace_mode:replace.clone(),list:list.clone(),status,hits:RefCell::new(Vec::new()),pending:Cell::new(false)});
+    let weak=Rc::downgrade(&s);replace_all.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.replace_all();}});
     let weak=Rc::downgrade(&s);query.connect_search_changed(move |_|{if let Some(s)=weak.upgrade(){s.refresh();}});
     let weak=Rc::downgrade(&s);case.connect_toggled(move |_|{if let Some(s)=weak.upgrade(){s.refresh();}});
-    let weak=Rc::downgrade(&s);replace.connect_toggled(move |b|{if let Some(s)=weak.upgrade(){s.replacement.set_visible(b.is_active());s.refresh();}});
+    let weak=Rc::downgrade(&s);replace.connect_toggled(move |b|{if let Some(s)=weak.upgrade(){s.replacement_row.set_visible(b.is_active());s.refresh();}});
     let weak=Rc::downgrade(&s);toggle.connect_toggled(move|b|{if let Some(s)=weak.upgrade(){if let Some(ui)=s.ui.upgrade(){
-        ui.sidebar_pages.set_visible_child_name(if b.is_active(){"search"}else{"thumbnails"});
+        ui.sidebar_pages.set_visible_child_name(if b.is_active(){"search"}else{"navigation"});
         if b.is_active(){ui.sidebar.set_show_sidebar(true);s.query.grab_focus();s.refresh();}else{ui.search_highlights.borrow_mut().clear();refresh_selection(&ui);}
     }}});
     let weak=Rc::downgrade(&s);compact.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.show(false);}});
@@ -110,6 +121,8 @@ fn search_ui_test(ui:&Rc<Ui>,s:&Rc<SearchPanel>,app:&Application,host:&Rc<Worksp
     apply_user_edit(ui,Edit::Undo);s.refresh();assert_eq!(s.hits.borrow().len(),4);
     s.replacement.set_text("");s.replace_hit(0);assert_eq!(s.hits.borrow().len(),3);
     apply_user_edit(ui,Edit::Undo);s.refresh();assert_eq!(s.hits.borrow().len(),4);
+    s.replacement.set_text("$1 ^p");s.replace_all.emit_clicked();assert!(s.hits.borrow().is_empty());
+    apply_user_edit(ui,Edit::Undo);s.refresh();assert_eq!(s.hits.borrow().len(),4);assert!(!s.status.is_visible());
     s.toggle.set_active(false);assert!(ui.search_highlights.borrow().is_empty());s.show(false);
     let original=host.tabs.selected_page().unwrap();blank_tab(app,host);
     let new=host.docs.borrow().last().unwrap().1.clone();
