@@ -44,8 +44,6 @@ struct Ui {
     zoom_label: gtk::Label,
     zoom_out: gtk::Button,
     zoom_in: gtk::Button,
-    previous: gtk::Button,
-    next: gtk::Button,
     stack: gtk::Stack,
     title: WindowTitle,
     toasts: ToastOverlay,
@@ -438,8 +436,6 @@ fn update_status(ui: &Rc<Ui>) {
     let Ok(current) = ui.current.try_borrow() else { return };
     if let Some(doc) = current.as_ref() {
         ui.page_label.set_text(&format!("{} de {}", doc.active + 1, doc.sizes.len()));
-        ui.previous.set_sensitive(doc.active > 0);
-        ui.next.set_sensitive(doc.active + 1 < doc.sizes.len());
         ui.zoom_label.set_text(&format!("{:.0} %", doc.zoom * 100.0));
         ui.zoom_out.set_sensitive(doc.zoom > viewer_layout::MIN_ZOOM);
         ui.zoom_in.set_sensitive(doc.zoom < viewer_layout::MAX_ZOOM);
@@ -754,7 +750,9 @@ fn make_window(
     selection_demo: bool,
     editing_demo: bool,
     formatting_demo: bool,
-) {
+    initial_document: Option<(Session, String)>,
+) -> ApplicationWindow {
+    let initial_loaded = initial_document.is_some();
     if dark_on_start {
         adw::StyleManager::default().set_color_scheme(adw::ColorScheme::ForceDark);
     }
@@ -809,10 +807,6 @@ fn make_window(
     let page_label = gtk::Label::new(Some("Sin documento"));
     page_label.add_css_class("page-indicator");
 
-    let previous = gtk::Button::with_label("Página anterior");
-    previous.set_sensitive(false);
-    let next = gtk::Button::with_label("Página siguiente");
-    next.set_sensitive(false);
     let zoom_out = gtk::Button::with_label("−");
     zoom_out.set_tooltip_text(Some("Reducir zoom (Ctrl+-)"));
     let zoom_in = gtk::Button::with_label("+");
@@ -827,13 +821,10 @@ fn make_window(
     menu_content.set_margin_bottom(12);
     menu_content.set_margin_start(12);
     menu_content.set_margin_end(12);
+    let new_window_button = gtk::Button::with_label("Nueva ventana (Ctrl+N)");
+    menu_content.append(&new_window_button);
     menu_content.append(&save_as_button);
-    menu_content.append(&zoom_label);
-    menu_content.append(&fit_button);
-    menu_content.append(&normal_zoom);
-    menu_content.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
-    menu_content.append(&previous);
-    menu_content.append(&next);
+
     menu.set_child(Some(&menu_content));
     // Si el panel lateral está cerrado, su menú de aplicación debe seguir
     // accesible desde la cabecera principal.
@@ -899,6 +890,21 @@ fn make_window(
     zoom_out.add_css_class("circular");
     zoom_buttons.append(&zoom_in);
     zoom_buttons.append(&zoom_out);
+    let zoom_popover = gtk::Popover::new();
+    let zoom_options = gtk::Box::new(gtk::Orientation::Vertical, 6);
+    zoom_options.set_margin_top(12); zoom_options.set_margin_bottom(12);
+    zoom_options.set_margin_start(12); zoom_options.set_margin_end(12);
+    zoom_options.append(&zoom_label);
+    zoom_options.append(&normal_zoom);
+    zoom_options.append(&fit_button);
+    zoom_popover.set_child(Some(&zoom_options));
+    let zoom_menu = gtk::MenuButton::new();
+    zoom_menu.set_icon_name("view-more-symbolic");
+    zoom_menu.set_tooltip_text(Some("Opciones de zoom"));
+    zoom_menu.add_css_class("osd"); zoom_menu.add_css_class("circular");
+    zoom_menu.set_popover(Some(&zoom_popover));
+    zoom_menu.set_direction(gtk::ArrowType::Up);
+    zoom_buttons.append(&zoom_menu);
     let canvas_overlay = gtk::Overlay::new();
     canvas_overlay.set_child(Some(&scroll));
     canvas_overlay.add_overlay(&zoom_buttons);
@@ -923,10 +929,27 @@ fn make_window(
     let underline_button = gtk::ToggleButton::with_label("U");
     underline_button.set_tooltip_text(Some("Subrayado (Ctrl+U)"));
     underline_button.add_css_class("flat");
-    format_bar.append(&bold_button);
-    format_bar.append(&italic_button);
-    format_bar.append(&underline_button);
-    format_bar.append(&gtk::Separator::new(gtk::Orientation::Vertical));
+    let text_popover = gtk::Popover::new();
+    let text_options = gtk::Box::new(gtk::Orientation::Vertical, 12);
+    text_options.set_margin_top(12); text_options.set_margin_bottom(12);
+    text_options.set_margin_start(12); text_options.set_margin_end(12);
+    let inline_buttons = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+    inline_buttons.append(&bold_button); inline_buttons.append(&italic_button);
+    inline_buttons.append(&underline_button);
+    text_options.append(&inline_buttons);
+    let size_label = gtk::Label::new(Some("Tamaño de letra"));
+    size_label.set_halign(gtk::Align::Start);
+    text_options.append(&size_label);
+    let sizes = gtk::Grid::new();
+    sizes.set_row_spacing(6); sizes.set_column_spacing(6);
+    text_options.append(&sizes);
+    text_popover.set_child(Some(&text_options));
+    let text_menu = gtk::MenuButton::new();
+    text_menu.set_label("Texto");
+    text_menu.set_tooltip_text(Some("Negrita, cursiva, subrayado y tamaño de letra"));
+    text_menu.set_popover(Some(&text_popover));
+    text_menu.set_direction(gtk::ArrowType::Up);
+    format_bar.append(&text_menu);
 
     let mut format_actions: Vec<(gtk::Button, Format, gtk::Popover)> = Vec::new();
     let style_menu = format_menu("Estilo", &[
@@ -935,16 +958,11 @@ fn make_window(
         ("Título 2", Format::Heading2),
         ("Título 3", Format::Heading3),
     ], &mut format_actions);
-    let font_size_menu = format_menu("Tamaño", &[
-        ("10 pt", Format::FontSize(10)),
-        ("11 pt", Format::FontSize(11)),
-        ("12 pt", Format::FontSize(12)),
-        ("14 pt", Format::FontSize(14)),
-        ("16 pt", Format::FontSize(16)),
-        ("18 pt", Format::FontSize(18)),
-        ("24 pt", Format::FontSize(24)),
-        ("36 pt", Format::FontSize(36)),
-    ], &mut format_actions);
+    for (index, size) in [10u8, 11, 12, 14, 16, 18, 24, 36].iter().enumerate() {
+        let button = gtk::Button::with_label(&format!("{size} pt"));
+        sizes.attach(&button, (index % 4) as i32, (index / 4) as i32, 1, 1);
+        format_actions.push((button, Format::FontSize(*size), text_popover.clone()));
+    }
     let align_menu = format_menu("Alineación", &[
         ("Izquierda", Format::AlignLeft),
         ("Centrada", Format::AlignCenter),
@@ -952,7 +970,6 @@ fn make_window(
         ("Justificada", Format::Justify),
     ], &mut format_actions);
     format_bar.append(&style_menu);
-    format_bar.append(&font_size_menu);
     format_bar.append(&align_menu);
     let format_toolbar = gtk::ScrolledWindow::new();
     format_toolbar.set_policy(gtk::PolicyType::Automatic, gtk::PolicyType::Never);
@@ -1000,7 +1017,7 @@ fn make_window(
         format_syncing: Cell::new(false),
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button,
-        page_label, zoom_label, zoom_out, zoom_in, previous, next, stack, title, toasts,
+        page_label, zoom_label, zoom_out, zoom_in, stack, title, toasts,
     });
 
 
@@ -1008,6 +1025,13 @@ fn make_window(
         let ui = ui.clone();
         let parent = window.clone();
         button.connect_clicked(move |_| save_document(&ui, &parent, save_as, Box::new(|| {})));
+    }
+
+    {
+        let app = app.clone();
+        new_window_button.connect_clicked(move |_| {
+            make_window(&app, false, false, false, false, false, false, false, None);
+        });
     }
 
     // All formatting commands preserve the selection and return keyboard
@@ -1018,8 +1042,10 @@ fn make_window(
         (underline_button, Format::Underline),
     ] {
         let ui = ui.clone();
+        let popover = text_popover.clone();
         button.connect_toggled(move |_| {
             if !ui.format_syncing.get() {
+                popover.popdown();
                 apply_user_format(&ui, action);
             }
         });
@@ -1163,26 +1189,6 @@ fn make_window(
     }
     {
         let ui = ui.clone();
-        ui.previous.connect_clicked({
-            let ui = ui.clone();
-            move |_| {
-                let page = ui.current.borrow().as_ref().map(|d| d.active.saturating_sub(1));
-                if let Some(page) = page { jump_to(&ui, page); }
-            }
-        });
-    }
-    {
-        let ui = ui.clone();
-        ui.next.connect_clicked({
-            let ui = ui.clone();
-            move |_| {
-                let page = ui.current.borrow().as_ref().map(|d| d.active + 1);
-                if let Some(page) = page { jump_to(&ui, page); }
-            }
-        });
-    }
-    {
-        let ui = ui.clone();
         ui.zoom_out.connect_clicked({
             let ui = ui.clone();
             move |_| zoom_step(&ui, false)
@@ -1197,7 +1203,7 @@ fn make_window(
     }
     {
         let ui = ui.clone();
-        let menu = menu.clone();
+        let menu = zoom_popover.clone();
         fit_button.connect_clicked(move |_| {
             fit_width(&ui);
             menu.popdown();
@@ -1205,7 +1211,7 @@ fn make_window(
     }
     {
         let ui = ui.clone();
-        let menu = menu.clone();
+        let menu = zoom_popover.clone();
         normal_zoom.connect_clicked(move |_| {
             if let Some(doc) = ui.current.borrow_mut().as_mut() {
                 doc.fit_to_width = false;
@@ -1218,6 +1224,7 @@ fn make_window(
         let ui = ui.clone();
         let open_button = open_button.clone();
         let save_parent = window.clone();
+        let new_window_button = new_window_button.clone();
         let controller = gtk::EventControllerKey::new();
         // GTK supplies dead-key composition, accents and input methods.
         // Committed text enters WordCraft; ordinary shortcuts remain in
@@ -1279,6 +1286,14 @@ fn make_window(
             }
             if !modifiers.contains(gdk::ModifierType::CONTROL_MASK) {
                 return glib::Propagation::Proceed;
+            }
+            if key == gdk::Key::n || key == gdk::Key::N {
+                if !shift && !modifiers.contains(gdk::ModifierType::ALT_MASK) {
+                    new_window_button.emit_clicked(); return glib::Propagation::Stop;
+                }
+            }
+            if key == gdk::Key::w || key == gdk::Key::W {
+                save_parent.close(); return glib::Propagation::Stop;
             }
             if key == gdk::Key::s || key == gdk::Key::S {
                 save_document(&ui, &save_parent, shift, Box::new(|| {}));
@@ -1387,6 +1402,7 @@ fn make_window(
     {
         let ui = ui.clone();
         let parent = window.clone();
+        let app = app.clone();
         open_button.connect_clicked(move |_| {
             let dialog = gtk::FileDialog::new();
             dialog.set_title("Abrir documento");
@@ -1398,7 +1414,7 @@ fn make_window(
             filters.append(&filter);
             dialog.set_filters(Some(&filters));
             let ui = ui.clone();
-            let chooser_parent = parent.clone();
+            let app = app.clone();
             dialog.open(Some(&parent), None::<&gio::Cancellable>, move |result| {
                 let Ok(file) = result else { return };
                 let Some(path) = file.path() else {
@@ -1409,8 +1425,12 @@ fn make_window(
                     Ok(session) => {
                         let label = path.file_name().map(|n| n.to_string_lossy().into_owned())
                             .unwrap_or_else(|| "Documento".to_string());
-                        let next = ui.clone();
-                        ask_discard(&ui, &chooser_parent, move || opened(&next, session, &label));
+                        if ui.current.borrow().is_none() {
+                            opened(&ui, session, &label);
+                        } else {
+                            make_window(&app, false, false, false, false, false, false, false,
+                                Some((session, label)));
+                        }
                     }
                     Err(err) => ui.toasts.add_toast(Toast::new(&err)),
                 }
@@ -1436,8 +1456,18 @@ fn make_window(
         });
     }
 
-    if sample_on_start { opened(&ui, sample_session(), "Documento de ejemplo"); }
+    if let Some((session, label)) = initial_document {
+        opened(&ui, session, &label);
+    } else if sample_on_start { opened(&ui, sample_session(), "Documento de ejemplo"); }
     window.present();
+    if std::env::args().any(|a| a == "--text-menu-demo") {
+        let menu = text_menu.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_millis(1100), move || menu.popup());
+    }
+    if std::env::args().any(|a| a == "--zoom-menu-demo") {
+        let menu = zoom_menu.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_millis(1100), move || menu.popup());
+    }
     if sidebar_on_start {
         // Cuando se aplica AdwBreakpoint, el split puede cambiar por sí mismo
         // la visibilidad del panel; abrimos la miniatura tras estabilizarlo.
@@ -1452,7 +1482,7 @@ fn make_window(
             });
         });
     }
-    if sample_on_start {
+    if sample_on_start || initial_loaded {
         let ui = ui.clone();
         glib::idle_add_local_once(move || fit_width(&ui));
     }
@@ -1500,6 +1530,7 @@ fn make_window(
             refresh_selection(&ui);
         });
     }
+    window
 }
 
 fn main() {
@@ -1520,7 +1551,22 @@ fn main() {
         .flags(gio::ApplicationFlags::NON_UNIQUE)
         .build();
     app.connect_activate(move |app| {
-        make_window(app, sample_on_start, sidebar_on_start, narrow_on_start, dark_on_start, selection_demo, editing_demo, formatting_demo)
+        if std::env::args().any(|a| a == "--multiwindow-test") {
+            let first = make_window(app, false, false, false, false, false, false, false,
+                Some((sample_session(), "Primero".into())));
+            let _second = make_window(app, false, false, false, false, false, false, false,
+                Some((sample_session(), "Segundo".into())));
+            let app = app.clone();
+            glib::timeout_add_local_once(std::time::Duration::from_millis(1000), move || {
+                if app.windows().len() != 2 { std::process::exit(1); }
+                first.close();
+                if app.windows().len() != 1 { std::process::exit(1); }
+                eprintln!("MULTIWINDOW_OK");
+                app.quit();
+            });
+            return;
+        }
+        make_window(app, sample_on_start, sidebar_on_start, narrow_on_start, dark_on_start, selection_demo, editing_demo, formatting_demo, None);
     });
     app.run_with_args(&["wordcraft-gnome"]);
 }
