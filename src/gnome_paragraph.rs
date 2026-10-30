@@ -11,7 +11,7 @@ struct ParagraphPopover {
     border: RefCell<serde_json::Value>,
 }
 fn paragraph_icon(name:&str)->gtk::Widget {
-    let area=gtk::DrawingArea::new();area.set_content_width(18);area.set_content_height(18);
+    let area=gtk::DrawingArea::new();area.set_content_width(18);area.set_content_height(18);area.set_halign(gtk::Align::Center);area.set_valign(gtk::Align::Center);
     let kind=name.to_string();
     area.set_draw_func(move|w,cr,_,_|{
         let c=w.color();cr.set_source_rgba(c.red() as f64,c.green() as f64,c.blue() as f64,c.alpha() as f64);cr.set_line_width(1.4);
