@@ -1,3 +1,11 @@
+fn release_document(ui:&Rc<Ui>) {
+    ui.closed.set(true);
+    let current=ui.current.borrow_mut().take();
+    if let Some(mut doc)=current {doc.session.finish_recovery();}
+    clear_box(&ui.document_box);clear_box(&ui.thumbnails_box);
+    ui.tab_page.borrow_mut().take();
+}
+
 fn cancel_tab_close(ui:&Rc<Ui>) {
     if let Some((view,page))=ui.pending_tab_close.borrow_mut().take(){view.close_page_finish(&page,false);}
 }
@@ -17,8 +25,7 @@ fn close_workspace(host: &Rc<Workspace>) {
         ask_discard(&ui, &host.window, move || { next.closing_confirmed.set(true); close_workspace(&host2); });
     } else {
         for (_, ui) in host.docs.borrow().iter() {
-            ui.closed.set(true);
-            if let Some(doc) = ui.current.borrow_mut().as_mut() { doc.session.finish_recovery(); }
+            release_document(ui);
         }
         host.allow_close.set(true);
         let window=host.window.clone();glib::idle_add_local_once(move ||window.close());
@@ -43,8 +50,7 @@ fn make_window(app: &Application, sample: bool, sidebar: bool, narrow: bool, dar
                 let view = view.clone(); let page = page.clone(); let next = ui.clone();
                 ui.pending_tab_close.replace(Some((view.clone(),page.clone())));
                 ask_discard(&ui, &host2.window, move || {
-                    if let Some(doc) = next.current.borrow_mut().as_mut() { doc.session.finish_recovery(); }
-                    next.closed.set(true);
+                    release_document(&next);
                     next.pending_tab_close.borrow_mut().take();
                     view.close_page_finish(&page,true);
                 });
