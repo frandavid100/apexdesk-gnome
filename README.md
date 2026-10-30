@@ -5,7 +5,7 @@ interfaz GTK4/libadwaita, reutilizando el motor WordCraft sin egui.
 
 ## Incluido
 
-- Negrita **Ctrl+B**, cursiva **Ctrl+I** y subrayado **Ctrl+U**.
+- Negrita **Ctrl+B**, cursiva **Ctrl+I** y subrayado **Ctrl+U**, con botones de estado que se actualizan según la selección.
 - Estilos de párrafo: Normal y Títulos 1, 2 y 3.
 - Alineación: izquierda, centrada, derecha y justificada.
 - Tamaños de fuente: 10, 11, 12, 14, 16, 18, 24 y 36 puntos.
