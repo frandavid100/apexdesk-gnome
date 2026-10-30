@@ -32,6 +32,10 @@ pub fn set_caret(session: &mut Session, pos: &Pos, extend: bool) -> Result<(), S
 }
 
 pub fn select_range(session: &mut Session, anchor: &Pos, focus: &Pos) -> Result<(), String> {
+    if anchor.story == focus.story && anchor.path.cell().is_some() && anchor.path.cell() != focus.path.cell() {
+        set_caret(session,anchor,false)?;
+        return set_caret(session,focus,true);
+    }
     session.run("select.range", &json!({"anchor": anchor, "focus": focus}))
         .map_err(|e| e.to_string())?;
     Ok(())
@@ -65,6 +69,19 @@ pub fn geometry(session: &mut Session) -> SelectionGeometry {
     let lay = session.layout();
     let selection = session.sel.clone();
     let mut out = SelectionGeometry::default();
+    if let Some(range)=session.cell_range() {
+        let cells=session.doc.table(range.story,&range.table).map(|t|range.cells(t)).unwrap_or_default();
+        for (page, p) in lay.pages.iter().enumerate() {
+            for item in &p.items {
+                if let wordcraft_engine::layout::Placed::Cell {rect,table,row,cell,story,covered,..}=item {
+                    if !covered && *story==range.story && *table==range.table && cells.contains(&(*row,*cell)) {
+                        out.highlights.push(Rect {page,x:rect.x as f64,y:rect.y as f64,width:rect.w as f64,height:rect.h as f64});
+                    }
+                }
+            }
+        }
+        return out;
+    }
     if !selection.is_collapsed() {
         for (page, rect) in lay.selection_rects(&session.doc, &selection.anchor, &selection.focus, session.page_hint) {
             out.highlights.push(Rect {
