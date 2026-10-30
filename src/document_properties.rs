@@ -31,7 +31,7 @@ pub fn apply(s:&mut Session,setup:PageSetup,whole:bool)->Result<bool,String>{
         }start=end+1;
     }
     if changes.is_empty(){return Ok(false);}
-    let snap=s.edit_snapshot();let mark=s.undo_mark();let sel=s.sel.clone();
+    let snap=s.edit_snapshot();let mark=s.undo_mark();let sel=s.sel.clone();let pending=s.pending.clone();
     let result=(||{
         // Anchor the grouped undo before moving to any other section.
         s.checkpoint("Propiedades del documento");
@@ -43,5 +43,5 @@ pub fn apply(s:&mut Session,setup:PageSetup,whole:bool)->Result<bool,String>{
         s.run("select.range",&json!({"anchor":sel.anchor,"focus":sel.focus}))?;
         Ok::<_,wordcraft_engine::CmdError>(())
     })();
-    match result {Ok(())=>{s.merge_undo_since(mark);Ok(true)},Err(e)=>{s.restore(snap);Err(e.to_string())}}
+    match result {Ok(())=>{s.pending=pending;s.merge_undo_since(mark);Ok(true)},Err(e)=>{s.restore(snap);s.pending=pending;Err(e.to_string())}}
 }
