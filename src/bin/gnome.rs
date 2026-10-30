@@ -403,7 +403,7 @@ fn save_to(ui: &Rc<Ui>, path: &Path) -> bool {
 }
 
 fn save_document(ui: &Rc<Ui>, parent: &ApplicationWindow, save_as: bool, done: Box<dyn FnOnce()>) {
-    if ui.current.borrow().as_ref().is_none_or(|doc|doc.session.is_untouched_blank()) { return; }
+    if ui.current.borrow().is_none() {cancel_tab_close(ui); return;}
     let existing = ui.save_path.borrow().clone();
     if !save_as {
         if let Some(path) = existing { if save_to(ui, &path) { done(); } else {cancel_tab_close(ui);} return; }
@@ -1706,9 +1706,10 @@ fn main() {
             glib::timeout_add_local_once(std::time::Duration::from_millis(1000), move || {
                 if app.windows().len() != 2 { std::process::exit(1); }
                 first.close();
-                if app.windows().len() != 1 { std::process::exit(1); }
-                eprintln!("MULTIWINDOW_OK");
-                app.quit();
+                glib::timeout_add_local_once(std::time::Duration::from_millis(150),move || {
+                    if app.windows().len() != 1 { std::process::exit(1); }
+                    eprintln!("MULTIWINDOW_OK");app.quit();
+                });
             });
             return;
         }
