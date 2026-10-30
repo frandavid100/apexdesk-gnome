@@ -662,6 +662,74 @@ fn make_window(
         page_label, zoom_label, zoom_out, zoom_in, previous, next, stack, title, toasts,
     });
 
+
+    // Click sets the caret, double-click selects a word and triple-click
+    // selects a paragraph. Coordinates are relative to the document stack.
+    {
+        let click = gtk::GestureClick::new();
+        click.set_button(gdk::BUTTON_PRIMARY);
+        let ui = ui.clone();
+        click.connect_pressed(move |gesture, count, x, y| {
+            let Some(pos) = pos_at_canvas(&ui, x, y) else { return };
+            ui.document_box.grab_focus();
+            let shift = gesture.current_event_state().contains(gdk::ModifierType::SHIFT_MASK);
+            let result = {
+                let mut value = ui.current.borrow_mut();
+                let Some(doc) = value.as_mut() else { return };
+                selection::set_caret(&mut doc.session, &pos, shift)
+                    .and_then(|_| {
+                        let cmd = if count == 2 { Some("select.word") }
+                            else if count >= 3 { Some("select.paragraph") }
+                            else { None };
+                        if let Some(cmd) = cmd {
+                            doc.session.run(cmd, &serde_json::json!({}))
+                                .map_err(|e| e.to_string())?;
+                        }
+                        Ok(())
+                    })
+            };
+            if let Err(e) = result { ui.toasts.add_toast(Toast::new(&e)); }
+            refresh_selection(&ui);
+        });
+        ui.document_box.add_controller(click);
+    }
+    // One drag gesture for the entire document, including page boundaries.
+    {
+        let drag = gtk::GestureDrag::new();
+        drag.set_button(gdk::BUTTON_PRIMARY);
+        {
+            let ui = ui.clone();
+            drag.connect_drag_begin(move |_, x, y| {
+                *ui.drag_anchor.borrow_mut() = pos_at_canvas(&ui, x, y);
+                ui.document_box.grab_focus();
+            });
+        }
+        {
+            let ui = ui.clone();
+            drag.connect_drag_update(move |gesture, dx, dy| {
+                let Some((sx, sy)) = gesture.start_point() else { return };
+                let Some(anchor) = ui.drag_anchor.borrow().clone() else { return };
+                let Some(focus) = pos_at_canvas(&ui, sx + dx, sy + dy) else { return };
+                let result = {
+                    let mut value = ui.current.borrow_mut();
+                    value.as_mut().map(|doc| selection::select_range(
+                        &mut doc.session, &anchor, &focus,
+                    ))
+                };
+                if let Some(Err(e)) = result { ui.toasts.add_toast(Toast::new(&e)); }
+                refresh_selection(&ui);
+            });
+        }
+        {
+            let ui = ui.clone();
+            drag.connect_drag_end(move |_, _, _| {
+                ui.drag_anchor.borrow_mut().take();
+                refresh_selection(&ui);
+            });
+        }
+        ui.document_box.add_controller(drag);
+    }
+
     {
         let ui = ui.clone();
         let app_popover = app_popover.clone();
@@ -773,6 +841,23 @@ fn make_window(
         let open_button = open_button.clone();
         let controller = gtk::EventControllerKey::new();
         controller.connect_key_pressed(move |_, key, _, modifiers| {
+            let shift = modifiers.contains(gdk::ModifierType::SHIFT_MASK);
+            let control = modifiers.contains(gdk::ModifierType::CONTROL_MASK);
+            if ui.document_box.has_focus() {
+                let movement = match key {
+                    gdk::Key::Left => Some(if control { "wordLeft" } else { "left" }),
+                    gdk::Key::Right => Some(if control { "wordRight" } else { "right" }),
+                    gdk::Key::Up => Some("up"),
+                    gdk::Key::Down => Some("down"),
+                    gdk::Key::Home => Some(if control { "docStart" } else { "home" }),
+                    gdk::Key::End => Some(if control { "docEnd" } else { "end" }),
+                    _ => None,
+                };
+                if let Some(action) = movement {
+                    selected_command(&ui, action, shift);
+                    return glib::Propagation::Stop;
+                }
+            }
             if key == gdk::Key::F9 {
                 ui.sidebar_button.set_active(!ui.sidebar_button.is_active());
                 return glib::Propagation::Stop;
@@ -783,6 +868,16 @@ fn make_window(
             if key == gdk::Key::o || key == gdk::Key::O {
                 open_button.emit_clicked();
                 return glib::Propagation::Stop;
+            }
+            if ui.document_box.has_focus() {
+                if key == gdk::Key::c || key == gdk::Key::C {
+                    copy_selection(&ui);
+                    return glib::Propagation::Stop;
+                }
+                if key == gdk::Key::a || key == gdk::Key::A {
+                    selected_command(&ui, "select-all", false);
+                    return glib::Propagation::Stop;
+                }
             }
             match key {
                 gdk::Key::plus | gdk::Key::equal | gdk::Key::KP_Add => zoom_step(&ui, true),
@@ -864,7 +959,7 @@ fn make_window(
 
 fn main() {
     if std::env::args().any(|arg| arg == "--version") {
-        println!("WordCraft GNOME · interfaz Adwaita adaptativa · edición 2026-10-30.3");
+        println!("WordCraft GNOME · selección y cursor · fase 3A");
         return;
     }
     let sample_on_start = std::env::args().any(|arg| arg == "--sample");
