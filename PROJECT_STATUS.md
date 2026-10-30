@@ -23,7 +23,7 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 - Panel lateral estrecho y abierto por defecto desde su construcción, sin apertura diferida. Miniaturas con margen uniforme de 12 px alrededor de imagen y número, ambos dentro del botón seleccionado; filas a altura natural. Selector inferior en AdwToolbarView, con altura compartida con la barra de edición y sombras nativas al desplazar contenido. Fondo del visor del color de la ventana; hojas blancas.
 - Cabecera del documento de una línea: nombre y ● a su izquierda cuando hay cambios pendientes, sin subtítulo ni contador de páginas.
 - Barra de edición abajo, como Apostrophe. Deshacer y Rehacer a la izquierda.
-- Los cuatro desplegables de edición (Estilo, Párrafo, Texto y Tabla) tienen cabecera fija con nombre y chincheta. Activada, el panel es no modal y aplicar una opción mantiene su apertura; desactivada recupera el cierre al aplicar. Fijar/desfijar conserva subpágina/formulario y no modifica el documento. Flechas pequeñas de chevrón hacia abajo en los botones de la barra y subopciones de Párrafo.
+- Los cuatro desplegables de edición (Estilo, Párrafo, Texto y Tabla) comparten un grupo por pestaña: solo uno puede estar abierto y la chincheta se conserva al pasar de uno a otro. La modalidad GTK es siempre no modal; fijar/desfijar solo cambia la política de cierre, sin ocultar, recrear ni volver a mostrar la superficie. Sin fijar se cierra al aplicar o pulsar fuera. Cabecera única con nombre, vuelta atrás contextual y chincheta. Botones de subopciones de Párrafo independientes, con fondo y esquinas nativos, no enlazados/planos.
 - Orden de formato: Estilo → Párrafo → Texto. Estilos y Párrafo se gestionan en desplegables con subpáginas internas; Texto conserva su panel ampliado.
 - Zoom a la derecha: +, − y un tercer botón con 100 % y Ajustar al ancho.
 - Sin botones Página anterior/siguiente; navegación mediante scroll y miniaturas.
@@ -56,12 +56,12 @@ tiradores de tamaño con ratón, fórmulas ni una interfaz dedicada para inserta
 
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `2e13ffa51fe6a02b32f019df6eab46b894e335db`.
+Código del último ejecutable validado: `d90c9caf76e099265c54b446701a1b383330b2b1`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41108119019).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13003146783`.
-Ejecutable actual con cabeceras y chincheta: 33.901.864 bytes.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41112308966).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13004731589`.
+Ejecutable actual con cabeceras y chincheta: 33.913.816 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
@@ -76,6 +76,7 @@ También se comparó una región de la página en las capturas anterior/actual s
 Pasaron los tests de integración con el motor, de los adaptadores y de búsqueda de páginas frente al recorrido anterior;
 la CI compiló y probó el ejecutable release en ventanas, pestañas y paneles nativos.
 Las pruebas del visor verifican geometría de filas simples/dobles, alturas mixtas y páginas impares; márgenes simétricos de miniaturas, número dentro del botón, barras inferiores alineadas y título de una línea con cambios pendientes. La regresión de foco usa clics reales para abrir un menú, cerrarlo y situar el cursor en una página posterior sin alterar el scroll. Capturas revisadas en una columna y en vista doble al 100 %.
+La regresión comprueba además ausencia de señales hide y conservación de la superficie al fijar/desfijar, y cambio exclusivo Estilo/Párrafo conservando la chincheta. Capturas de cabeceras únicas y botones de flecha con fondo nativo revisadas.
 La prueba POPOVER_PIN_OK aplica acciones reales de Estilo/Párrafo/Texto/Tabla y comprueba que fijar permite mantenerlos abiertos al aplicar y enfocar el documento; desfijar conserva la subpágina y restaura el cierre. Fijar no cambia la revisión. La prueba espera fotogramas de GTK y exige is_mapped, para detectar el caso de un panel marcado como visible pero sin superficie dibujada. Se revisó además una captura tras aplicar un estilo fijado y varios segundos con el foco en el documento, así como el aspecto plano de la barra y los chevrones.
 La prueba DOCUMENT_CHROME_OK verifica arranque vacío sin fixture, menú GtkPopoverMenu y sus cuatro acciones, historial sobre el documento activo y altura compartida de las barras. VIEW_POINTER_OK comprueba además el margen de 12 px y el número incluido en la miniatura sin regresión de foco. Capturas anchas, estrechas y oscuras comprobadas.
 Las pruebas de navegación verifican niveles heredados/expresos, selección sin alterar historial, contraer/expandir secciones, conservación de Títulos al cerrar la búsqueda y acciones nativas de pestañas, historial, ayuda y atajos.
@@ -86,7 +87,7 @@ validación de nombres y el recorrido real de botones/subpáginas sin ventanas a
 
 **Confirmación del usuario:** el desplegable de estilos funciona y su distribución le gusta; solicita quitar la negrita general. Se mantienen ¶/a para tipo con explicaciones; el estilo actual se distingue con fondo de selección en vez de ✓.
 **Corrección solicitada por el usuario:** salto a la primera página al cerrar un menú y pulsar el texto. El visor usa un GtkViewport explícito con scroll-to-focus desactivado; desplazar el cursor con teclado sigue usando la geometría del motor.
-**Pendiente de confirmación del usuario:** chincheta y cabeceras de desplegables, chevrones pequeños; barras inferiores alineadas con sombras nativas, miniaturas de 12 px incluyendo número, menú de documento y retirada de botones/ejemplo; selector Páginas/Títulos, títulos contraíbles, menú principal nativo, vista de todas las pestañas y últimos ajustes de búsqueda/reemplazo total y fundido; cabecera simplificada, márgenes de miniaturas, páginas dobles y corrección de foco; búsqueda lateral, rediseño de Párrafo y fondo del estilo activo; movimiento suave del cursor, arranque del panel sin animación, tablas, formato avanzado y última optimización en su GNOME OS Preview 51.
+**Pendiente de confirmación del usuario:** chincheta sin remapeo, sustitución exclusiva con estado compartido, cabecera única y botones de subopciones nativos; barras inferiores alineadas con sombras nativas, miniaturas de 12 px incluyendo número, menú de documento y retirada de botones/ejemplo; selector Páginas/Títulos, títulos contraíbles, menú principal nativo, vista de todas las pestañas y últimos ajustes de búsqueda/reemplazo total y fundido; cabecera simplificada, márgenes de miniaturas, páginas dobles y corrección de foco; búsqueda lateral, rediseño de Párrafo y fondo del estilo activo; movimiento suave del cursor, arranque del panel sin animación, tablas, formato avanzado y última optimización en su GNOME OS Preview 51.
 No interpretar el éxito de la CI como una prueba manual del usuario.
 
 ## Límites y comprobación pendiente
@@ -130,5 +131,6 @@ Consultar Cargo.toml/Cargo.lock por si una revisión posterior los actualiza.
 Después de cada entrega, actualizar estado, validación, revisión, limitaciones y siguiente
 paso. Separar propuestas, trabajo implementado y confirmaciones reales del usuario.
 Registrar en ROADMAP los cambios de prioridad para que el plan sobreviva al chat.
+
 
 
