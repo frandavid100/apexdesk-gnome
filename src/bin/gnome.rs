@@ -777,6 +777,7 @@ fn install_css() {
       .document-sheet { background: white; box-shadow: 0 1px 4px alpha(black, 0.15); }
       .thumbnail-sheet { background: white; box-shadow: 0 1px 3px alpha(black, 0.16); }
       .thumbnail-button.selected-thumb { background: alpha(@window_fg_color, 0.09); }
+      button.search-replace { min-width: 24px; min-height: 24px; padding: 0; }
       .style-popover button, .format-popover button { font-weight: normal; }
       .style-row.current-style { background: alpha(@window_fg_color, 0.14); border-radius: 6px; }
       .format-popover button:checked { background: alpha(@window_fg_color, 0.14); }
