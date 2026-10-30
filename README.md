@@ -73,3 +73,16 @@ El perfil de producción optimiza también el motor, usa ThinLTO y elimina
 símbolos. La interfaz reutiliza los píxeles nativos del renderizador, busca
 páginas mediante búsqueda binaria y agrupa las actualizaciones de miniaturas.
 Las pruebas de interfaz se ejecutan sobre este mismo ejecutable de producción.
+
+## Tablas
+
+Tabla > Insertar tabla abre una cuadrícula y tamaños personalizados. Dentro
+de una tabla, el mismo menú ofrece selección de celdas/filas/columnas, inserción
+y eliminación, combinación, división de tabla y propiedades. También hay
+menú contextual con clic derecho o Mayús+F10.
+
+Tab avanza entre celdas y crea una fila al final; Mayús+Tab retrocede.
+El menú contextual permite insertar una tabulación literal dentro de la celda.
+Arrastrar entre celdas selecciona un rectángulo, incluidas celdas vacías.
+Las propiedades incluyen anchos, alturas, autoajuste, alineación, bordes,
+sombreado, división de celdas y opciones de cabecera/paginación.
