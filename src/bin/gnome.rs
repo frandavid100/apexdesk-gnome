@@ -941,7 +941,7 @@ fn make_window(
     format_bar.set_margin_bottom(5);
     let undo_button = gtk::Button::from_icon_name("edit-undo-symbolic");
     let redo_button = gtk::Button::from_icon_name("edit-redo-symbolic");
-    let icons = gtk::IconTheme::for_display(&window.display());
+    let icons = gtk::IconTheme::for_display(&gtk::prelude::WidgetExt::display(&window));
     if !icons.has_icon("edit-undo-symbolic") { undo_button.set_label("Deshacer"); }
     if !icons.has_icon("edit-redo-symbolic") { redo_button.set_label("Rehacer"); }
     undo_button.set_tooltip_text(Some("Deshacer (Ctrl+Z)"));
