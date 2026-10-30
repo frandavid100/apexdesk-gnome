@@ -6,6 +6,7 @@ struct ParagraphPopover {
     main: gtk::Box,
     detail: gtk::Box,
     message: gtk::Label,
+    header:Rc<FormatHeader>,
     spacing: Cell<f64>,
     shade: RefCell<String>,
     border: RefCell<serde_json::Value>,
@@ -53,11 +54,11 @@ impl ParagraphPopover {
         let weak=Rc::downgrade(self);b.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.execute(command,args.clone());}});b
     }
     fn split(self:&Rc<Self>,row:&gtk::Box,button:&impl IsA<gtk::Widget>,page:&'static str,label:&str){
-        let group=gtk::Box::new(gtk::Orientation::Horizontal,0);group.add_css_class("linked");group.set_hexpand(true);group.append(button);
-        let more=gtk::Button::new();more.set_child(Some(&format_chevron()));more.set_tooltip_text(Some(&format!("Opciones de {label}")));more.set_widget_name(&format!("paragraph-more-{page}"));more.add_css_class("flat");group.append(&more);row.append(&group);
+        let group=gtk::Box::new(gtk::Orientation::Horizontal,2);group.set_hexpand(true);group.append(button);
+        let more=gtk::Button::new();more.set_child(Some(&format_chevron()));more.set_tooltip_text(Some(&format!("Opciones de {label}")));more.set_widget_name(&format!("paragraph-more-{page}"));more.add_css_class("image-button");group.append(&more);row.append(&group);
         let weak=Rc::downgrade(self);more.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.page(page);}});
     }
-    fn home(self:&Rc<Self>){
+    fn home(self:&Rc<Self>){self.header.home();
         clear_box(&self.main);let Some(ui)=self.ui.upgrade()else{return;};let state=selection_paragraph(&ui);
         let row=gtk::Box::new(gtk::Orientation::Horizontal,4);
         for(icon,label,value)in[("format-justify-left-symbolic","Alinear a la izquierda","left"),("format-justify-center-symbolic","Centrar","center"),("format-justify-right-symbolic","Alinear a la derecha","right"),("format-justify-fill-symbolic","Justificar","justify")]{
@@ -87,7 +88,7 @@ impl ParagraphPopover {
         let n=gtk::SpinButton::with_range(min,max,0.5);n.set_digits(1);n.set_width_chars(6);n.set_value(value);row.append(&n);self.detail.append(&row);n
     }
     fn button(self:&Rc<Self>,label:&str,name:&str,command:&'static str,args:serde_json::Value){self.detail.append(&self.action(label,name,command,args));}
-    fn page(self:&Rc<Self>,page:&str){
+    fn page(self:&Rc<Self>,page:&str){let weak=Rc::downgrade(self);self.header.back("Párrafo",move||{if let Some(s)=weak.upgrade(){s.home();}});
         clear_box(&self.detail);self.message.set_visible(false);
         let Some(ui)=self.ui.upgrade()else{return;};let state=selection_paragraph(&ui);
         match page{
@@ -142,21 +143,20 @@ impl ParagraphPopover {
 }
 fn install_paragraph_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<ParagraphPopover>{
     let pop=gtk::Popover::new();pop.add_css_class("format-popover");let root=gtk::Box::new(gtk::Orientation::Vertical,6);root.set_width_request(300);root.set_margin_top(8);root.set_margin_bottom(8);root.set_margin_start(8);root.set_margin_end(8);
-    let changing=format_popover_header(&pop,&root,"Párrafo");
+    let header=format_popover_header(&pop,&root,"Párrafo",&ui.format_group);header.button.set_widget_name("paragraph-back");
     let stack=gtk::Stack::new();stack.set_transition_type(gtk::StackTransitionType::SlideLeftRight);stack.set_vhomogeneous(false);
     let main=gtk::Box::new(gtk::Orientation::Vertical,6);let detail=gtk::Box::new(gtk::Orientation::Vertical,8);
     let scroll=gtk::ScrolledWindow::new();scroll.set_policy(gtk::PolicyType::Never,gtk::PolicyType::Automatic);scroll.set_max_content_height(420);scroll.set_propagate_natural_height(true);scroll.set_child(Some(&detail));
-    let detail_page=gtk::Box::new(gtk::Orientation::Vertical,6);let back=style_menu_button("‹ Párrafo");back.set_widget_name("paragraph-back");detail_page.append(&back);detail_page.append(&gtk::Separator::new(gtk::Orientation::Horizontal));detail_page.append(&scroll);
+    let detail_page=gtk::Box::new(gtk::Orientation::Vertical,6);detail_page.append(&scroll);
     stack.add_named(&main,Some("main"));stack.add_named(&detail_page,Some("detail"));root.append(&stack);let message=gtk::Label::new(None);message.set_wrap(true);message.set_max_width_chars(35);message.set_visible(false);root.append(&message);pop.set_child(Some(&root));
-    let s=Rc::new(ParagraphPopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,main,detail,message,spacing:Cell::new(1.5),shade:RefCell::new("FFF2CC".into()),border:RefCell::new(serde_json::json!({"kind":"outside","width":0.5,"color":"000000"}))});
-    let weak=Rc::downgrade(&s);back.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.home();}});
-    let state=s.clone();pop.connect_show(move |_|{if !changing.get(){state.home();}});menu.set_popover(Some(&pop));s
+    let s=Rc::new(ParagraphPopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,main,detail,message,header,spacing:Cell::new(1.5),shade:RefCell::new("FFF2CC".into()),border:RefCell::new(serde_json::json!({"kind":"outside","width":0.5,"color":"000000"}))});
+    let state=s.clone();pop.connect_show(move |_|state.home());menu.set_popover(Some(&pop));s
 }
 fn show_paragraph_options(ui:&Rc<Ui>,_parent:&ApplicationWindow){if let Some(s)=ui.paragraph.borrow().as_ref(){if let Some(p)=s.popover.upgrade(){p.popup();}s.page("options");}}
 
 fn paragraph_ui_test(s:&Rc<ParagraphPopover>,menu:&gtk::MenuButton,app:&Application){
     menu.popup();let ui=s.ui.upgrade().unwrap();
-    let click=|name:&str|style_widget(&s.stack,name).unwrap_or_else(||panic!("missing {name}")).downcast::<gtk::Button>().unwrap().emit_clicked();
+    let click=|name:&str|style_widget(&s.popover.upgrade().unwrap().child().unwrap(),name).unwrap_or_else(||panic!("missing {name}")).downcast::<gtk::Button>().unwrap().emit_clicked();
     click("paragraph-align-center");assert_eq!(selection_paragraph(&ui)["align"],"center");
     click("paragraph-indent");assert!(selection_paragraph(&ui)["indentLeft"].as_f64().unwrap()>0.0);
     click("paragraph-more-bullets");assert_eq!(s.stack.visible_child_name().as_deref(),Some("detail"));
@@ -168,4 +168,5 @@ fn paragraph_ui_test(s:&Rc<ParagraphPopover>,menu:&gtk::MenuButton,app:&Applicat
     assert_eq!(s.stack.visible_child_name().as_deref(),Some("main"));assert_eq!(app.windows().len(),1);
     assert!(ui.current.borrow().as_ref().unwrap().session.can_undo());eprintln!("PARAGRAPH_POPOVER_OK");app.quit();
 }
+
 
