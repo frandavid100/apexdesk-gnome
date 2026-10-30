@@ -22,10 +22,10 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 - Abrir y Nueva ventana pertenecen al menú general del panel lateral.
 - Panel lateral estrecho y abierto por defecto desde su construcción, sin apertura diferida. Fondo del visor del color de la ventana; hojas blancas.
 - Barra de edición abajo, como Apostrophe. Deshacer y Rehacer a la izquierda.
-- Orden de formato: Estilo → Párrafo → Texto. Estilos se gestiona íntegramente en el desplegable y subpáginas internas; texto/párrafo mantienen opciones ampliadas.
+- Orden de formato: Estilo → Párrafo → Texto. Estilos y Párrafo se gestionan en desplegables con subpáginas internas; Texto conserva su panel ampliado.
 - Zoom a la derecha: +, − y un tercer botón con 100 % y Ajustar al ancho.
 - Sin botones Página anterior/siguiente; navegación mediante scroll y miniaturas.
-- Buscar/reemplazar en el menú de tres puntos del documento.
+- Lupa en la cabecera lateral: alterna miniaturas/búsqueda. Resultados con contexto y página; opciones de mayúsculas y reemplazo en los tres puntos del campo. Reemplazo individual desde cada resultado. Ctrl+F/Ctrl+H abren ese mismo panel.
 - Preferencias de autoguardado: desactivado, recuperación o propio archivo.
 - Mantener la interfaz GNOME compacta; la captura de Word es referencia de funciones.
 
@@ -37,12 +37,12 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 | Fase 3A | Cursor con desplazamiento visual suave de 100 ms, selección con ratón/teclado, doble/triple clic y copiar. |
 | Fase 3B | Escritura Unicode, borrar, párrafos, saltos, portapapeles, deshacer y rehacer. |
 | Fase 3C | Fuente, tamaño, negrita, cursiva, subrayados, colores, resaltado, tachados, sub/superíndice, espaciado y efectos admitidos por WordCraft. |
-| Párrafos | Alineación/dirección, sangrías, interlineado, espaciado, listas multinivel, ordenación, bordes, sombreado, tabulaciones y marcas ¶. |
+| Párrafos | Tres filas de iconos: alineación; listas/sangrías; interlineado/sombreado/bordes. Flechas a subpáginas y Más opciones dentro del mismo desplegable, con vuelta atrás. Se conservan las funciones anteriores. |
 | Estilos | Lista completa con búsqueda, aplicar por nombre, gestión en subpáginas con vuelta atrás, muestra real, crear/actualizar/renombrar/eliminar sin ventanas adicionales. |
 | Fase 3D | Abrir y guardar DOCX/ODT, guardar como, cambios pendientes y confirmaciones de cierre. |
 | Documentos | Pestañas y ventanas, nuevo documento y apertura conservando documentos existentes. |
 | Autoguardado | Preferencia persistente; recuperación cada 10 s por defecto, propio archivo cada 30 s; recuperación tras cierre inesperado. |
-| Búsqueda | Buscar y reemplazar una/todas las coincidencias, con deshacer. |
+| Búsqueda | Panel lateral tipo Papers; coincidencias con contexto/página, resaltado, distinguir mayúsculas y reemplazo individual con deshacer; estado independiente por pestaña. |
 | Tablas | Inserción, filas/columnas, selección de celdas, combinar/dividir, tamaño, alineación, bordes, sombreado y cabeceras; menú inferior y contextual. |
 | Optimización | Release con ThinLTO, píxeles premultiplicados directos a GTK, búsqueda binaria de páginas y miniaturas agrupadas a 120 ms. |
 
@@ -52,12 +52,12 @@ tiradores de tamaño con ratón, fórmulas ni una interfaz dedicada para inserta
 
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `1dedfc25a7a90a23f871022115d5c08e7ba8641f`.
+Código del último ejecutable validado: `8edbbf62d608c3cb6ea98a14f734d0dda7324eab`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41081266192).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `12990441821`.
-Ejecutable actual con el cursor animado y ajustes de estilos: 33.696.184 bytes.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41089020631).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `12994295475`.
+Ejecutable actual con búsqueda lateral y Párrafo: 33.784.056 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
@@ -71,12 +71,13 @@ También se comparó una región de la página en las capturas anterior/actual s
 
 Pasaron los tests de integración con el motor, de los adaptadores y de búsqueda de páginas frente al recorrido anterior;
 la CI compiló y probó el ejecutable release en ventanas, pestañas y paneles nativos.
+Las pruebas de búsqueda verifican texto Unicode, mayúsculas, sustituciones literales y vacías con deshacer, tablas, varias páginas, conservación de selección, rechazo de resultados antiguos e independencia de pestañas. Las pruebas de Párrafo recorren botones, subpáginas y vuelta atrás, aplicando formato sin abrir ventanas adicionales. Se han revisado capturas anchas, estrechas y oscuras.
 Las pruebas del cursor verifican movimientos consecutivos, fin de animación con el reloj de GTK, ausencia de cambios de historial, movimiento reducido y arranque del panel sin alternar su visibilidad.
 Las pruebas de estilos verifican previsualización sin cambios, gestión completa,
 validación de nombres y el recorrido real de botones/subpáginas sin ventanas adicionales.
 
-**Confirmación del usuario:** el desplegable de estilos funciona y su distribución le gusta; solicita quitar la negrita general. Se mantienen ¶/a para tipo y ✓ para estilo actual, ahora con explicaciones al pasar el puntero.
-**Pendiente de confirmación del usuario:** movimiento suave del cursor, arranque del panel sin animación, tablas, formato avanzado y última optimización en su GNOME OS Preview 51.
+**Confirmación del usuario:** el desplegable de estilos funciona y su distribución le gusta; solicita quitar la negrita general. Se mantienen ¶/a para tipo con explicaciones; el estilo actual se distingue con fondo de selección en vez de ✓.
+**Pendiente de confirmación del usuario:** búsqueda lateral, rediseño de Párrafo y fondo del estilo activo; movimiento suave del cursor, arranque del panel sin animación, tablas, formato avanzado y última optimización en su GNOME OS Preview 51.
 No interpretar el éxito de la CI como una prueba manual del usuario.
 
 ## Límites y comprobación pendiente
@@ -94,7 +95,9 @@ Probar manualmente tablas importadas complejas y los controles en ventana estrec
 
 - `src/bin/gnome.rs`: widgets GTK, selección visual, entrada y vista de páginas.
 - `src/gnome_host.rs`: pestañas, ventanas, preferencias, búsqueda y recuperación.
-- `src/gnome_format_panels.rs`: paneles de texto y párrafo.
+- `src/gnome_format_panels.rs`: paneles de texto y funciones comunes de formato.
+- `src/gnome_paragraph.rs`: iconos y subpáginas de Párrafo.
+- `src/gnome_search.rs`, `src/search.rs`: búsqueda lateral y adaptador del matcher/selección/reemplazo del motor.
 - `src/caret_motion.rs`: interpolación visual aislada, sin modificar selección, documento ni historial.
 - `src/gnome_styles.rs`: lista, gestión y formularios dentro del desplegable de estilos.
 - `src/styles.rs`: comandos de estilos y previsualización aislada.
