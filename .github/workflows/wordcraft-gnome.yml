@@ -68,6 +68,22 @@ jobs:
               kill "$pid"
               wait "$pid" || true
             }
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --context-ui-test 2> context-menu.log &
+            context_pid=$!
+            for attempt in $(seq 1 300); do
+              if grep -q CONTEXT_POINTER_READY context-menu.log; then break; fi
+              kill -0 "$context_pid"
+              sleep 0.1
+            done
+            grep -q CONTEXT_POINTER_READY context-menu.log
+            read marker cx cy < <(grep CONTEXT_POINTER_READY context-menu.log | tail -n1)
+            context_window=$(xdotool search --onlyvisible --pid "$context_pid" | head -n1)
+            xdotool windowfocus --sync "$context_window"
+            xdotool mousemove --window "$context_window" "$cx" "$cy" click 3
+            sleep 0.3
+            scrot vista-contexto-texto.png
+            wait "$context_pid" || { cat context-menu.log; exit 1; }
+            grep -q CONTEXT_UI_OK context-menu.log
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --view-pointer-test 2> view-pointer.log &
             view_pid=$!
             for attempt in $(seq 1 300); do
@@ -280,6 +296,8 @@ jobs:
             document-tools.log
             document-tools-test.pdf
             vista-pdf-exportado.png
+            context-menu.log
+            vista-contexto-texto.png
             vista-imagen.png
             vista-imagen-estrecha.png
             vista-propiedades-documento.png
@@ -312,6 +330,7 @@ jobs:
             performance-debug.txt
             performance-release.txt
           if-no-files-found: warn
+
 
 
 
