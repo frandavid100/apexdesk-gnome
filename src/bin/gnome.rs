@@ -238,7 +238,7 @@ fn after_content_change(ui: &Rc<Ui>) {
         glib::idle_add_local_once(move || caret_ensure_visible(&ui));
     }
     ui.dirty.set(true);
-    ui.title.set_subtitle("● Cambios sin guardar · Fase 3B");
+    ui.title.set_subtitle("● Cambios sin guardar · Fase 3C");
 }
 
 fn apply_user_edit(ui: &Rc<Ui>, edit: Edit) {
@@ -690,7 +690,7 @@ fn make_window(
 
     // Composición oficial: panel adaptable y dos páginas de barras nativas.
     let side_header = HeaderBar::new();
-    let side_title = gtk::Label::new(Some("Visor de documentos"));
+    let side_title = gtk::Label::new(Some("Editor de documentos"));
     side_title.add_css_class("heading");
     side_header.set_title_widget(Some(&side_title));
 
