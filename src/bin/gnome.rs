@@ -297,7 +297,7 @@ fn install_css() {
     }
 }
 
-fn make_window(app: &Application, sample_on_start: bool) {
+fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool) {
     install_css();
     let window = ApplicationWindow::builder()
         .application(app)
@@ -531,12 +531,14 @@ fn make_window(app: &Application, sample_on_start: bool) {
     }
 
     if sample_on_start { opened(&ui, sample_session(), "Documento de ejemplo"); }
+    if sidebar_on_start { ui.sidebar_button.set_active(true); }
     window.present();
 }
 
 fn main() {
     let sample_on_start = std::env::args().any(|arg| arg == "--sample");
+    let sidebar_on_start = std::env::args().any(|arg| arg == "--sidebar");
     let app = Application::builder().application_id(APP_ID).build();
-    app.connect_activate(move |app| make_window(app, sample_on_start));
+    app.connect_activate(move |app| make_window(app, sample_on_start, sidebar_on_start));
     app.run_with_args(&["wordcraft-gnome"]);
 }
