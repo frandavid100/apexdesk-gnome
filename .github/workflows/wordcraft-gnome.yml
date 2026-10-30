@@ -22,7 +22,7 @@ jobs:
       - name: Instalar bibliotecas GNOME y pantalla virtual
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev xvfb xauth scrot adwaita-icon-theme
+          sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev xvfb xauth scrot xdotool adwaita-icon-theme
       - name: Tests sin interfaz
         run: cargo test
       - name: Validar árbol sin egui/eframe
@@ -68,6 +68,16 @@ jobs:
               kill "$pid"
               wait "$pid" || true
             }
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --table-keyboard-test 2> table-keyboard.log &
+            table_pid=$!
+            sleep 3
+            table_window=$(xdotool search --onlyvisible --pid "$table_pid" | head -n1)
+            xdotool windowfocus --sync "$table_window"
+            xdotool key Tab Tab
+            xdotool type --clearmodifiers --delay 40 GNOME
+            xdotool key shift+Tab
+            wait "$table_pid"
+            grep -q TABLE_KEYBOARD_OK table-keyboard.log
             run_case vista-insertar-tabla.png --table-insert-demo
             run_case vista-menu-tabla.png --table-menu-demo
             run_case vista-propiedades-tabla.png --table-properties-demo
@@ -136,6 +146,7 @@ jobs:
             vista-zoom.png
             multiwindow.log
             tabs.log
+            table-keyboard.log
             vista-preferencias.png
             vista-insertar-tabla.png
             vista-menu-tabla.png
