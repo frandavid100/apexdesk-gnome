@@ -1,60 +1,22 @@
-# WordCraft GNOME · Fase 3C: formato
+# WordCraft GNOME — fase 3D
 
-Esta rama `wordcraft-formatting` añade herramientas de formato a la
-interfaz GTK4/libadwaita, reutilizando el motor WordCraft sin egui.
+Guardar (Ctrl+S), Guardar como (Ctrl+Shift+S), DOCX y ODT mediante el motor WordCraft.
+La primera operación propone una copia y protege el archivo abierto originalmente.
+El nombre debe incluir .docx o .odt; cambiar la extensión elige el formato.
+Los guardados siguientes actualizan la copia. El selector nativo confirma sobrescrituras.
+Al cerrar o cambiar de documento, ofrece Cancelar, Descartar o Guardar.
+Cancelar el selector o fallar el guardado mantiene abierto el documento con sus cambios.
 
-## Incluido
-
-- Negrita **Ctrl+B**, cursiva **Ctrl+I** y subrayado **Ctrl+U**, con botones de estado que se actualizan según la selección.
-- Estilos de párrafo: Normal y Títulos 1, 2 y 3.
-- Alineación: izquierda, centrada, derecha y justificada.
-- Tamaños de fuente: 10, 11, 12, 14, 16, 18, 24 y 36 puntos.
-- Atajos de párrafo: Ctrl+L/E/R/J, Ctrl+Shift+N,
-  Ctrl+Alt+1/2/3.
-- Barra de formato integrada en `AdwToolbarView`, desplazable
-  horizontalmente en ventanas estrechas.
-- Cambio de formato aplicado a selecciones y texto futuro en el cursor.
-- Paginación, miniaturas, zoom, escritura, copia, pegado, borrado y
-  deshacer/rehacer de las fases anteriores.
-
-El formato se realiza con comandos del motor (`format.bold`,
-`format.italic`, `format.underline`, `format.size`,
-`para.heading1` y `para.alignCenter`, entre otros).
-
-## Importante
-
-**Todavía no se guardan cambios en DOCX/ODT**. Los cambios en contenido y
-formato permanecen en la sesión. El programa avisa antes de cerrar o
-reemplazar documentos modificados. En esta etapa usa solo documentos de
-prueba y evita editar originales que necesites conservar.
-
-Esta versión añade funcionalidades sobre la fase 3B, que aún está
-pendiente de verificación interactiva en GNOME OS. Las pruebas de CI
-no garantizan por sí solas el funcionamiento de todos los teclados,
-tipos de documento o entradas IME.
-
-## Ejecutar
+Incluye las funciones de edición y formato de las fases 3B y 3C.
+Las pruebas verifican contenido Unicode, negrita, tamaño y alineación después de
+guardar y reabrir ambos formatos, además de guardados repetidos y fallos de escritura.
+La fidelidad de documentos complejos depende del motor WordCraft; prueba con copias.
 
 ```sh
 chmod +x wordcraft-gnome
-./wordcraft-gnome --version
 ./wordcraft-gnome --sample --sidebar
 ```
 
-La versión debe indicar **fase 3C**. Se puede comparar con la rama
-`wordcraft-editing` (fase 3B) y la rama `wordcraft-selection` (fase 3A).
-
-## Pruebas de desarrollo
-
-```sh
-cargo test
-cargo build --features gui --bin wordcraft-gnome
-cargo run --features gui --bin wordcraft-gnome -- --sample --sidebar --format-demo
-```
-
-El flujo automático produce `vista-formato.png` y verifica la
-compilación, el motor y el arranque en Xvfb.
-
-WordCraft revisión
-[`165d5725`](https://github.com/storytold/wordcraft/commit/165d5725dc25b4a7887d8025c3b1fe506ccc3dcc)
-(MIT OR Apache-2.0). Código de esta aplicación: GPL-3.0-or-later.
+Documentación revisada:
+https://docs.gtk.org/gtk4/method.FileDialog.save.html
+https://developer.gnome.org/hig/patterns/feedback/dialogs.html
