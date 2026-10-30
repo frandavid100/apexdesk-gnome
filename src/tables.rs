@@ -23,6 +23,7 @@ pub fn navigate(session: &mut Session, backwards: bool, literal: bool) -> Result
             let last=if backwards {first}else{paths.last().unwrap()};
             let anchor=Pos{story:session.sel.focus.story,path:first.clone(),off:0};
             let focus=Pos{story:anchor.story,path:last.clone(),off:if backwards{0}else{session.doc.para(anchor.story,last).map_or(0,|p|p.len())}};
+            session.run("caret.set",&json!({"pos":anchor,"extend":false})).map_err(|e|e.to_string())?;
             session.run("select.range",&json!({"anchor":anchor,"focus":focus})).map_err(|e|e.to_string())?;
             return Ok(false);
         }
