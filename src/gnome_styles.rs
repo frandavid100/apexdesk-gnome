@@ -1,4 +1,9 @@
 // One popover with list, detail and name-entry pages; no auxiliary windows.
+fn style_menu_button(label:&str)->gtk::Button{
+    let b=gtk::Button::with_label(label);b.add_css_class("flat");
+    if let Some(l)=b.child().and_then(|w|w.downcast::<gtk::Label>().ok()){l.set_xalign(0.0);}
+    b
+}
 struct StylePopover {
     ui: std::rc::Weak<Ui>,
     popover: glib::WeakRef<gtk::Popover>,
@@ -51,7 +56,7 @@ impl StylePopover {
         let ui=self.ui.upgrade()?;let state=ui.current.borrow();state.as_ref()?.session.doc.styles.get(id).cloned()
     }
     fn action(self:&Rc<Self>,label:&str,name:&str,edit:wordcraft_gnome::styles::Edit,stay:Option<String>)->gtk::Button{
-        let b=gtk::Button::with_label(label);b.add_css_class("flat");b.set_widget_name(name);
+        let b=style_menu_button(label);b.set_widget_name(name);
         let weak=Rc::downgrade(self);b.connect_clicked(move|_|{if let Some(s)=weak.upgrade(){match s.run(edit.clone()){
             Ok(_)=>{if let Some(id)=&stay{s.show_detail(id);s.report("Estilo actualizado");}else{s.main();s.report("Estilo eliminado");}},Err(e)=>s.report(&e)
         }}});b
@@ -65,7 +70,7 @@ impl StylePopover {
         }
         self.detail.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
         let update=self.action("Actualizar según la selección","style-update",wordcraft_gnome::styles::Edit::Update(st.id.clone()),Some(st.id.clone()));self.detail.append(&update);
-        let rename=gtk::Button::with_label("Renombrar…");rename.add_css_class("flat");rename.set_widget_name("style-rename");self.detail.append(&rename);
+        let rename=style_menu_button("Renombrar…");rename.set_widget_name("style-rename");self.detail.append(&rename);
         let weak=Rc::downgrade(self);let style=st.clone();rename.connect_clicked(move|_|{if let Some(s)=weak.upgrade(){s.show_form(Some(&style.id));}});
         let delete=self.action("Eliminar estilo","style-delete",wordcraft_gnome::styles::Edit::Delete(st.id.clone()),None);
         delete.set_sensitive(!st.builtin);if st.builtin{delete.set_tooltip_text(Some("Los estilos integrados no se pueden eliminar"));}self.detail.append(&delete);
@@ -92,7 +97,7 @@ fn install_style_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<StylePopover>{
     let stack=gtk::Stack::new();stack.set_transition_type(gtk::StackTransitionType::SlideLeftRight);stack.set_vhomogeneous(false);
     let main=gtk::Box::new(gtk::Orientation::Vertical,6);let search=gtk::SearchEntry::new();search.set_placeholder_text(Some("Buscar estilos"));search.set_widget_name("style-search");main.append(&search);
     let list=gtk::Box::new(gtk::Orientation::Vertical,0);let scroll=gtk::ScrolledWindow::new();scroll.set_policy(gtk::PolicyType::Never,gtk::PolicyType::Automatic);scroll.set_min_content_height(240);scroll.set_max_content_height(340);scroll.set_propagate_natural_height(true);scroll.set_child(Some(&list));main.append(&scroll);
-    main.append(&gtk::Separator::new(gtk::Orientation::Horizontal));let create=gtk::Button::with_label("Nuevo estilo…");create.set_widget_name("style-new");create.add_css_class("flat");main.append(&create);
+    main.append(&gtk::Separator::new(gtk::Orientation::Horizontal));let create=style_menu_button("Nuevo estilo…");create.set_widget_name("style-new");create.add_css_class("flat");main.append(&create);
     let detail=gtk::Box::new(gtk::Orientation::Vertical,6);let form=gtk::Box::new(gtk::Orientation::Vertical,8);
     stack.add_named(&main,Some("list"));stack.add_named(&detail,Some("detail"));stack.add_named(&form,Some("form"));root.append(&stack);
     let message=gtk::Label::new(None);message.set_wrap(true);message.set_max_width_chars(36);message.set_xalign(0.0);message.set_visible(false);root.append(&message);pop.set_child(Some(&root));
