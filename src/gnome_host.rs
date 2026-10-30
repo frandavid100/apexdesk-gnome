@@ -2,7 +2,7 @@ fn release_document(ui:&Rc<Ui>) {
     ui.closed.set(true);
     let current=ui.current.borrow_mut().take();
     if let Some(mut doc)=current {doc.session.finish_recovery();}
-    clear_box(&ui.document_box);clear_box(&ui.thumbnails_box);
+    clear_canvas(&ui.document_box);clear_box(&ui.thumbnails_box);
     ui.tab_page.borrow_mut().take();
 }
 
@@ -143,8 +143,8 @@ fn install_autosave(ui:&Rc<Ui>) {
                 if let Some(e)=doc.session.recovery_error() {error=Some(e.to_string());}
             }
         }
-        if reloaded {after_content_change(&ui);ui.title.set_title("Documento recuperado");ui.source_path.replace(None);ui.save_path.replace(None);}
-        if saved {ui.source_path.replace(None);ui.dirty.set(false);ui.title.set_subtitle("Guardado automáticamente");sync_tab(&ui);}
+        if reloaded {after_content_change(&ui);ui.document_name.replace("Documento recuperado".into());sync_tab(&ui);ui.source_path.replace(None);ui.save_path.replace(None);}
+        if saved {ui.source_path.replace(None);ui.dirty.set(false);sync_tab(&ui);}
         if let Some(e)=error {
             if ui.autosave_error.borrow().as_deref()!=Some(&e) {
                 ui.toasts.add_toast(Toast::new(&format!("Autoguardado: {e}")));ui.autosave_error.replace(Some(e));
@@ -155,9 +155,9 @@ fn install_autosave(ui:&Rc<Ui>) {
 }
 
 fn sync_tab(ui:&Rc<Ui>) {
-    if let Some(page)=ui.tab_page.borrow().as_ref() {
-        page.set_title(&format!("{}{}",if ui.dirty.get(){"● "}else{""},ui.title.title()));
-    }
+    let text=format!("{}{}",if ui.dirty.get(){"● "}else{""},ui.document_name.borrow().as_str());
+    ui.title.set_title(&text);ui.title.set_subtitle("");
+    if let Some(page)=ui.tab_page.borrow().as_ref(){page.set_title(&text);}
 }
 
 fn show_recovery(ui:&Rc<Ui>, parent:&ApplicationWindow, app:&Application, host:&Rc<Workspace>) {
@@ -175,7 +175,7 @@ fn show_recovery(ui:&Rc<Ui>, parent:&ApplicationWindow, app:&Application, host:&
                 let mut state=ui.current.borrow_mut();if let Some(doc)=state.as_mut() {
                     doc.session.recovery_tick();
                     let id=record.id.clone();let ui2=ui.clone();
-                    ui2.title.set_subtitle("Cargando copia de recuperación…");
+                    
                     let attempts=Cell::new(0u32);
                     glib::timeout_add_local(std::time::Duration::from_millis(100),move || {
                         if ui2.closed.get(){return glib::ControlFlow::Break;}
