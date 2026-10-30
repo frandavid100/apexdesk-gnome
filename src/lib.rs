@@ -38,6 +38,8 @@ pub fn open_document(path: &Path) -> Result<Session, String> {
 /// La escala se limita para evitar imágenes enormes en esta prueba inicial.
 pub fn render_page(session: &mut Session, page_index: usize, scale: f32) -> Result<PageImage, String> {
     let scale = if scale.is_finite() { scale.clamp(0.15, 2.0) } else { 1.0 };
+    let mut options=wordcraft_render::RenderOptions::default();
+    options.display.marks=session.view.marks;
     let layout = session.layout();
     let count = layout.pages.len();
     let page = layout.pages.get(page_index).ok_or("La página solicitada no existe")?;
@@ -47,7 +49,7 @@ pub fn render_page(session: &mut Session, page_index: usize, scale: f32) -> Resu
     if !width.is_finite() || !height.is_finite() || width * height > 12_000_000.0 {
         return Err("La página excede el límite de tamaño de esta vista preliminar".into());
     }
-    let output = wordcraft_render::render_page(&session.doc, page, scale, &Default::default());
+    let output = wordcraft_render::render_page(&session.doc, page, scale, &options);
     let rgba = output.to_straight();
     if output.width == 0 || output.height == 0 ||
         rgba.len() != output.width as usize * output.height as usize * 4 {
