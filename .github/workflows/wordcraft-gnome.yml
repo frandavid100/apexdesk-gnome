@@ -1,7 +1,7 @@
-name: "WordCraft GNOME — interfaz libadwaita"
+name: "WordCraft GNOME — fase 3A selección"
 on:
   push:
-    branches: [wordcraft-migration, wordcraft-viewer, adwaita-layout]
+    branches: [wordcraft-migration, wordcraft-viewer, adwaita-layout, wordcraft-selection]
   pull_request:
   workflow_dispatch:
 
@@ -41,7 +41,7 @@ jobs:
       - name: Identificar versión de prueba
         run: |
           ./target/debug/wordcraft-gnome --version | tee version.txt
-          grep -q "Adwaita adaptativa" version.txt
+          grep -q "fase 3A" version.txt
       - name: Probar escritorio ancho, ventana estrecha, panel y tema oscuro
         run: |
           python -m pip install --disable-pip-version-check pillow==11.3.0
@@ -103,7 +103,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: wordcraft-gnome-adwaita-linux
+          name: wordcraft-gnome-fase3a-linux
           path: |
             wordcraft-gnome
             muestra-wordcraft.png
