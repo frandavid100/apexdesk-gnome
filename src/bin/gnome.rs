@@ -1,7 +1,8 @@
 //! Visor nativo GNOME para WordCraft: páginas continuas, zoom y miniaturas.
 //! El contenido es solo lectura; no modifica los documentos.
 use adw::prelude::*;
-use adw::{Application, ApplicationWindow, HeaderBar, StatusPage, Toast, ToastOverlay, WindowTitle};
+use adw::{Application, ApplicationWindow, HeaderBar, StatusPage, Toast, ToastOverlay, ToolbarView, WindowTitle};
+use glib::value::ToValue;
 use gtk::{gdk, gio, glib};
 use std::{cell::RefCell, collections::HashSet, path::Path, rc::Rc};
 use wordcraft_engine::Session;
@@ -30,7 +31,7 @@ struct Ui {
     thumbnails_box: gtk::Box,
     scroll: gtk::ScrolledWindow,
     thumbnails_scroll: gtk::ScrolledWindow,
-    sidebar: gtk::Revealer,
+    sidebar: adw::OverlaySplitView,
     sidebar_button: gtk::ToggleButton,
     page_label: gtk::Label,
     zoom_label: gtk::Label,
@@ -121,7 +122,7 @@ fn refresh_pages(ui: &Rc<Ui>) {
 
 /// Renderizar miniaturas solo alrededor de la zona desplazada del panel.
 fn refresh_thumbnails(ui: &Rc<Ui>) {
-    if !ui.sidebar.reveals_child() { return; }
+    if !ui.sidebar.shows_sidebar() { return; }
     let adj = ui.thumbnails_scroll.vadjustment();
     let top = adj.value();
     let bottom = top + adj.page_size().max(600.0);
@@ -152,6 +153,7 @@ fn jump_to(ui: &Rc<Ui>, index: usize) {
         borrowed.as_ref().and_then(|doc| doc.tops.get(index).copied())
     };
     if let Some(top) = target {
+        if ui.sidebar.is_collapsed() { ui.sidebar.set_show_sidebar(false); }
         let adj = ui.scroll.vadjustment();
         let max = (adj.upper() - adj.page_size()).max(0.0);
         adj.set_value((top - 10.0).max(0.0).min(max));
@@ -289,18 +291,13 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
 
 fn install_css() {
     let provider = gtk::CssProvider::new();
+    // Adwaita suministra color, espaciados y estados; CSS mínimo para papel.
     provider.load_from_data("
       .document-scroll { background: @view_bg_color; }
-      .document-sheet { background: #ffffff; box-shadow: 0 1px 5px alpha(black, 0.18); }
-      .thumbnail-sidebar, .thumbnail-strip { background: @sidebar_bg_color; }
-      .thumbnail-sheet { background: white; box-shadow: 0 1px 4px alpha(black, 0.16); }
-      .thumbnail-button { border-radius: 12px; padding: 9px; }
+      .document-sheet { background: white; box-shadow: 0 1px 4px alpha(black, 0.15); }
+      .thumbnail-sheet { background: white; box-shadow: 0 1px 3px alpha(black, 0.16); }
       .thumbnail-button.selected-thumb { background: alpha(@window_fg_color, 0.09); }
-      .zoom-value { font-feature-settings: 'tnum'; }
-      .page-indicator { background: alpha(@window_fg_color, 0.075); border-radius: 8px; padding: 7px 11px; }
-      button.floating-zoom { background: @window_bg_color; border-radius: 999px;
-                             box-shadow: 0 1px 5px alpha(black, 0.20);
-                             min-width: 32px; min-height: 32px; }
+      .page-indicator, .zoom-value { font-feature-settings: 'tnum'; }
     ");
     if let Some(display) = gdk::Display::default() {
         gtk::style_context_add_provider_for_display(
@@ -318,14 +315,27 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
         .default_height(840)
         .build();
 
-    // Un panel lateral con cabecera propia, al estilo de GNOME Papers.
-    let side_header = gtk::HeaderBar::new();
-    side_header.set_show_title_buttons(false);
+    // Composición oficial: panel adaptable y dos páginas de barras nativas.
+    let side_header = HeaderBar::new();
     let side_title = gtk::Label::new(Some("Visor de documentos"));
     side_title.add_css_class("heading");
     side_header.set_title_widget(Some(&side_title));
-    let example_button = gtk::Button::with_label("Ejemplo");
-    example_button.set_tooltip_text(Some("Abrir el documento de muestra de WordCraft"));
+
+    // Menú de aplicación, independiente del menú de documento.
+    let example_button = gtk::Button::with_label("Abrir ejemplo");
+    let app_popover = gtk::Popover::new();
+    let app_content = gtk::Box::new(gtk::Orientation::Vertical, 6);
+    app_content.set_margin_top(12);
+    app_content.set_margin_bottom(12);
+    app_content.set_margin_start(12);
+    app_content.set_margin_end(12);
+    app_content.append(&example_button);
+    app_popover.set_child(Some(&app_content));
+    let app_menu = gtk::MenuButton::new();
+    app_menu.set_icon_name("open-menu-symbolic");
+    app_menu.set_tooltip_text(Some("Menú de la aplicación"));
+    app_menu.set_popover(Some(&app_popover));
+    side_header.pack_end(&app_menu);
 
     let header = HeaderBar::new();
     let title = WindowTitle::new("WordCraft GNOME", "Solo lectura");
@@ -333,24 +343,23 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
 
     let sidebar_button = gtk::ToggleButton::new();
     sidebar_button.set_icon_name("sidebar-show-symbolic");
-    sidebar_button.set_tooltip_text(Some("Mostrar u ocultar las miniaturas (F9)"));
+    sidebar_button.set_tooltip_text(Some("Mostrar u ocultar miniaturas (F9)"));
     header.pack_start(&sidebar_button);
 
     let open_button = gtk::Button::from_icon_name("document-open-symbolic");
-    open_button.set_tooltip_text(Some("Abrir un documento DOCX u ODT"));
+    open_button.set_tooltip_text(Some("Abrir documento (Ctrl+O)"));
     header.pack_start(&open_button);
 
     let page_label = gtk::Label::new(Some("Sin documento"));
     page_label.add_css_class("page-indicator");
 
-    // Las opciones poco frecuentes se trasladan al menú de la cabecera.
     let previous = gtk::Button::with_label("Página anterior");
     previous.set_sensitive(false);
     let next = gtk::Button::with_label("Página siguiente");
     next.set_sensitive(false);
-    let zoom_out = gtk::Button::with_label("−");
+    let zoom_out = gtk::Button::from_icon_name("zoom-out-symbolic");
     zoom_out.set_tooltip_text(Some("Reducir zoom (Ctrl+-)"));
-    let zoom_in = gtk::Button::with_label("+");
+    let zoom_in = gtk::Button::from_icon_name("zoom-in-symbolic");
     zoom_in.set_tooltip_text(Some("Ampliar zoom (Ctrl++)"));
     let zoom_label = gtk::Label::new(Some("100 %"));
     zoom_label.add_css_class("zoom-value");
@@ -368,12 +377,10 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     menu_content.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
     menu_content.append(&previous);
     menu_content.append(&next);
-    menu_content.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
-    menu_content.append(&example_button);
     menu.set_child(Some(&menu_content));
     let menu_button = gtk::MenuButton::new();
-    menu_button.set_icon_name("open-menu-symbolic");
-    menu_button.set_tooltip_text(Some("Opciones del visor"));
+    menu_button.set_icon_name("view-more-symbolic");
+    menu_button.set_tooltip_text(Some("Opciones del documento"));
     menu_button.set_popover(Some(&menu));
     header.pack_end(&menu_button);
     header.pack_end(&page_label);
@@ -382,7 +389,7 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     let empty = StatusPage::builder()
         .icon_name("x-office-document-symbolic")
         .title("Abre un documento")
-        .description("DOCX y ODT, con páginas continuas, zoom y miniaturas")
+        .description("DOCX y ODT con desplazamiento continuo y miniaturas")
         .build();
     stack.add_named(&empty, Some("empty"));
 
@@ -400,28 +407,21 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     thumbnails_scroll.set_policy(gtk::PolicyType::Never, gtk::PolicyType::Automatic);
     thumbnails_scroll.set_vexpand(true);
     thumbnails_scroll.set_child(Some(&thumbnails_box));
-    thumbnails_scroll.add_css_class("thumbnail-strip");
-    let side_column = gtk::Box::new(gtk::Orientation::Vertical, 0);
-    side_column.set_width_request(298);
-    side_column.add_css_class("thumbnail-sidebar");
-    side_column.append(&side_header);
-    side_column.append(&thumbnails_scroll);
-    let sidebar = gtk::Revealer::new();
-    sidebar.set_transition_type(gtk::RevealerTransitionType::SlideRight);
-    sidebar.set_reveal_child(false);
-    sidebar.set_child(Some(&side_column));
 
-    // Los botones de zoom flotan sobre el documento en lugar de ocupar
-    // espacio en la cabecera. El documento sigue desplazándose debajo.
+    let sidebar_toolbar = ToolbarView::new();
+    sidebar_toolbar.add_top_bar(&side_header);
+    sidebar_toolbar.set_content(Some(&thumbnails_scroll));
+
     let zoom_buttons = gtk::Box::new(gtk::Orientation::Vertical, 8);
     zoom_buttons.set_halign(gtk::Align::End);
     zoom_buttons.set_valign(gtk::Align::End);
-    zoom_buttons.set_margin_end(18);
-    zoom_buttons.set_margin_bottom(18);
+    zoom_buttons.set_margin_end(16);
+    zoom_buttons.set_margin_bottom(16);
+    zoom_buttons.add_css_class("osd");
     zoom_in.add_css_class("circular");
     zoom_out.add_css_class("circular");
-    zoom_in.add_css_class("floating-zoom");
-    zoom_out.add_css_class("floating-zoom");
+    zoom_in.add_css_class("flat");
+    zoom_out.add_css_class("flat");
     zoom_buttons.append(&zoom_in);
     zoom_buttons.append(&zoom_out);
     let canvas_overlay = gtk::Overlay::new();
@@ -432,18 +432,28 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
 
     let toasts = ToastOverlay::new();
     toasts.set_child(Some(&stack));
-    let document_column = gtk::Box::new(gtk::Orientation::Vertical, 0);
-    document_column.set_hexpand(true);
-    document_column.append(&header);
-    document_column.append(&toasts);
+    let document_toolbar = ToolbarView::new();
+    document_toolbar.add_top_bar(&header);
+    document_toolbar.set_content(Some(&toasts));
 
-    let workspace = gtk::Box::new(gtk::Orientation::Horizontal, 0);
-    workspace.append(&sidebar);
-    let sidebar_divider = gtk::Separator::new(gtk::Orientation::Vertical);
-    sidebar_divider.set_visible(false);
-    workspace.append(&sidebar_divider);
-    workspace.append(&document_column);
-    window.set_content(Some(&workspace));
+    let sidebar = adw::OverlaySplitView::new();
+    sidebar.set_sidebar(Some(&sidebar_toolbar));
+    sidebar.set_content(Some(&document_toolbar));
+    sidebar.set_show_sidebar(false);
+    sidebar.set_min_sidebar_width(240.0);
+    sidebar.set_max_sidebar_width(310.0);
+    sidebar.set_sidebar_width_fraction(0.27);
+    sidebar.set_pin_sidebar(true);
+    window.set_content(Some(&sidebar));
+
+    // En estrecho la barra lateral se superpone sobre la página.
+    let narrow = adw::Breakpoint::new(
+        adw::BreakpointCondition::parse("max-width: 760sp")
+            .expect("condición de ancho válida"),
+    );
+    narrow.add_setter(&sidebar, "collapsed", Some(&true.to_value()));
+    window.add_breakpoint(narrow);
+    window.set_size_request(360, 420);
 
     let ui = Rc::new(Ui {
         current: RefCell::new(None),
@@ -454,20 +464,29 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
 
     {
         let ui = ui.clone();
-        example_button.connect_clicked(move |_| opened(&ui, sample_session(), "Documento de ejemplo"));
+        let app_popover = app_popover.clone();
+        example_button.connect_clicked(move |_| {
+            opened(&ui, sample_session(), "Documento de ejemplo");
+            app_popover.popdown();
+        });
     }
     {
         let ui = ui.clone();
         ui.sidebar_button.connect_toggled({
             let ui = ui.clone();
-            let divider = sidebar_divider.clone();
-            move |button| {
-                divider.set_visible(button.is_active());
-                ui.sidebar.set_reveal_child(button.is_active());
-                if button.is_active() {
-                    let ui = ui.clone();
-                    glib::idle_add_local_once(move || refresh_thumbnails(&ui));
-                }
+            move |button| ui.sidebar.set_show_sidebar(button.is_active())
+        });
+    }
+    {
+        let ui = ui.clone();
+        ui.sidebar.connect_show_sidebar_notify(move |split| {
+            let visible = split.shows_sidebar();
+            if ui.sidebar_button.is_active() != visible {
+                ui.sidebar_button.set_active(visible);
+            }
+            if visible {
+                let ui = ui.clone();
+                glib::idle_add_local_once(move || refresh_thumbnails(&ui));
             }
         });
     }
@@ -531,6 +550,7 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     }
     {
         let ui = ui.clone();
+        let open_button = open_button.clone();
         let controller = gtk::EventControllerKey::new();
         controller.connect_key_pressed(move |_, key, _, modifiers| {
             if key == gdk::Key::F9 {
@@ -539,6 +559,10 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
             }
             if !modifiers.contains(gdk::ModifierType::CONTROL_MASK) {
                 return glib::Propagation::Proceed;
+            }
+            if key == gdk::Key::o || key == gdk::Key::O {
+                open_button.emit_clicked();
+                return glib::Propagation::Stop;
             }
             match key {
                 gdk::Key::plus | gdk::Key::equal | gdk::Key::KP_Add => zoom_step(&ui, true),
@@ -607,7 +631,7 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
 
 fn main() {
     if std::env::args().any(|arg| arg == "--version") {
-        println!("WordCraft GNOME · visor Papers · edición 2026-10-30.2");
+        println!("WordCraft GNOME · interfaz Adwaita adaptativa · edición 2026-10-30.3");
         return;
     }
     let sample_on_start = std::env::args().any(|arg| arg == "--sample");
