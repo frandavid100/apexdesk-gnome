@@ -65,3 +65,5 @@ pub mod editing;
 pub mod formatting;
 
 pub mod saving;
+
+pub mod preferences;
