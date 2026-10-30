@@ -646,7 +646,11 @@ fn schedule_layout(ui:&Rc<Ui>){
         if fit {fit_width(&ui);}else{layout_pages(&ui);refresh_pages(&ui);}
     });
 }
-fn clear_canvas(canvas:&gtk::Fixed){while let Some(child)=canvas.first_child(){canvas.remove(&child);}}
+fn clear_canvas(canvas:&gtk::Fixed){
+    // Tool popovers belong to the tab, not to a page. Preserve their parent
+    // and native surface when rebuilding pages or replacing the document.
+    let mut child=canvas.first_child();while let Some(w)=child{child=w.next_sibling();if !w.is::<gtk::Popover>(){canvas.remove(&w);}}
+}
 
 fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     if !session.recovery_ready() {
