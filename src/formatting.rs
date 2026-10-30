@@ -5,7 +5,7 @@ use wordcraft_engine::Session;
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum Format {
     Bold, Italic, Underline,
-    Normal, Heading1, Heading2, Heading3,
+    Normal, NoSpacing, Heading1, Heading2, Heading3,
     AlignLeft, AlignCenter, AlignRight, Justify,
     FontSize(u8),
     Bullets, Numbering, Indent, Outdent,
@@ -20,6 +20,7 @@ pub fn apply(session: &mut Session, action: Format) -> Result<(), String> {
         Format::Bold => ("format.bold", json!({})),
         Format::Italic => ("format.italic", json!({})),
         Format::Underline => ("format.underline", json!({})),
+        Format::NoSpacing => ("para.style", json!({"style":"NoSpacing"})),
         Format::Normal => ("para.normal", json!({})),
         Format::Heading1 => ("para.heading1", json!({})),
         Format::Heading2 => ("para.heading2", json!({})),
