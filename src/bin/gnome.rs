@@ -10,7 +10,7 @@ use wordcraft_gnome::selection::{self, SelectionGeometry};
 use wordcraft_gnome::editing::{self, Edit};
 use wordcraft_gnome::formatting::{self, Format};
 use wordcraft_engine::Session;
-use wordcraft_gnome::{open_document, render_page, sample_session};
+use wordcraft_gnome::{open_document, render_page_premultiplied as render_page, sample_session};
 use wordcraft_gnome::viewer_layout::{self, THUMB_SCALE};
 
 const APP_ID: &str = "io.github.frandavid100.WordCraftGnome.PapersPreview";
@@ -75,7 +75,7 @@ fn texture(img: wordcraft_gnome::PageImage) -> gdk::MemoryTexture {
     let bytes = glib::Bytes::from_owned(img.rgba);
     gdk::MemoryTexture::new(
         img.width as i32, img.height as i32,
-        gdk::MemoryFormat::R8g8b8a8, &bytes, img.width as usize * 4,
+        gdk::MemoryFormat::R8g8b8a8Premultiplied, &bytes, img.width as usize * 4,
     )
 }
 
