@@ -1146,7 +1146,7 @@ fn build_tab(
     style_menu.set_widget_name("style-menu");align_menu.set_widget_name("paragraph-menu");text_menu.set_widget_name("text-menu");
     let style_popover=install_style_popover(&ui,&style_menu);ui.style.replace(Some(style_popover.clone()));
     ui.format_buttons.replace(vec![style_menu.clone(),align_menu.clone(),text_menu.clone()]);
-    let adaptive=Rc::new(AdaptiveTools{ui:Rc::downgrade(&ui),history:history_tools,formats:format_tools,top_history,top_formats,bottom:format_bar.clone(),separator:history_separator,narrow:Cell::new(true),generation:Cell::new(0),pending_width:Cell::new(0),reflow_queued:Cell::new(false)});
+    let adaptive=Rc::new(AdaptiveTools{ui:Rc::downgrade(&ui),history:history_tools,formats:format_tools,top_history,top_formats,bottom:format_bar.clone(),separator:history_separator,narrow:Cell::new(true),generation:Cell::new(0)});
     for(menu,label,kind)in[(&style_menu,"Estilo","style"),(&align_menu,"Párrafo","paragraph"),(&text_menu,"Texto","text")]{format_icon_button(menu,label,kind);}
     ui.adaptive.replace(Some(adaptive.clone()));adaptive.sync_width(if narrow_on_start{420}else{900});
     let table_menu=install_table_controls(&ui,&window,&format_bar);
@@ -1320,7 +1320,7 @@ fn build_tab(
         let ui = ui.clone();
         ui.scroll.vadjustment().connect_value_changed(move |_| refresh_pages(&ui));
     }
-    {let weak=Rc::downgrade(&ui);ui.scroll.hadjustment().connect_changed(move |a|{if let Some(ui)=weak.upgrade(){let width=a.page_size().round()as i32;if width>0&&ui.viewport_width.replace(width)!=width{if let Some(a)=ui.adaptive.borrow().as_ref(){a.request_width(width);}schedule_layout(&ui);}}});}
+    {let weak=Rc::downgrade(&ui);ui.scroll.hadjustment().connect_changed(move |a|{if let Some(ui)=weak.upgrade(){let width=a.page_size().round()as i32;if width>0&&ui.viewport_width.replace(width)!=width{if let Some(a)=ui.adaptive.borrow().as_ref(){a.sync_width(width);}schedule_layout(&ui);}}});}
     {
         let ui = ui.clone();
         ui.thumbnails_scroll.vadjustment().connect_value_changed(move |_| refresh_thumbnails(&ui));
