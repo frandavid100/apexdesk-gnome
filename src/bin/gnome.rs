@@ -19,7 +19,7 @@ const STEPS: &[f32] = &[0.5, 0.67, 0.75, 0.85, 1.0, 1.25, 1.5, 1.75, 2.0];
 struct Current {
     session: Session,
     sizes: Vec<(f32, f32)>,
-    tops: Vec<f64>,
+    arrangement: viewer_layout::Arrangement,
     zoom: f32,
     fit_to_width: bool,
     pages: Vec<gtk::Picture>,
@@ -35,7 +35,7 @@ struct Current {
 
 struct Ui {
     current: RefCell<Option<Current>>,
-    document_box: gtk::Box,
+    document_box: gtk::Fixed,
     thumbnails_box: gtk::Box,
     scroll: gtk::ScrolledWindow,
     thumbnails_scroll: gtk::ScrolledWindow,
@@ -45,7 +45,9 @@ struct Ui {
     search: RefCell<Option<Rc<SearchPanel>>>,
     paragraph: RefCell<Option<Rc<ParagraphPopover>>>,
     search_highlights: Rc<RefCell<Vec<selection::Rect>>>,
-    page_label: gtk::Label,
+    document_name: RefCell<String>,
+    layout_pending: Cell<bool>,
+    viewport_width: Cell<i32>,
     zoom_label: gtk::Label,
     zoom_out: gtk::Button,
     zoom_in: gtk::Button,
@@ -256,7 +258,7 @@ fn after_content_change(ui: &Rc<Ui>) {
     if rebuild {
         let prior = ui.current.borrow_mut().take();
         if let Some(previous) = prior {
-            let name = ui.title.title().to_string();
+            let name = ui.document_name.borrow().clone();
             let saved_path = ui.save_path.borrow().clone();
             let source_path = ui.source_path.borrow().clone();
             opened(ui, previous.session, &name);
@@ -289,7 +291,7 @@ fn after_content_change(ui: &Rc<Ui>) {
     }
     if let Some(s)=ui.search.borrow().as_ref(){s.schedule();}
     ui.dirty.set(true);
-    ui.title.set_subtitle("● Cambios sin guardar · Fase 3D");
+
     sync_tab(ui);
 }
 
@@ -392,8 +394,7 @@ fn save_to(ui: &Rc<Ui>, path: &Path) -> bool {
         Ok(()) => {
             ui.save_path.replace(Some(path.to_path_buf()));
             ui.dirty.set(false);
-            ui.title.set_title(&path.file_name().unwrap_or_default().to_string_lossy());
-            ui.title.set_subtitle("Guardado · Fase 3D");
+            ui.document_name.replace(path.file_name().unwrap_or_default().to_string_lossy().into_owned());
             if let Some(doc)=ui.current.borrow_mut().as_mut(){doc.session.finish_recovery();}
             sync_tab(ui);
             ui.toasts.add_toast(Toast::new("Documento guardado"));
@@ -462,7 +463,6 @@ fn update_status(ui: &Rc<Ui>) {
     // Un cambio de tamaño puede emitir una señal de scroll de forma reentrante.
     let Ok(mut current) = ui.current.try_borrow_mut() else { return };
     if let Some(doc) = current.as_mut() {
-        ui.page_label.set_text(&format!("{} de {}", doc.active + 1, doc.sizes.len()));
         ui.zoom_label.set_text(&format!("{:.0} %", doc.zoom * 100.0));
         ui.zoom_out.set_sensitive(doc.zoom > viewer_layout::MIN_ZOOM);
         ui.zoom_in.set_sensitive(doc.zoom < viewer_layout::MAX_ZOOM);
@@ -474,7 +474,6 @@ fn update_status(ui: &Rc<Ui>) {
             doc.status_active=Some(doc.active);
         }
     } else {
-        ui.page_label.set_text("Sin documento");
         ui.zoom_label.set_text("100 %");
     }
 }
@@ -488,8 +487,8 @@ fn refresh_pages(ui: &Rc<Ui>) {
     if let Ok(mut borrowed) = ui.current.try_borrow_mut() {
         if let Some(doc) = borrowed.as_mut() {
             let viewport = top + adj.page_size().max(600.0) * 0.3;
-            doc.active = viewer_layout::page_at(&doc.tops, &doc.sizes, doc.zoom, viewport);
-            let visible = viewer_layout::visible_indices(&doc.tops, &doc.sizes, doc.zoom, top, bottom);
+            doc.active = doc.arrangement.page_at(ui.scroll.hadjustment().value()+ui.scroll.hadjustment().page_size()*0.3,viewport);
+            let visible = doc.arrangement.visible(top,bottom);
             let keep: HashSet<usize> = visible.iter().copied().collect();
             let old: Vec<usize> = doc.painted_pages.difference(&keep).copied().collect();
             for index in old {
@@ -525,7 +524,8 @@ fn refresh_thumbnails(ui: &Rc<Ui>) {
             for i in 0..doc.sizes.len() {
                 let (_, h) = doc.sizes[i];
                 let height = (f64::from(h) * f64::from(THUMB_SCALE)).ceil() + 59.0;
-                let is_visible = offset <= bottom + 250.0 && offset + height >= top - 250.0;
+                let (start,end)=doc.thumb_buttons[i].compute_bounds(&ui.thumbnails_box).map(|r|(r.y()as f64,(r.y()+r.height())as f64)).filter(|(_,end)|*end>0.0).unwrap_or((offset,offset+height));
+                let is_visible = start <= bottom + 250.0 && end >= top - 250.0;
                 if is_visible && !doc.painted_thumbs.contains(&i) {
                     if let Ok(image) = render_page(&mut doc.session, i, THUMB_SCALE) {
                         doc.thumbs[i].set_paintable(Some(&texture(image)));
@@ -543,7 +543,7 @@ fn refresh_thumbnails(ui: &Rc<Ui>) {
 fn jump_to(ui: &Rc<Ui>, index: usize) {
     let target = {
         let borrowed = ui.current.borrow();
-        borrowed.as_ref().and_then(|doc| doc.tops.get(index).copied())
+        borrowed.as_ref().and_then(|doc| doc.arrangement.pages.get(index).map(|p|p.y))
     };
     if let Some(top) = target {
         if ui.sidebar.is_collapsed() { ui.sidebar.set_show_sidebar(false); }
@@ -561,9 +561,9 @@ fn zoom_to(ui: &Rc<Ui>, zoom: f32) {
         let mut borrowed = ui.current.borrow_mut();
         let Some(doc) = borrowed.as_mut() else { return };
         current_page = doc.active;
-        if (zoom - doc.zoom).abs() < 0.005 { return; }
+        let changed=(zoom - doc.zoom).abs()>=0.005;
+        if !changed {drop(borrowed);layout_pages(ui);return;}
         doc.zoom = zoom;
-        doc.tops = viewer_layout::page_tops(&doc.sizes, zoom);
         for (i, picture) in doc.pages.iter().enumerate() {
             picture.set_paintable(None::<&gdk::Paintable>);
             doc.page_frames[i].set_size_request(
@@ -578,6 +578,7 @@ fn zoom_to(ui: &Rc<Ui>, zoom: f32) {
         doc.painted_pages.clear();
     }
     ui.selection_zoom.set(zoom);
+    layout_pages(ui);
     refresh_selection(ui);
     update_status(ui);
     let ui = ui.clone();
@@ -606,27 +607,38 @@ fn refit_if_needed(ui: &Rc<Ui>) {
     if fit { fit_width(ui); }
 }
 
-fn fit_width(ui: &Rc<Ui>) {
-    let max_width = ui.current.borrow().as_ref().and_then(|d| {
-        d.sizes.iter().map(|x| x.0).reduce(f32::max)
-    });
-    let Some(width) = max_width else { return };
-    // El scroll puede conservar una anchura natural mayor que la del área
-    // visible durante la animación de AdwOverlaySplitView. Tomamos también
-    // el ancho real del split y descontamos el panel si está al lado.
-    let split_width = ui.sidebar.allocated_width() as f32;
-    let sidebar_width = if ui.sidebar.shows_sidebar() && !ui.sidebar.is_collapsed() {
-        ui.sidebar.sidebar().map(|w| w.allocated_width() as f32).unwrap_or(0.0)
-    } else { 0.0 };
-    let layout_width = (split_width - sidebar_width).max(0.0);
-    let available = (ui.scroll.allocated_width() as f32)
-        .min(layout_width)
-        .max(250.0) - 46.0;
-    if let Some(doc) = ui.current.borrow_mut().as_mut() {
-        doc.fit_to_width = true;
-    }
-    zoom_to(ui, available / width);
+fn viewport_width(ui:&Ui)->f64 {
+    let split=ui.sidebar.allocated_width() as f64;
+    let side=if ui.sidebar.shows_sidebar()&&!ui.sidebar.is_collapsed(){ui.sidebar.sidebar().map(|w|w.allocated_width()as f64).unwrap_or(0.0)}else{0.0};
+    (ui.scroll.allocated_width()as f64).min((split-side).max(0.0)).max(250.0)
 }
+fn layout_pages(ui:&Rc<Ui>){
+    let width=viewport_width(ui);
+    let Ok(mut value)=ui.current.try_borrow_mut()else{return;};let Some(doc)=value.as_mut()else{return;};
+    let next=viewer_layout::arrange(&doc.sizes,doc.zoom,width);
+    for(frame,p)in doc.page_frames.iter().zip(&next.pages){ui.document_box.move_(frame,p.x,p.y);}
+    ui.document_box.set_size_request(next.width.ceil()as i32,next.height.ceil()as i32);
+    doc.arrangement=next;
+}
+fn fit_width(ui:&Rc<Ui>){
+    let width=viewport_width(ui);
+    let zoom={let mut value=ui.current.borrow_mut();let Some(doc)=value.as_mut()else{return;};
+        doc.fit_to_width=true;
+        let natural=viewer_layout::arrange(&doc.sizes,1.0,width);
+        let maximum=doc.sizes.chunks(natural.columns).map(|c|c.iter().map(|s|s.0 as f64).sum::<f64>()).fold(1.0,f64::max);
+        ((width-viewer_layout::PAGE_GAP*(natural.columns+1)as f64-2.0)/maximum)as f32
+    };
+    zoom_to(ui,zoom);
+}
+fn schedule_layout(ui:&Rc<Ui>){
+    if ui.layout_pending.replace(true){return;}
+    let weak=Rc::downgrade(ui);glib::timeout_add_local_once(std::time::Duration::from_millis(80),move||{
+        let Some(ui)=weak.upgrade().filter(|u|!u.closed.get())else{return;};ui.layout_pending.set(false);
+        let fit=ui.current.borrow().as_ref().is_some_and(|d|d.fit_to_width);
+        if fit {fit_width(&ui);}else{layout_pages(&ui);refresh_pages(&ui);}
+    });
+}
+fn clear_canvas(canvas:&gtk::Fixed){while let Some(child)=canvas.first_child(){canvas.remove(&child);}}
 
 fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     if !session.recovery_ready() {
@@ -641,11 +653,11 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         return;
     }
     let zoom = 1.0;
-    let tops = viewer_layout::page_tops(&sizes, zoom);
+    let arrangement=viewer_layout::arrange(&sizes,zoom,viewport_width(ui));
     ui.caret_motion.borrow_mut().retarget(None, 0, false);
     ui.search_highlights.borrow_mut().clear();
     if let Some(s)=ui.search.borrow().as_ref(){s.schedule();}
-    clear_box(&ui.document_box);
+    clear_canvas(&ui.document_box);
     clear_box(&ui.thumbnails_box);
 
     let mut pages = Vec::with_capacity(sizes.len());
@@ -663,8 +675,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         let frame = gtk::Overlay::new();
         frame.set_size_request(width.ceil() as i32, height.ceil() as i32);
         frame.set_halign(gtk::Align::Center);
-        frame.set_margin_top(11);
-        frame.set_margin_bottom(11);
+        frame.set_valign(gtk::Align::Start);
         picture.set_margin_top(0);
         picture.set_margin_bottom(0);
         frame.set_child(Some(&picture));
@@ -697,7 +708,8 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
             });
         }
         frame.add_overlay(&area);
-        ui.document_box.append(&frame);
+        let position=&arrangement.pages[i];
+        ui.document_box.put(&frame,position.x,position.y);
         pages.push(picture);
         page_frames.push(frame);
         selection_areas.push(area);
@@ -714,33 +726,21 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         thumb.add_css_class("thumbnail-sheet");
         let number = gtk::Label::new(Some(&(i + 1).to_string()));
         number.add_css_class("dim-label");
-        let content = gtk::Box::new(gtk::Orientation::Vertical, 5);
-        content.set_halign(gtk::Align::Center);
-        // El ancho de las hojas pequeñas no debe crecer hasta ocupar
-        // casi todo el panel lateral.
-        let thumb_clamp = adw::Clamp::new();
-        thumb_clamp.set_maximum_size(185);
-        thumb_clamp.set_child(Some(&thumb));
-        content.append(&thumb_clamp);
-        content.append(&number);
-        let button = gtk::Button::new();
-        button.set_child(Some(&content));
-        button.add_css_class("flat");
-        button.add_css_class("thumbnail-button");
-        button.set_margin_top(7);
-        button.set_margin_bottom(7);
-        button.set_halign(gtk::Align::Center);
+        let content=gtk::Box::new(gtk::Orientation::Vertical,5);content.set_halign(gtk::Align::Center);
+        let button=gtk::Button::new();button.set_child(Some(&thumb));button.add_css_class("flat");button.add_css_class("thumbnail-button");
+        button.set_halign(gtk::Align::Center);button.set_valign(gtk::Align::Start);thumb.set_valign(gtk::Align::Center);
+        content.append(&button);content.append(&number);content.set_margin_top(7);content.set_margin_bottom(14);
         {
             let ui = ui.clone();
             button.connect_clicked(move |_| jump_to(&ui, i));
         }
-        ui.thumbnails_box.append(&button);
+        ui.thumbnails_box.append(&content);
         thumbs.push(thumb);
         thumb_buttons.push(button);
     }
 
     ui.current.replace(Some(Current {
-        session, sizes, tops, zoom, fit_to_width: true,
+        session, sizes, arrangement, zoom, fit_to_width: true,
         pages, page_frames, selection_areas, thumbs, thumb_buttons,
         painted_pages: HashSet::new(),
         painted_thumbs: HashSet::new(),
@@ -748,14 +748,15 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     }));
     *ui.drag_anchor.borrow_mut() = None;
     ui.selection_zoom.set(zoom);
-    ui.title.set_title(label);
-    sync_tab(ui);
+    ui.document_name.replace(label.to_owned());
     ui.dirty.set(false);
+    sync_tab(ui);
     ui.save_path.replace(None);
     ui.source_path.replace(ui.current.borrow().as_ref().and_then(|d| d.session.path.clone()));
-    ui.title.set_subtitle("WordCraft · Fase 3D · guarda una copia");
+
     ui.format_toolbar.set_visible(true);
     ui.stack.set_visible_child_name("pages");
+    layout_pages(ui);
     ui.scroll.vadjustment().set_value(0.0);
     ui.thumbnails_scroll.vadjustment().set_value(0.0);
     update_status(ui);
@@ -776,6 +777,7 @@ fn install_css() {
       .document-scroll { background: @window_bg_color; }
       .document-sheet { background: white; box-shadow: 0 1px 4px alpha(black, 0.15); }
       .thumbnail-sheet { background: white; box-shadow: 0 1px 3px alpha(black, 0.16); }
+      .thumbnail-button { padding: 8px; min-width: 0; min-height: 0; }
       .thumbnail-button.selected-thumb { background: alpha(@window_fg_color, 0.09); }
       button.search-replace { min-width: 24px; min-height: 24px; padding: 0; }
       .style-popover button, .format-popover button { font-weight: normal; }
@@ -796,6 +798,7 @@ include!("../gnome_tables.rs");
 include!("../gnome_styles.rs");
 include!("../gnome_search.rs");
 include!("../gnome_paragraph.rs");
+include!("../gnome_view_tests.rs");
 
 fn build_tab(
     app: &Application,
@@ -846,7 +849,7 @@ fn build_tab(
     side_header.pack_end(&app_menu);
 
     let header = HeaderBar::new();
-    let title = WindowTitle::new("WordCraft GNOME", "Edición y guardado · Fase 3D");
+    let title = WindowTitle::new("WordCraft GNOME", "");
     header.set_title_widget(Some(&title));
 
     let sidebar_button = gtk::ToggleButton::new();
@@ -865,8 +868,6 @@ fn build_tab(
     let save_as_button = gtk::Button::with_label("Guardar como…");
 
 
-    let page_label = gtk::Label::new(Some("Sin documento"));
-    page_label.add_css_class("page-indicator");
 
     let zoom_out = gtk::Button::with_label("−");
     zoom_out.set_tooltip_text(Some("Reducir zoom (Ctrl+-)"));
@@ -914,7 +915,7 @@ fn build_tab(
     menu_button.set_tooltip_text(Some("Opciones del documento"));
     menu_button.set_popover(Some(&menu));
     header.pack_end(&menu_button);
-    header.pack_end(&page_label);
+
 
     let stack = gtk::Stack::new();
     let empty = StatusPage::builder()
@@ -924,7 +925,8 @@ fn build_tab(
         .build();
     stack.add_named(&empty, Some("empty"));
 
-    let document_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    let document_box = gtk::Fixed::new();
+    document_box.set_valign(gtk::Align::Start);
     document_box.set_halign(gtk::Align::Center);
     document_box.set_focusable(true);
     document_box.set_cursor_from_name(Some("text"));
@@ -933,7 +935,10 @@ fn build_tab(
     scroll.set_vexpand(true);
     scroll.set_policy(gtk::PolicyType::Automatic, gtk::PolicyType::Automatic);
     scroll.add_css_class("document-scroll");
-    scroll.set_child(Some(&document_box));
+    // The canvas is taller than the viewport. Restoring focus must not scroll
+    // its whole allocation into view before pointer hit testing runs.
+    let viewport=gtk::Viewport::new(None::<&gtk::Adjustment>,None::<&gtk::Adjustment>);
+    viewport.set_scroll_to_focus(false);viewport.set_child(Some(&document_box));scroll.set_child(Some(&viewport));
 
     let thumbnails_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
     let thumbnails_scroll = gtk::ScrolledWindow::new();
@@ -1114,7 +1119,8 @@ fn build_tab(
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button, sidebar_pages,
         search: RefCell::new(None), paragraph: RefCell::new(None), search_highlights: Rc::new(RefCell::new(Vec::new())),
-        page_label, zoom_label, zoom_out, zoom_in, stack, title, toasts,
+        document_name:RefCell::new(String::new()),layout_pending:Cell::new(false),viewport_width:Cell::new(0),
+        zoom_label, zoom_out, zoom_in, stack, title, toasts,
     });
 
 
@@ -1379,6 +1385,7 @@ fn build_tab(
         let ui = ui.clone();
         ui.scroll.vadjustment().connect_value_changed(move |_| refresh_pages(&ui));
     }
+    {let weak=Rc::downgrade(&ui);ui.scroll.hadjustment().connect_changed(move |a|{if let Some(ui)=weak.upgrade(){let width=a.page_size().round()as i32;if width>0&&ui.viewport_width.replace(width)!=width{schedule_layout(&ui);}}});}
     {
         let ui = ui.clone();
         ui.thumbnails_scroll.vadjustment().connect_value_changed(move |_| refresh_thumbnails(&ui));
@@ -1696,6 +1703,8 @@ fn build_tab(
     if std::env::args().any(|a|a=="--paragraph-demo"||a=="--paragraph-spacing-demo") {let m=align_menu.clone();let s=paragraph_popover.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{m.popup();if std::env::args().any(|a|a=="--paragraph-spacing-demo"){s.page("spacing");}});}
     if std::env::args().any(|a|a=="--paragraph-ui-test") {let s=paragraph_popover.clone();let m=align_menu.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||paragraph_ui_test(&s,&m,&app));}
     if std::env::args().any(|a|a=="--search-ui-test") {let s=search_panel.clone();let ui=ui.clone();let app=app.clone();let host=host.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||search_ui_test(&ui,&s,&app,&host));}
+    if std::env::args().any(|a|a=="--view-pointer-test"){let u=ui.clone();let m=style_menu.clone();let w=window.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1300),move||view_pointer_test(&u,&m,&w,&a));}
+    if std::env::args().any(|a|a=="--spreads-demo"){window.set_default_size(1800,950);let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1300),move||{if let Some(d)=u.current.borrow_mut().as_mut(){d.fit_to_width=false;}zoom_to(&u,1.0);});}
     if std::env::args().any(|a|a=="--advanced-text-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_text_options(&u,&w));}
     if std::env::args().any(|a|a=="--advanced-paragraph-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_paragraph_options(&u,&w));}
     if std::env::args().any(|a|a=="--styles-ui-test") {let s=style_popover.clone();let m=style_menu.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||style_ui_test(&s,&m,&a));}
