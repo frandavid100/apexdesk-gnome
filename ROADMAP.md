@@ -11,6 +11,8 @@ Implementados: búsqueda con opciones sin fondo, reemplazar todo en un paso de d
 
 Últimos ajustes solicitados: igualar las barras inferiores y sus sombras nativas; ampliar el marco de miniaturas e incluir el número; mover el historial a un menú de documento nativo junto a Guardar/Guardar como; quitar los botones de pestaña nueva/guardar de la cabecera y la opción de ejemplo. Arranque normal con documento vacío.
 
+Revisión solicitada tras probar la chincheta: eliminar el parpadeo al fijar/desfijar, sustituir el panel anterior al abrir otro manteniendo la chincheta, unificar vuelta atrás/título/chincheta y cambiar el botón completo de subopciones al aspecto de Nautilus. Grupo exclusivo por pestaña con modalidad GTK constante.
+
 Cabeceras con nombre y chincheta en los cuatro desplegables de edición. La chincheta permite aplicar varias opciones sin cerrar el panel; al desfijar se recupera el cierre normal. Chevrones pequeños como Nautilus en Párrafo/Texto y coherentes en los botones inferiores. No implica reorganizar todavía todas las opciones de Texto.
 
 Siguiente propuesta: reorganizar el desplegable Texto como Estilo/Párrafo antes de imágenes; no implementarla sin que el usuario la solicite.
@@ -67,5 +69,6 @@ metadatos y una versión identificable que sustituya el nombre provisional «fas
 Compatibilidad con documentos reales, accesibilidad/teclado, rendimiento medido en archivos
 largos y actualización controlada del motor según UPDATING_WORDCRAFT.md.
 No modificar el motor por comodidad de la interfaz ni distribuir binarios de desarrollo.
+
 
 
