@@ -1,65 +1,52 @@
-# WordCraft GNOME — interfaz adaptativa libadwaita
+# WordCraft GNOME — Fase 3A: cursor y selección
 
-Esta rama (`adwaita-layout`) reemplaza la estructura manual del visor por
-los contenedores recomendados por las **GNOME Human Interface Guidelines**.
+Esta rama (`wordcraft-selection`) incorpora la primera interacción real
+con texto sobre el visor GTK4/libadwaita.
 
-## Componentes
+**Qué puedes probar**
 
-- `AdwApplicationWindow`: ventana.
-- `AdwOverlaySplitView`: panel lateral y documento, con ancho proporcional
-  administrado por libadwaita. El panel se superpone en ventanas pequeñas.
-- `AdwToolbarView` y `AdwHeaderBar`: cabeceras y barras integradas con GNOME.
-- `AdwBreakpoint`: cambio de disposición por debajo de **760sp**, incluidos
-  ajustes de accesibilidad para texto grande.
-- `GtkOverlay` con estilo `.osd`: controles de zoom sobre el lienzo.
-- El renderizado, paginación y formatos siguen procediendo de WordCraft.
+- Clic sobre una palabra: posiciona el cursor según la maquetación de WordCraft.
+- Doble clic: selecciona una palabra. Triple clic: selecciona el párrafo.
+- Arrastrar sobre las páginas: selecciona texto, incluso entre páginas.
+- Flechas, Inicio, Fin y combinaciones con **Shift**: mover o extender la selección.
+- `Ctrl+Izquierda/Derecha`: mover por palabras; `Ctrl+Inicio/Fin`: principio/final.
+- `Ctrl+A`: seleccionar el documento; `Ctrl+C`: copiar texto al portapapeles.
+- Zoom, miniaturas, desplazamiento y la interfaz adaptativa de las fases anteriores.
 
-El menú de la **aplicación** está en la cabecera lateral; el menú del
-**documento** está en la cabecera principal.
+La posición y el resaltado proceden de las API `DocLayout::hit`,
+`DocLayout::caret_on` y `DocLayout::selection_rects` de WordCraft; el estado
+se modifica con sus comandos `caret.set`, `select.range` y `edit.copy`.
+No usamos `egui`.
 
-## Funciones
+**Limitaciones actuales:** el documento todavía no admite escritura, cambios
+de formato ni guardado. La selección mediante arrastre fuera de la ventana
+no dispone todavía de desplazamiento automático. `Ctrl+C` copia texto
+plano, no HTML ni formato enriquecido. La compatibilidad de selección
+en tablas complejas y documentos con varias orientaciones requiere pruebas.
 
-Permite abrir DOCX/ODT, leerlos, desplazarse de forma continua, ajustar zoom,
-consultar miniaturas y saltar a páginas. No permite editar ni guardar todavía.
+## Ejecución
 
-Los atajos principales: `Ctrl+O` abrir, `F9` panel, `Ctrl++` ampliar,
-`Ctrl+-` reducir, `Ctrl+0` ajustar ancho.
+En GNOME con GTK4 >= 4.10 y libadwaita >= 1.4:
 
-## Pruebas
+```sh
+./wordcraft-gnome --version
+./wordcraft-gnome --sample --sidebar
+```
 
-Requiere GTK4 >= 4.10, libadwaita >= 1.4 y Rust estable.
+Desde fuentes (Rust estable):
 
 ```sh
 cargo test
 cargo run --features gui --bin wordcraft-gnome -- --sample --sidebar
 ```
 
-Para pruebas visuales sin modificar preferencias del usuario:
+## Calidad y pruebas
 
-```sh
-./wordcraft-gnome --sample --narrow --sidebar
-./wordcraft-gnome --sample --narrow
-./wordcraft-gnome --sample --dark --sidebar
-./wordcraft-gnome --version
-```
+GitHub Actions compila el editor, verifica las pruebas del motor
+(incluido un test de selección entre páginas), comprueba ausencia de
+`egui` y genera capturas de pantalla con libadwaita. Eso no sustituye
+una prueba real de clic, arrastre, accesibilidad y portapapeles en GNOME OS.
 
-El flujo de GitHub Actions genera capturas de las cinco disposiciones,
-compila los motores sin egui y crea un ejecutable Linux reducido (sin símbolos
-de depuración). Las capturas automatizadas no sustituyen las pruebas
-interactivas con teclado, lector de pantalla o Wayland real.
-
-## Ramas y licencias
-
-- `main`: prototipo previo basado en ApexDesk.
-- `wordcraft-migration`: primera integración de WordCraft.
-- `wordcraft-viewer`: visor anterior con contenedores manuales.
-- `adwaita-layout`: refactorización HIG/libadwaita (esta rama).
-
-Las dependencias de WordCraft proceden de
-[storytold/wordcraft, revisión 165d5725](https://github.com/storytold/wordcraft/commit/165d5725dc25b4a7887d8025c3b1fe506ccc3dcc),
-con licencia MIT OR Apache-2.0; el código del proyecto es GPL-3.0-or-later.
-
-Documentación de referencia:
-[GNOME HIG](https://developer.gnome.org/hig/),
-[OverlaySplitView](https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/class.OverlaySplitView.html),
-[ToolbarView](https://gnome.pages.gitlab.gnome.org/libadwaita/doc/main/class.ToolbarView.html).
+El código está disponible en GitHub bajo GPL-3.0-or-later y reutiliza
+WordCraft [revisión 165d5725](https://github.com/storytold/wordcraft/commit/165d5725dc25b4a7887d8025c3b1fe506ccc3dcc)
+(MIT OR Apache-2.0). La rama anterior `adwaita-layout` permanece intacta.
