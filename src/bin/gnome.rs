@@ -970,7 +970,7 @@ fn build_tab(
     format_bar.set_margin_bottom(5);
     let undo_button = gtk::Button::from_icon_name("edit-undo-symbolic");
     let redo_button = gtk::Button::from_icon_name("edit-redo-symbolic");
-    undo_button.set_child(Some(&history_icon(false)));redo_button.set_child(Some(&history_icon(true)));
+    undo_button.set_child(Some(&history_icon(false)));redo_button.set_child(Some(&history_icon(true)));undo_button.add_css_class("image-button");redo_button.add_css_class("image-button");
     undo_button.update_property(&[gtk::accessible::Property::Label("Deshacer")]);redo_button.update_property(&[gtk::accessible::Property::Label("Rehacer")]);
     undo_button.set_tooltip_text(Some("Deshacer (Ctrl+Z)"));
     redo_button.set_tooltip_text(Some("Rehacer (Ctrl+Shift+Z)"));
