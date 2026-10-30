@@ -3,11 +3,15 @@
 Actualizada: 30 de octubre de 2026. Estado técnico en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Las fases siguientes son propuestas; no implican autorización para implementarlas todas.
 
-## Ahora: navegación lateral y menú principal
+## Ahora: barras inferiores y menús nativos
 
 Validado automáticamente en CI (41094124112), pendiente de prueba del usuario: se han aplicado márgenes simétricos de miniaturas, cabecera de una línea sin contador de páginas, disposición automática de dos páginas y corrección del salto al devolver el foco desde los menús al documento.
 
 Implementados: búsqueda con opciones sin fondo, reemplazar todo en un paso de deshacer, sin contador y con fundido; selector Páginas/Títulos como Papers y títulos jerárquicos contraíbles; menú principal GMenu/GtkPopoverMenu como Nautilus, acciones de ventana y vista general nativa de pestañas. Validación y revisión de entrega en PROJECT_STATUS.md. Pendiente de prueba del usuario.
+
+Últimos ajustes solicitados: igualar las barras inferiores y sus sombras nativas; ampliar el marco de miniaturas e incluir el número; mover el historial a un menú de documento nativo junto a Guardar/Guardar como; quitar los botones de pestaña nueva/guardar de la cabecera y la opción de ejemplo. Arranque normal con documento vacío.
+
+Siguiente propuesta: reorganizar el desplegable Texto como Estilo/Párrafo antes de imágenes; no implementarla sin que el usuario la solicite.
 
 Recoger la prueba del usuario de formato avanzado y compilación optimizada en GNOME OS.
 Corregir los fallos que aparezcan antes de acumular funciones nuevas.
@@ -61,3 +65,4 @@ metadatos y una versión identificable que sustituya el nombre provisional «fas
 Compatibilidad con documentos reales, accesibilidad/teclado, rendimiento medido en archivos
 largos y actualización controlada del motor según UPDATING_WORDCRAFT.md.
 No modificar el motor por comodidad de la interfaz ni distribuir binarios de desarrollo.
+
