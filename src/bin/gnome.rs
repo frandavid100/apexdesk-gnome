@@ -649,6 +649,7 @@ fn make_window(
     dark_on_start: bool,
     selection_demo: bool,
     editing_demo: bool,
+    formatting_demo: bool,
 ) {
     if dark_on_start {
         adw::StyleManager::default().set_color_scheme(adw::ColorScheme::ForceDark);
@@ -1157,6 +1158,35 @@ fn make_window(
                 return glib::Propagation::Stop;
             }
             if ui.document_box.has_focus() {
+                let alt = modifiers.contains(gdk::ModifierType::ALT_MASK);
+                let format_shortcut = if alt {
+                    match key {
+                        gdk::Key::_1 | gdk::Key::KP_1 => Some(Format::Heading1),
+                        gdk::Key::_2 | gdk::Key::KP_2 => Some(Format::Heading2),
+                        gdk::Key::_3 | gdk::Key::KP_3 => Some(Format::Heading3),
+                        _ => None,
+                    }
+                } else if shift {
+                    match key {
+                        gdk::Key::n | gdk::Key::N => Some(Format::Normal),
+                        _ => None,
+                    }
+                } else {
+                    match key {
+                        gdk::Key::b | gdk::Key::B => Some(Format::Bold),
+                        gdk::Key::i | gdk::Key::I => Some(Format::Italic),
+                        gdk::Key::u | gdk::Key::U => Some(Format::Underline),
+                        gdk::Key::l | gdk::Key::L => Some(Format::AlignLeft),
+                        gdk::Key::e | gdk::Key::E => Some(Format::AlignCenter),
+                        gdk::Key::r | gdk::Key::R => Some(Format::AlignRight),
+                        gdk::Key::j | gdk::Key::J => Some(Format::Justify),
+                        _ => None,
+                    }
+                };
+                if let Some(action) = format_shortcut {
+                    apply_user_format(&ui, action);
+                    return glib::Propagation::Stop;
+                }
                 if key == gdk::Key::z || key == gdk::Key::Z {
                     apply_user_edit(&ui, if shift { Edit::Redo } else { Edit::Undo });
                     return glib::Propagation::Stop;
@@ -1307,6 +1337,21 @@ fn make_window(
         let ui = ui.clone();
         glib::idle_add_local_once(move || fit_width(&ui));
     }
+    if formatting_demo {
+        let ui = ui.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_millis(950), move || {
+            {
+                let mut borrowed = ui.current.borrow_mut();
+                if let Some(doc) = borrowed.as_mut() {
+                    let _ = doc.session.run("select.text", &serde_json::json!({
+                        "text": "Why share a studio?"
+                    }));
+                }
+            }
+            apply_user_format(&ui, Format::Heading1);
+            apply_user_format(&ui, Format::AlignCenter);
+        });
+    }
     if editing_demo {
         let ui = ui.clone();
         glib::timeout_add_local_once(std::time::Duration::from_millis(900), move || {
@@ -1349,13 +1394,14 @@ fn main() {
     let dark_on_start = std::env::args().any(|arg| arg == "--dark");
     let selection_demo = std::env::args().any(|arg| arg == "--select-demo");
     let editing_demo = std::env::args().any(|arg| arg == "--edit-demo");
+    let formatting_demo = std::env::args().any(|arg| arg == "--format-demo");
     // Permite probar versiones simultáneas sin activar una ventana anterior por D-Bus.
     let app = Application::builder()
         .application_id(APP_ID)
         .flags(gio::ApplicationFlags::NON_UNIQUE)
         .build();
     app.connect_activate(move |app| {
-        make_window(app, sample_on_start, sidebar_on_start, narrow_on_start, dark_on_start, selection_demo, editing_demo)
+        make_window(app, sample_on_start, sidebar_on_start, narrow_on_start, dark_on_start, selection_demo, editing_demo, formatting_demo)
     });
     app.run_with_args(&["wordcraft-gnome"]);
 }
