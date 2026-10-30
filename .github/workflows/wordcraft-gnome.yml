@@ -1,7 +1,7 @@
-name: "Migración a WordCraft — GTK4/libadwaita"
+name: "WordCraft GNOME — visor continuo"
 on:
   push:
-    branches: [wordcraft-migration]
+    branches: [wordcraft-migration, wordcraft-viewer]
   pull_request:
   workflow_dispatch:
 
@@ -56,7 +56,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: wordcraft-gnome-prototipo-linux
+          name: wordcraft-gnome-visor-continuo-linux
           path: |
             target/debug/wordcraft-gnome
             muestra-wordcraft.png

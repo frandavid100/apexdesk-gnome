@@ -55,3 +55,5 @@ pub fn render_page(session: &mut Session, page_index: usize, scale: f32) -> Resu
     }
     Ok(PageImage { width: output.width, height: output.height, rgba, total_pages: count })
 }
+
+pub mod viewer_layout;
