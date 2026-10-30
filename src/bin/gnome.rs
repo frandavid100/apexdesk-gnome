@@ -8,6 +8,7 @@ use std::{cell::{Cell, RefCell}, collections::HashSet, path::Path, rc::Rc};
 use wordcraft_doc::Pos;
 use wordcraft_gnome::selection::{self, SelectionGeometry};
 use wordcraft_gnome::editing::{self, Edit};
+use wordcraft_gnome::formatting::{self, Format};
 use wordcraft_engine::Session;
 use wordcraft_gnome::{open_document, render_page, sample_session};
 use wordcraft_gnome::viewer_layout::{self, THUMB_SCALE};
@@ -53,6 +54,7 @@ struct Ui {
     drag_anchor: RefCell<Option<Pos>>,
     dirty: Cell<bool>,
     closing_confirmed: Cell<bool>,
+    format_toolbar: gtk::ScrolledWindow,
 }
 
 fn texture(img: wordcraft_gnome::PageImage) -> gdk::MemoryTexture {
@@ -551,6 +553,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     ui.title.set_title(label);
     ui.dirty.set(false);
     ui.title.set_subtitle("WordCraft · edición experimental · sin guardar");
+    ui.format_toolbar.set_visible(true);
     ui.stack.set_visible_child_name("pages");
     ui.scroll.vadjustment().set_value(0.0);
     ui.thumbnails_scroll.vadjustment().set_value(0.0);
@@ -625,7 +628,7 @@ fn make_window(
     side_header.pack_end(&app_menu);
 
     let header = HeaderBar::new();
-    let title = WindowTitle::new("WordCraft GNOME", "Edición experimental · sin guardar");
+    let title = WindowTitle::new("WordCraft GNOME", "Formato experimental · sin guardar");
     header.set_title_widget(Some(&title));
 
     let sidebar_button = gtk::ToggleButton::new();
@@ -767,6 +770,7 @@ fn make_window(
         drag_anchor: RefCell::new(None),
         dirty: Cell::new(false),
         closing_confirmed: Cell::new(false),
+        format_toolbar,
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button,
         page_label, zoom_label, zoom_out, zoom_in, previous, next, stack, title, toasts,
@@ -1208,7 +1212,7 @@ fn make_window(
 
 fn main() {
     if std::env::args().any(|arg| arg == "--version") {
-        println!("WordCraft GNOME · escritura y edición · fase 3B");
+        println!("WordCraft GNOME · herramientas de formato · fase 3C");
         return;
     }
     let sample_on_start = std::env::args().any(|arg| arg == "--sample");
