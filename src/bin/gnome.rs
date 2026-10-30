@@ -1,5 +1,5 @@
-//! Visor nativo GNOME para WordCraft: páginas continuas, zoom y miniaturas.
-//! El contenido es solo lectura; no modifica los documentos.
+//! Editor experimental GNOME para WordCraft: motor y maquetación reutilizados.
+//! La fase 3B modifica el documento en memoria, pero aún no lo guarda.
 use adw::prelude::*;
 use adw::{Application, ApplicationWindow, HeaderBar, StatusPage, Toast, ToastOverlay, ToolbarView, WindowTitle};
 use glib::value::ToValue;
@@ -7,6 +7,7 @@ use gtk::{gdk, gio, glib};
 use std::{cell::{Cell, RefCell}, collections::HashSet, path::Path, rc::Rc};
 use wordcraft_doc::Pos;
 use wordcraft_gnome::selection::{self, SelectionGeometry};
+use wordcraft_gnome::editing::{self, Edit};
 use wordcraft_engine::Session;
 use wordcraft_gnome::{open_document, render_page, sample_session};
 use wordcraft_gnome::viewer_layout::{self, THUMB_SCALE};
@@ -50,6 +51,8 @@ struct Ui {
     selection_data: Rc<RefCell<SelectionGeometry>>,
     selection_zoom: Rc<Cell<f32>>,
     drag_anchor: RefCell<Option<Pos>>,
+    dirty: Cell<bool>,
+    closing_confirmed: Cell<bool>,
 }
 
 fn texture(img: wordcraft_gnome::PageImage) -> gdk::MemoryTexture {
@@ -444,7 +447,8 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     *ui.drag_anchor.borrow_mut() = None;
     ui.selection_zoom.set(zoom);
     ui.title.set_title(label);
-    ui.title.set_subtitle("WordCraft · visor Papers · solo lectura");
+    ui.dirty.set(false);
+    ui.title.set_subtitle("WordCraft · edición experimental · sin guardar");
     ui.stack.set_visible_child_name("pages");
     ui.scroll.vadjustment().set_value(0.0);
     ui.thumbnails_scroll.vadjustment().set_value(0.0);
@@ -518,7 +522,7 @@ fn make_window(
     side_header.pack_end(&app_menu);
 
     let header = HeaderBar::new();
-    let title = WindowTitle::new("WordCraft GNOME", "Solo lectura");
+    let title = WindowTitle::new("WordCraft GNOME", "Edición experimental · sin guardar");
     header.set_title_widget(Some(&title));
 
     let sidebar_button = gtk::ToggleButton::new();
@@ -658,6 +662,8 @@ fn make_window(
         selection_data: Rc::new(RefCell::new(SelectionGeometry::default())),
         selection_zoom: Rc::new(Cell::new(1.0)),
         drag_anchor: RefCell::new(None),
+        dirty: Cell::new(false),
+        closing_confirmed: Cell::new(false),
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button,
         page_label, zoom_label, zoom_out, zoom_in, previous, next, stack, title, toasts,
@@ -975,7 +981,7 @@ fn make_window(
 
 fn main() {
     if std::env::args().any(|arg| arg == "--version") {
-        println!("WordCraft GNOME · selección y cursor · fase 3A");
+        println!("WordCraft GNOME · escritura y edición · fase 3B");
         return;
     }
     let sample_on_start = std::env::args().any(|arg| arg == "--sample");
