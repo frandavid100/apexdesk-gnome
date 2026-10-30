@@ -232,6 +232,8 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         let thumb = gtk::Picture::new();
         thumb.set_can_shrink(false);
         thumb.set_content_fit(gtk::ContentFit::Fill);
+        thumb.set_halign(gtk::Align::Center);
+        thumb.set_hexpand(false);
         thumb.set_size_request(
             (width * THUMB_SCALE).ceil() as i32,
             (height * THUMB_SCALE).ceil() as i32,
@@ -319,7 +321,6 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     side_header.set_title_widget(Some(&side_title));
     let example_button = gtk::Button::with_label("Ejemplo");
     example_button.set_tooltip_text(Some("Abrir el documento de muestra de WordCraft"));
-    side_header.pack_end(&example_button);
 
     let header = HeaderBar::new();
     let title = WindowTitle::new("WordCraft GNOME", "Solo lectura");
@@ -363,6 +364,8 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     menu_content.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
     menu_content.append(&previous);
     menu_content.append(&next);
+    menu_content.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
+    menu_content.append(&example_button);
     menu.set_child(Some(&menu_content));
     let menu_button = gtk::MenuButton::new();
     menu_button.set_icon_name("open-menu-symbolic");
@@ -394,7 +397,7 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     thumbnails_scroll.set_child(Some(&thumbnails_box));
     thumbnails_scroll.add_css_class("thumbnail-strip");
     let side_column = gtk::Box::new(gtk::Orientation::Vertical, 0);
-    side_column.set_width_request(275);
+    side_column.set_width_request(298);
     side_column.add_css_class("thumbnail-sidebar");
     side_column.append(&side_header);
     side_column.append(&thumbnails_scroll);
