@@ -924,10 +924,46 @@ fn make_window(
         let ui = ui.clone();
         let open_button = open_button.clone();
         let controller = gtk::EventControllerKey::new();
+        // GTK supplies dead-key composition, accents and input methods.
+        // Committed text enters WordCraft; ordinary shortcuts remain in
+        // the key controller instead of being converted into characters.
+        let input = gtk::IMMulticontext::new();
+        input.set_client_widget(Some(&ui.document_box));
+        controller.set_im_context(Some(&input));
+        {
+            let ui = ui.clone();
+            input.connect_commit(move |_, text| {
+                if ui.document_box.has_focus() && !text.is_empty() {
+                    apply_user_edit(&ui, Edit::Insert(text.to_owned()));
+                }
+            });
+        }
+        {
+            let input = input.clone();
+            ui.document_box.connect_notify_local(Some("has-focus"), move |widget, _| {
+                if widget.has_focus() { input.focus_in(); } else { input.focus_out(); }
+            });
+        }
         controller.connect_key_pressed(move |_, key, _, modifiers| {
             let shift = modifiers.contains(gdk::ModifierType::SHIFT_MASK);
             let control = modifiers.contains(gdk::ModifierType::CONTROL_MASK);
             if ui.document_box.has_focus() {
+                // Commands which change the document are resolved by
+                // WordCraft, including replacement of selected text.
+                if !control && !modifiers.contains(gdk::ModifierType::ALT_MASK) {
+                    let change = match key {
+                        gdk::Key::Return | gdk::Key::KP_Enter => {
+                            Some(if shift { Edit::LineBreak } else { Edit::Paragraph })
+                        }
+                        gdk::Key::BackSpace => Some(Edit::Backspace),
+                        gdk::Key::Delete | gdk::Key::KP_Delete => Some(Edit::Delete),
+                        _ => None,
+                    };
+                    if let Some(edit) = change {
+                        apply_user_edit(&ui, edit);
+                        return glib::Propagation::Stop;
+                    }
+                }
                 let movement = match key {
                     gdk::Key::Left => Some(if control { "wordLeft" } else { "left" }),
                     gdk::Key::Right => Some(if control { "wordRight" } else { "right" }),
@@ -954,6 +990,39 @@ fn make_window(
                 return glib::Propagation::Stop;
             }
             if ui.document_box.has_focus() {
+                if key == gdk::Key::z || key == gdk::Key::Z {
+                    apply_user_edit(&ui, if shift { Edit::Redo } else { Edit::Undo });
+                    return glib::Propagation::Stop;
+                }
+                if key == gdk::Key::y || key == gdk::Key::Y {
+                    apply_user_edit(&ui, Edit::Redo);
+                    return glib::Propagation::Stop;
+                }
+                if key == gdk::Key::v || key == gdk::Key::V {
+                    let ui = ui.clone();
+                    if let Some(display) = gdk::Display::default() {
+                        display.clipboard().read_text_async(
+                            None::<&gio::Cancellable>,
+                            move |result| {
+                                if let Ok(Some(text)) = result {
+                                    if ui.document_box.has_focus() {
+                                        apply_user_edit(&ui, Edit::Paste(text.to_string()));
+                                    }
+                                }
+                            },
+                        );
+                    }
+                    return glib::Propagation::Stop;
+                }
+                if key == gdk::Key::x || key == gdk::Key::X {
+                    let has_selected = ui.current.borrow().as_ref()
+                        .is_some_and(|doc| !doc.session.sel.is_collapsed());
+                    if has_selected {
+                        copy_selection(&ui);
+                        apply_user_edit(&ui, Edit::Delete);
+                    }
+                    return glib::Propagation::Stop;
+                }
                 if key == gdk::Key::c || key == gdk::Key::C {
                     copy_selection(&ui);
                     return glib::Propagation::Stop;
