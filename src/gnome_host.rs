@@ -80,7 +80,7 @@ fn make_window(app: &Application, sample: bool, sidebar: bool, narrow: bool, dar
             eprintln!("TABS_OK");app.quit();
         });
     }
-    window.present(); window
+    window
 }
 
 fn blank_tab(app:&Application, host:&Rc<Workspace>) {
