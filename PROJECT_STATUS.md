@@ -23,13 +23,13 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 - Panel lateral estrecho y abierto por defecto desde su construcción, sin apertura diferida. Miniaturas con esquinas de 6 px y borde fino como Papers; margen uniforme de 12 px alrededor de imagen y número, ambos dentro del botón seleccionado; filas a altura natural. Selector inferior en AdwToolbarView, con altura compartida con la barra de edición y sombras nativas al desplazar contenido. Fondo del visor del color de la ventana; hojas blancas.
 - Cabecera del documento de una línea: nombre y ● a su izquierda cuando hay cambios pendientes, sin subtítulo ni contador de páginas.
 - Barra de edición abajo, como Apostrophe. Deshacer y Rehacer a la izquierda.
-- Los cuatro desplegables de edición (Estilo, Párrafo, Texto y Tabla) comparten un grupo por pestaña: solo uno puede estar abierto y la chincheta se conserva al pasar de uno a otro. La modalidad GTK es siempre no modal; fijar/desfijar solo cambia la política de cierre, sin ocultar, recrear ni volver a mostrar la superficie. Sin fijar se cierra al aplicar o pulsar fuera. Cabecera única con nombre, vuelta atrás contextual y chincheta. Controles divididos de Párrafo con AdwSplitButton plano: fondo compartido al pasar el puntero y resaltado independiente de cuerpo/chevrón, como Nautilus; subopciones en la misma subpágina, sin otro popup.
-- Orden de formato: Estilo → Párrafo → Texto. Estilos y Párrafo se gestionan en desplegables con subpáginas internas; Texto conserva su panel ampliado.
+- Los cinco desplegables de edición (Estilo, Párrafo, Texto, Tabla e Imagen) comparten un grupo por pestaña: solo uno puede estar abierto y la chincheta se conserva al pasar de uno a otro. La modalidad GTK es siempre no modal; fijar/desfijar solo cambia la política de cierre, sin ocultar, recrear ni volver a mostrar la superficie. Sin fijar se cierra al aplicar o pulsar fuera. Cabecera única con nombre, vuelta atrás contextual y chincheta. Controles divididos de Párrafo con AdwSplitButton plano: fondo compartido al pasar el puntero y resaltado independiente de cuerpo/chevrón, como Nautilus; subopciones en la misma subpágina, sin otro popup.
+- Orden de formato: Estilo → Párrafo → Texto → Tabla → Imagen. Estilos y Párrafo se gestionan en desplegables con subpáginas internas; Texto conserva su panel ampliado.
 - Zoom a la derecha: +, − y un tercer botón con 100 % y Ajustar al ancho.
 - Sin botones Página anterior/siguiente; navegación mediante scroll y miniaturas.
 - Selector inferior del panel lateral con iconos Páginas/Títulos, inspirado en Papers. Títulos jerárquicos con secciones contraíbles, numeración y navegación al texto mediante WordCraft.
 - Lupa en la cabecera lateral: alterna navegación/búsqueda mediante fundido de 180 ms. Resultados con contexto y página; opciones de mayúsculas y reemplazo en los tres puntos del campo. Reemplazo individual desde cada resultado y Reemplazar todo a la derecha del segundo campo, en un solo paso de deshacer. Sin contador de coincidencias; botón de opciones plano. Ctrl+F/Ctrl+H abren ese mismo panel.
-- Menú principal GtkPopoverMenu/GMenu como Nautilus: ventana/pestaña nuevas, vista de todas las pestañas, abrir, recuperación, preferencias, atajos, ayuda y acerca de. Menú de documento nativo separado: Deshacer/Rehacer y Guardar/Guardar como. Sin acción ni opción de documento de ejemplo; el arranque normal abre un documento vacío. El contenido de prueba solo está disponible para diagnósticos internos con --test-document. Se conservan Ctrl+N (pestaña) y Ctrl+Mayús+N (ventana); Ctrl+T añade una pestaña también.
+- Menú principal GtkPopoverMenu/GMenu como Nautilus: ventana/pestaña nuevas, vista de todas las pestañas, abrir, recuperación, preferencias, atajos, ayuda y acerca de. Menú de documento nativo separado: Deshacer/Rehacer y Guardar/Guardar como. Propiedades del documento y Exportar a PDF están también en el menú del documento. Sin acción ni opción de documento de ejemplo; el arranque normal abre un documento vacío. El contenido de prueba solo está disponible para diagnósticos internos con --test-document. Se conservan Ctrl+N (pestaña) y Ctrl+Mayús+N (ventana); Ctrl+T añade una pestaña también.
 - Preferencias de autoguardado: desactivado, recuperación o propio archivo.
 - Mantener la interfaz GNOME compacta; la captura de Word es referencia de funciones.
 
@@ -48,11 +48,14 @@ Conservar el motor sin modificaciones y fijar sus revisiones para facilitar actu
 | Autoguardado | Preferencia persistente; recuperación cada 10 s por defecto, propio archivo cada 30 s; recuperación tras cierre inesperado. |
 | Búsqueda | Panel lateral con fundido, coincidencias con contexto/página y resaltado, mayúsculas, reemplazo individual o total con un solo deshacer; sin contador. Estado por pestaña. |
 | Tablas | Inserción, filas/columnas, selección de celdas, combinar/dividir, tamaño, alineación, bordes, sombreado y cabeceras; menú inferior y contextual. |
+| Imágenes | Inserción en línea, selección con clic, tamaño en mm con proporción bloqueada por defecto, tamaño original, sustitución y eliminación; chincheta compartida. |
+| Página | Propiedades del documento: papel, dimensiones, orientación y márgenes en mm; sección actual o todo el documento, conservando las demás propiedades y agrupando el historial. |
+| PDF | Exportación independiente desde el menú del documento, con selector nativo y trabajo en segundo plano sobre una copia del documento; conserva destino editable e historial. |
 | Optimización | Release con ThinLTO, píxeles premultiplicados directos a GTK, búsqueda binaria de páginas y miniaturas agrupadas a 120 ms. |
 
 Las funciones de formato son las expuestas por el motor, sin equivalencia completa con Microsoft Word.
 Las tablas existentes y nuevas pueden editarse con los controles nativos. No hay todavía
-tiradores de tamaño con ratón, fórmulas ni una interfaz dedicada para insertar imágenes.
+tiradores de tamaño con ratón ni fórmulas. Las imágenes nuevas son en línea; no se añaden controles para hacerlas flotantes.
 
 ## Última entrega y pruebas
 
@@ -140,3 +143,8 @@ Registrar en ROADMAP los cambios de prioridad para que el plan sobreviva al chat
 ## Prioridad de MVP acordada
 
 Completar el documento mínimo: imágenes (insertar, conservar proporción al redimensionar y eliminar), configuración de tamaño/orientación/márgenes y exportación PDF. Después, distribución instalable; combinar pruebas de documentos reales con primeros usuarios y mantenimiento. El rediseño completo de Texto no bloquea este orden. Flathub requiere colaboración humana para el manifiesto y la solicitud conforme a su política de IA revisada; no presentar la publicación como garantizada.
+
+
+## Ampliación autorizada en validación
+
+El usuario ha confirmado que le gusta el resultado de los botones divididos nativos y las miniaturas redondeadas. Autoriza conjuntamente Imagen en barra inferior, Propiedades del documento y Exportar a PDF en menú del documento. La implementación usa API públicas de WordCraft y no cambia las dependencias. Las pruebas de adaptadores han pasado en la primera CI; queda comprobar compilación/GUI y entregar el ejecutable validado.
