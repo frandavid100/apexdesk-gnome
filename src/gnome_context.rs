@@ -142,7 +142,7 @@ fn show_document_context(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32,kind:D
     if kind==DocumentContext::Text{mount_context_formats(ui,&pop);}
     // GtkModelButton closes before activating its action helper. Keep the
     // hierarchy and action muxer alive until that signal has fully returned.
-    pop.connect_closed(|p|{let p=p.clone();glib::idle_add_local_once(move||{if !p.is_visible()&&p.parent().is_some(){p.unparent();}});});pop.popup();pop
+    pop.connect_closed(|p|{let p=p.clone();glib::idle_add_local_once(move||{if !p.is_visible()&&p.parent().is_some(){p.unparent();}});});pop.popup();if kind==DocumentContext::Text{pop.child_focus(gtk::DirectionType::TabForward);}pop
 }
 fn show_table_context_at(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32){
     let kind=ui.current.borrow().as_ref().map(|d|if pictures::selected(&d.session).is_some(){DocumentContext::Picture}else if wordcraft_gnome::tables::in_table(&d.session){DocumentContext::Table}else{DocumentContext::Text});
@@ -182,7 +182,7 @@ fn context_ui_test(ui:&Rc<Ui>,parent:&ApplicationWindow,app:&Application){
         eprintln!("CONTEXT_POINTER_READY {} {}",x as i32,y as i32);
         glib::timeout_add_local_once(std::time::Duration::from_secs(2),move||{
             {let value=ui.current.borrow();let d=value.as_ref().unwrap();assert_eq!(d.session.sel,sel,"right click must preserve selected text");assert_eq!(d.session.rev(),rev);}
-            let pop=style_widget(&ui.document_box,"document-context-menu").unwrap().downcast::<gtk::PopoverMenu>().unwrap();assert!(pop.is_mapped());assert_eq!(pop.menu_model().unwrap().n_items(),2);
+            let pop=style_widget(&ui.document_box,"document-context-menu").unwrap().downcast::<gtk::PopoverMenu>().unwrap();assert!(pop.is_mapped());assert!(!ui.document_box.has_focus(),"context menu must receive keyboard focus");assert_eq!(pop.menu_model().unwrap().n_items(),2);
             let row=context_model_row(&pop,"Copiar").unwrap();let r=row.compute_bounds(&pop).unwrap();let surface=pop.surface().unwrap().downcast::<gdk::Popup>().unwrap();let(tx,ty)=pop.surface_transform();
             eprintln!("CONTEXT_ACTION_READY {} {}",(surface.position_x()as f64-tx+r.x()as f64+r.width()as f64/2.0)as i32,(surface.position_y()as f64-ty+r.y()as f64+r.height()as f64/2.0)as i32);
             glib::timeout_add_local_once(std::time::Duration::from_millis(700),move||{
