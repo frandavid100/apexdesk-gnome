@@ -105,3 +105,16 @@ scrollable internal pages with a fixed back row. New paragraph/replace icons
 are drawn as small foreground-colour vectors, so they work without optional
 icon-theme assets and follow light/dark appearance. It retains the public paragraph commands; no engine
 formatting model is copied. The source engine remains unmodified.
+
+## Adaptive page canvas and focus
+
+The GTK host uses a Fixed canvas with geometry from viewer_layout::arrange.
+Two consecutive pages share a row only when they fit at the current zoom. Mixed
+page heights and an odd last page retain document order; visibility lookup is
+indexed by row. Text hit testing still uses the actual GTK page-frame bounds and
+the upstream layout. No engine pagination or document properties are changed.
+An explicit GtkViewport has scroll-to-focus disabled: the focusable canvas spans
+the document and must not be automatically panned into view on popover dismissal.
+Keyboard caret visibility remains an explicit host operation. CI reproduces a
+bottom menu click, its native dismissing click, and a subsequent text click on
+a later page with xdotool. Both dismissal and canvas focus must preserve scroll.
