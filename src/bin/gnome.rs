@@ -1617,19 +1617,19 @@ fn build_tab(
     window.present();
     install_table_context_menu(&ui,&window);
     if std::env::args().any(|a|a=="--table-keyboard-test") {
-        let u=ui.clone();
+        let u=ui.clone();let app=app.clone();
         glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{
             opened(&u,Session::new(wordcraft_doc::Document::new()),"Prueba de tablas");
             table_command(&u,"insert.table",serde_json::json!({"rows":1,"cols":2}));
-        });
-        let u=ui.clone();let app=app.clone();
-        glib::timeout_add_local_once(std::time::Duration::from_secs(7),move||{
+            eprintln!("TABLE_KEYBOARD_READY");
+            glib::timeout_add_local_once(std::time::Duration::from_secs(6),move||{
             {let s=u.current.borrow();let d=s.as_ref().unwrap();let (tp,r,c)=d.session.sel.focus.path.cell().expect("keyboard stayed in table");
                 let table=d.session.doc.table(d.session.sel.focus.story,&tp).unwrap();
                 assert_eq!(table.rows.len(),2,"Tab at the end must add a row");
                 assert_eq!((r,c),(0,1),"Shift+Tab must return to the previous cell");
                 assert!(d.session.doc.plain_text(wordcraft_doc::StoryRef::Body).contains("GNOME"),"keyboard input reaches the cell");}
             eprintln!("TABLE_KEYBOARD_OK");app.quit();
+            });
         });
     }
     if std::env::args().any(|a|a=="--table-menu-demo"||a=="--table-properties-demo"||a=="--table-insert-demo") {
