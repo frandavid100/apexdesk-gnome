@@ -3,6 +3,7 @@ fn table_command(ui:&Rc<Ui>,command:&str,args:serde_json::Value) {
     if let Err(e)=format_execute(ui,command,args) {ui.toasts.add_toast(Toast::new(&e));}
     caret_ensure_visible(ui);
     ui.document_box.grab_focus();
+    if let Some(menu)=style_widget(&ui.format_toolbar,"table-menu").and_then(|w|w.downcast::<gtk::MenuButton>().ok()){if let Some(pop)=menu.popover(){refresh_table_controls(ui,&pop);}}
 }
 
 fn table_navigate(ui:&Rc<Ui>,backwards:bool,literal:bool) {
@@ -87,14 +88,14 @@ fn show_table_properties(ui:&Rc<Ui>,parent:&ApplicationWindow) {
 }
 
 fn install_table_controls(ui:&Rc<Ui>,parent:&ApplicationWindow,bar:&gtk::Box)->gtk::MenuButton {
-    let menu=gtk::MenuButton::new();menu.set_label("Tabla");menu.set_direction(gtk::ArrowType::Up);menu.set_tooltip_text(Some("Insertar y editar tablas"));
-    let pop=gtk::Popover::new();let content=gtk::Box::new(gtk::Orientation::Vertical,6);
+    let menu=gtk::MenuButton::new();menu.set_widget_name("table-menu");format_menu_label(&menu,"Tabla");menu.set_direction(gtk::ArrowType::Up);menu.set_tooltip_text(Some("Insertar y editar tablas"));
+    let pop=gtk::Popover::new();pop.add_css_class("format-popover");let content=gtk::Box::new(gtk::Orientation::Vertical,6);
     content.set_margin_top(8);content.set_margin_bottom(8);content.set_margin_start(8);content.set_margin_end(8);
+    format_popover_header(&pop,&content,"Tabla");
     let insert=gtk::Button::with_label("Insertar tabla…");insert.add_css_class("flat");content.append(&insert);
-    {let ui=ui.clone();let p=parent.clone();let pop=pop.clone();insert.connect_clicked(move|_|{pop.popdown();show_insert_table(&ui,&p);});}
-    let context=gtk::Box::new(gtk::Orientation::Vertical,6);content.append(&context);
+    {let ui=ui.clone();let p=parent.clone();let pop=pop.clone();insert.connect_clicked(move|_|{close_format_popover(&pop);show_insert_table(&ui,&p);});}
+    let context=gtk::Box::new(gtk::Orientation::Vertical,6);context.set_widget_name("table-context");content.append(&context);
     let heading=gtk::Label::new(Some("Tabla actual"));heading.add_css_class("heading");context.append(&heading);
-    let mut merge_button=None;
     for items in [
         vec![("Seleccionar fila","table.selectRow"),("Seleccionar columna","table.selectColumn")],
         vec![("Seleccionar celda","table.selectCell"),("Seleccionar tabla","table.selectTable")],
@@ -104,18 +105,23 @@ fn install_table_controls(ui:&Rc<Ui>,parent:&ApplicationWindow,bar:&gtk::Box)->g
         vec![("Eliminar fila","table.deleteRow"),("Eliminar columna","table.deleteColumn")],
     ] {
         let row=gtk::Box::new(gtk::Orientation::Horizontal,4);
-        for(label,command)in items {let b=gtk::Button::with_label(label);b.add_css_class("flat");b.set_hexpand(true);row.append(&b);if command=="table.merge"{merge_button=Some(b.clone());}
-            let ui=ui.clone();let pop=pop.clone();b.connect_clicked(move|_|{pop.popdown();table_command(&ui,command,serde_json::json!({}));});}
+        for(label,command)in items {let b=gtk::Button::with_label(label);b.add_css_class("flat");b.set_hexpand(true);row.append(&b);b.set_widget_name(&format!("table-action-{command}"));if command=="table.merge"{b.set_widget_name("table-merge");}
+            let ui=ui.clone();let pop=pop.clone();b.connect_clicked(move|_|{close_format_popover(&pop);table_command(&ui,command,serde_json::json!({}));});}
         context.append(&row);
     }
     let properties=gtk::Button::with_label("Propiedades y dividir celdas…");properties.add_css_class("flat");context.append(&properties);
-    {let ui=ui.clone();let parent=parent.clone();let pop=pop.clone();properties.connect_clicked(move|_|{pop.popdown();show_table_properties(&ui,&parent);});}
-    let remove=gtk::Button::with_label("Eliminar tabla");remove.add_css_class("destructive-action");context.append(&remove);
-    {let ui=ui.clone();let pop=pop.clone();remove.connect_clicked(move|_|{pop.popdown();table_command(&ui,"table.deleteTable",serde_json::json!({}));});}
-    {let ui=ui.clone();pop.connect_show(move|_|{let s=ui.current.borrow();let doc=s.as_ref();context.set_visible(doc.is_some_and(|d|wordcraft_gnome::tables::in_table(&d.session)));if let Some(b)=&merge_button{b.set_sensitive(doc.is_some_and(|d|wordcraft_gnome::tables::selected_cells(&d.session)>1));}});}
+    {let ui=ui.clone();let parent=parent.clone();let pop=pop.clone();properties.connect_clicked(move|_|{close_format_popover(&pop);show_table_properties(&ui,&parent);});}
+    let remove=gtk::Button::with_label("Eliminar tabla");remove.set_widget_name("table-delete");remove.add_css_class("destructive-action");context.append(&remove);
+    {let ui=ui.clone();let pop=pop.clone();remove.connect_clicked(move|_|{close_format_popover(&pop);table_command(&ui,"table.deleteTable",serde_json::json!({}));});}
+    {let ui=ui.clone();pop.connect_show(move|p|refresh_table_controls(&ui,p));}
     pop.set_child(Some(&content));menu.set_popover(Some(&pop));bar.append(&menu);menu
 }
 
+fn refresh_table_controls(ui:&Rc<Ui>,pop:&gtk::Popover){
+    let Some(root)=pop.child()else{return;};let value=ui.current.borrow();let doc=value.as_ref();
+    if let Some(w)=style_widget(&root,"table-context"){w.set_visible(doc.is_some_and(|d|wordcraft_gnome::tables::in_table(&d.session)));}
+    if let Some(w)=style_widget(&root,"table-merge"){w.set_sensitive(doc.is_some_and(|d|wordcraft_gnome::tables::selected_cells(&d.session)>1));}
+}
 fn show_table_context_at(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32) {
     let inside=ui.current.borrow().as_ref().is_some_and(|d|wordcraft_gnome::tables::in_table(&d.session));
     if !inside{return;}
@@ -141,3 +147,4 @@ fn install_table_context_menu(ui:&Rc<Ui>,parent:&ApplicationWindow) {
         refresh_selection(&u);show_table_context_at(&u,&p,x as i32,y as i32);
     });ui.document_box.add_controller(click);
 }
+
