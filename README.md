@@ -11,7 +11,7 @@ Los guardados siguientes actualizan la copia. El selector nativo confirma sobres
 Al cerrar un documento modificado, ofrece Cancelar, Descartar o Guardar.
 Abrir un archivo conserva el documento actual y añade otra pestaña.
 Ctrl+N crea una pestaña vacía; Ctrl+W cierra la pestaña actual.
-La barra inferior agrupa formato y tamaños en Texto, junto a Estilo y Párrafo.
+La barra inferior va de lo general a lo específico: Estilo, Párrafo y Texto.
 Junto a + y −, el tercer botón abre 100 % y Ajustar al ancho.
 La navegación entre páginas se realiza mediante scroll o miniaturas.
 Cancelar el selector o fallar el guardado mantiene abierto el documento con sus cambios.
@@ -86,3 +86,13 @@ El menú contextual permite insertar una tabulación literal dentro de la celda.
 Arrastrar entre celdas selecciona un rectángulo, incluidas celdas vacías.
 Las propiedades incluyen anchos, alturas, autoajuste, alineación, bordes,
 sombreado, división de celdas y opciones de cabecera/paginación.
+
+## Desplegable de estilos
+
+Estilo muestra todos los estilos de párrafo y de texto del documento, con
+búsqueda y el estilo actual marcado. Pulsar el nombre aplica el estilo; el
+botón derecho abre su gestión dentro del mismo desplegable. La fila superior
+permite volver. Incluye una muestra renderizada por WordCraft, actualizar
+según la selección, renombrar y eliminar estilos personalizados. Nuevo estilo
+abre un formulario interno para crearlo desde la selección. Los cambios se
+reflejan al momento; estas operaciones no abren ventanas adicionales.
