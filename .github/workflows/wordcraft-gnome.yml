@@ -42,31 +42,45 @@ jobs:
         run: |
           ./target/debug/wordcraft-gnome --version | tee version.txt
           grep -q "Adwaita adaptativa" version.txt
-      - name: Iniciar GNOME en Xvfb y tomar captura
+      - name: Probar escritorio ancho, ventana estrecha, panel y tema oscuro
         run: |
           xvfb-run -a -s "-screen 0 1280x900x24" bash -c '
-            GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --sample --sidebar >gui-out.log 2>gui-err.log &
+            set -e
+            run_case () {
+              output="$1"
+              shift
+              GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --sample "$@" \
+                > "out-${output}.log" 2> "err-${output}.log" &
+              pid=$!
+              sleep 3
+              if ! kill -0 "$pid" 2>/dev/null; then
+                cat "err-${output}.log"
+                exit 1
+              fi
+              scrot "$output"
+              kill "$pid"
+              wait "$pid" || true
+            }
+            run_case vista-gnome.png --sidebar
+            run_case vista-sin-panel.png
+            run_case vista-estrecha-panel.png --narrow --sidebar
+            run_case vista-estrecha.png --narrow
+            run_case vista-oscura.png --dark --sidebar
+            GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --sample >gui-out.log 2>gui-err.log &
             pid=$!
-            sleep 8
-            if ! kill -0 "$pid" 2>/dev/null; then
-              cat gui-err.log
-              exit 1
-            fi
-            scrot vista-gnome.png
-            # Las pruebas de una app no pueden activar por accidente otra
-            # instancia anterior: ambas deben permanecer vivas.
+            sleep 2
             GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --sample >gui2-out.log 2>gui2-err.log &
             pid2=$!
-            sleep 3
-            if ! kill -0 "$pid2" 2>/dev/null; then
-              cat gui2-err.log
-              exit 1
-            fi
+            sleep 2
+            kill -0 "$pid"
+            kill -0 "$pid2"
             kill "$pid2" "$pid"
             wait "$pid2" || true
             wait "$pid" || true
           '
-          test -s vista-gnome.png
+          for name in vista-gnome.png vista-sin-panel.png vista-estrecha-panel.png vista-estrecha.png vista-oscura.png; do
+            test -s "$name"
+          done
       - name: Preparar ejecutable ligero sin símbolos de depuración
         run: |
           cp target/debug/wordcraft-gnome wordcraft-gnome
@@ -84,6 +98,10 @@ jobs:
             wordcraft-gnome
             muestra-wordcraft.png
             vista-gnome.png
+            vista-sin-panel.png
+            vista-estrecha-panel.png
+            vista-estrecha.png
+            vista-oscura.png
             gui-err.log
             dependencies.txt
             version.txt
