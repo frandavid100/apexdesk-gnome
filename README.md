@@ -152,3 +152,9 @@ Nautilus, con chevrones pequeños hacia abajo.
 
 
 Los botones divididos de Párrafo usan AdwSplitButton plano: fondo compartido y resaltado independiente de cada mitad como Nautilus. Las miniaturas tienen esquinas de 6 px como Papers.
+
+
+## Imágenes, propiedades y PDF
+
+Imagen, a la derecha de Tabla, permite insertar una imagen en línea, seleccionarla con un clic y cambiar su tamaño en milímetros. Mantener proporción está activado por defecto; también permite restaurar tamaño original, sustituir y eliminar. Comparte la chincheta con los demás desplegables.
+El menú del documento incluye Propiedades del documento (papel, orientación y márgenes; sección actual o todo el documento) y Exportar a PDF. La exportación trabaja en segundo plano y no cambia el archivo que se sigue editando y guardando. Los selectores requieren el sufijo del formato para confirmar sobrescrituras sobre el destino exacto.
