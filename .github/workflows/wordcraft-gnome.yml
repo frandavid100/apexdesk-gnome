@@ -116,6 +116,7 @@ jobs:
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --styles-ui-test 2> styles-popover.log
             grep -q STYLES_POPOVER_OK styles-popover.log
             run_case vista-estilos.png --styles-demo
+            run_case vista-estilos-fijado.png --styles-demo --pin-demo
             run_case vista-estilo-detalle.png --style-details-demo
             run_case vista-estilo-nuevo.png --style-new-demo
             run_case vista-estilos-estrecha.png --styles-demo --narrow
@@ -220,6 +221,7 @@ jobs:
             vista-texto-avanzado.png
             vista-parrafo-avanzado.png
             vista-estilos.png
+            vista-estilos-fijado.png
             vista-estilo-detalle.png
             vista-estilo-nuevo.png
             vista-estilos-estrecha.png
