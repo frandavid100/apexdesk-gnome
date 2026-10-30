@@ -18,7 +18,8 @@ Orden acordado de la barra: Estilo → Párrafo → Texto.
 El usuario confirma la distribución; se aligera el peso tipográfico de los botones.
 Antes de Párrafo se añade movimiento suave del cursor y se elimina la apertura diferida del panel lateral.
 
-La revisión del resto de desplegables queda pendiente de diseño con el usuario.
+Se ha autorizado e implementado la búsqueda lateral tipo Papers y después el rediseño de Párrafo con tres filas de iconos y gestión en subpáginas. El estilo actual usa fondo de selección. Las pruebas automáticas y las capturas de la CI han pasado; pendiente de validación en el equipo del usuario.
+La revisión de Texto queda pendiente de diseño con el usuario.
 No continuar todavía con imágenes por haber quedado después de esta revisión.
 
 ## Tablas: implementadas, pendientes de prueba manual
