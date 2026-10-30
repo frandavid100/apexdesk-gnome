@@ -488,6 +488,7 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     }
     {
         let ui = ui.clone();
+        let scroll = ui.scroll.clone();
         let controller = gtk::EventControllerScroll::new(gtk::EventControllerScrollFlags::VERTICAL);
         controller.connect_scroll(move |ctrl, _, dy| {
             if ctrl.current_event_state().contains(gdk::ModifierType::CONTROL_MASK) {
@@ -497,7 +498,7 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
                 glib::Propagation::Proceed
             }
         });
-        ui.scroll.add_controller(controller);
+        scroll.add_controller(controller);
     }
     {
         let ui = ui.clone();
