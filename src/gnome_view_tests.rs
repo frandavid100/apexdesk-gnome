@@ -30,7 +30,9 @@ fn view_pointer_test(ui:&Rc<Ui>,menu:&gtk::MenuButton,window:&ApplicationWindow,
             let adj=next.scroll.vadjustment();adj.set_value(top-adj.page_size()*0.35);
             let ui=next.clone();
             glib::timeout_add_local_once(std::time::Duration::from_millis(250),move||{
-                let (x,y)={let value=ui.current.borrow();let d=value.as_ref().unwrap();let r=&d.arrangement.pages[page];(r.x+r.width-65.0,top+4.0)};
+                let (x,y)={let value=ui.current.borrow();let d=value.as_ref().unwrap();let r=&d.arrangement.pages[page];(r.x+65.0,top+4.0)};
+                // The formatting popup now opens below the right of the header.
+                // Dismiss on the left of the page, outside that popup.
                 let expected=pos_at_canvas(&ui,x,y).unwrap();assert!(expected.path.last()>50);
                 let canvas=ui.document_box.compute_bounds(&window).unwrap();let m=menu.compute_bounds(&window).unwrap();
                 let scroll=ui.scroll.vadjustment().value();
