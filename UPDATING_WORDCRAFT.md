@@ -79,3 +79,13 @@ Creation supplies the current paragraph style as basedOn.
 CI tests preview immutability and style operations, then exercises real widget
 callbacks for creation, rename, update, deletion, navigation and filtering.
 It asserts that no additional application window is opened.
+
+## Caret motion and initial sidebar
+
+`caret_motion.rs` interpolates only the painted caret, for 100 ms, with retargeting
+from its current visual position. Engine geometry, selection, hit testing and
+scroll-to-caret always use the exact destination. A GTK frame-clock callback is
+registered only during movement; it respects gtk-enable-animations. Selection
+drags, missing carets, new sessions and page changes snap. No upstream patch.
+The sidebar's initial visibility is set before attaching the tab, with no delayed
+show call. Explicit user toggles retain libadwaita's normal transitions.
