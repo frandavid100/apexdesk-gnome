@@ -54,18 +54,14 @@ Las funciones de formato son las expuestas por el motor, sin equivalencia comple
 Las tablas existentes y nuevas pueden editarse con los controles nativos. No hay todavía
 tiradores de tamaño con ratón, fórmulas ni una interfaz dedicada para insertar imágenes.
 
-## Cambio en validación
-
-Revisión `cff930451b7426a6fbaa8fcae0898886b9eb30df`: botones divididos nativos AdwSplitButton planos en Párrafo y miniaturas redondeadas a 6 px como Papers. La CI incluye capturas con puntero fuera, sobre cuerpo y sobre chevrón, y clic real para abrir la subpágina. Pendiente del resultado de la ejecución 41121116046; no sustituye todavía a la entrega validada indicada abajo.
-
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `d90c9caf76e099265c54b446701a1b383330b2b1`.
+Código del último ejecutable validado: `5931f28b1c7354dd0002f03a1aff15b08a6e9219`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41112308966).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13004731589`.
-Ejecutable actual con cabeceras y chincheta: 33.913.816 bytes.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41122192743).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13010370365`.
+Ejecutable actual con cabeceras y chincheta: 33.925.624 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
@@ -80,6 +76,7 @@ También se comparó una región de la página en las capturas anterior/actual s
 Pasaron los tests de integración con el motor, de los adaptadores y de búsqueda de páginas frente al recorrido anterior;
 la CI compiló y probó el ejecutable release en ventanas, pestañas y paneles nativos.
 Las pruebas del visor verifican geometría de filas simples/dobles, alturas mixtas y páginas impares; márgenes simétricos de miniaturas, número dentro del botón, barras inferiores alineadas y título de una línea con cambios pendientes. La regresión de foco usa clics reales para abrir un menú, cerrarlo y situar el cursor en una página posterior sin alterar el scroll. Capturas revisadas en una columna y en vista doble al 100 %.
+Los controles divididos usan AdwSplitButton plano. Se han revisado capturas en reposo, con puntero sobre el cuerpo y sobre el chevrón; un clic real abre la subpágina (SPLIT_SUBPAGE_OK). La regresión GTK comprueba el tipo nativo y la navegación por ambas mitades. Las miniaturas tienen esquinas de 6 px y borde fino como Papers, con recorte del contenido; capturas revisadas. Pendiente de prueba manual del usuario.
 La regresión comprueba además ausencia de señales hide y conservación de la superficie al fijar/desfijar, y cambio exclusivo Estilo/Párrafo conservando la chincheta. Capturas de cabeceras únicas y botones de flecha con fondo nativo revisadas.
 La prueba POPOVER_PIN_OK aplica acciones reales de Estilo/Párrafo/Texto/Tabla y comprueba que fijar permite mantenerlos abiertos al aplicar y enfocar el documento; desfijar conserva la subpágina y restaura el cierre. Fijar no cambia la revisión. La prueba espera fotogramas de GTK y exige is_mapped, para detectar el caso de un panel marcado como visible pero sin superficie dibujada. Se revisó además una captura tras aplicar un estilo fijado y varios segundos con el foco en el documento, así como el aspecto plano de la barra y los chevrones.
 La prueba DOCUMENT_CHROME_OK verifica arranque vacío sin fixture, menú GtkPopoverMenu y sus cuatro acciones, historial sobre el documento activo y altura compartida de las barras. VIEW_POINTER_OK comprueba además el margen de 12 px y el número incluido en la miniatura sin regresión de foco. Capturas anchas, estrechas y oscuras comprobadas.
