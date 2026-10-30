@@ -796,8 +796,62 @@ fn make_window(
 
     let toasts = ToastOverlay::new();
     toasts.set_child(Some(&stack));
+    // A second native toolbar for document editing, horizontally scrollable
+    // on small windows. It lives in AdwToolbarView, never over the pages.
+    let format_bar = gtk::Box::new(gtk::Orientation::Horizontal, 6);
+    format_bar.set_margin_start(10);
+    format_bar.set_margin_end(10);
+    format_bar.set_margin_top(5);
+    format_bar.set_margin_bottom(5);
+    let bold_button = gtk::Button::with_label("B");
+    bold_button.set_tooltip_text(Some("Negrita (Ctrl+B)"));
+    bold_button.add_css_class("flat");
+    let italic_button = gtk::Button::with_label("I");
+    italic_button.set_tooltip_text(Some("Cursiva (Ctrl+I)"));
+    italic_button.add_css_class("flat");
+    let underline_button = gtk::Button::with_label("U");
+    underline_button.set_tooltip_text(Some("Subrayado (Ctrl+U)"));
+    underline_button.add_css_class("flat");
+    format_bar.append(&bold_button);
+    format_bar.append(&italic_button);
+    format_bar.append(&underline_button);
+    format_bar.append(&gtk::Separator::new(gtk::Orientation::Vertical));
+
+    let mut format_actions: Vec<(gtk::Button, Format, gtk::Popover)> = Vec::new();
+    let style_menu = format_menu("Estilo", &[
+        ("Normal", Format::Normal),
+        ("Título 1", Format::Heading1),
+        ("Título 2", Format::Heading2),
+        ("Título 3", Format::Heading3),
+    ], &mut format_actions);
+    let font_size_menu = format_menu("Tamaño", &[
+        ("10 pt", Format::FontSize(10)),
+        ("11 pt", Format::FontSize(11)),
+        ("12 pt", Format::FontSize(12)),
+        ("14 pt", Format::FontSize(14)),
+        ("16 pt", Format::FontSize(16)),
+        ("18 pt", Format::FontSize(18)),
+        ("24 pt", Format::FontSize(24)),
+        ("36 pt", Format::FontSize(36)),
+    ], &mut format_actions);
+    let align_menu = format_menu("Alineación", &[
+        ("Izquierda", Format::AlignLeft),
+        ("Centrada", Format::AlignCenter),
+        ("Derecha", Format::AlignRight),
+        ("Justificada", Format::Justify),
+    ], &mut format_actions);
+    format_bar.append(&style_menu);
+    format_bar.append(&font_size_menu);
+    format_bar.append(&align_menu);
+    let format_toolbar = gtk::ScrolledWindow::new();
+    format_toolbar.set_policy(gtk::PolicyType::Automatic, gtk::PolicyType::Never);
+    format_toolbar.set_child(Some(&format_bar));
+    format_toolbar.add_css_class("toolbar");
+    format_toolbar.set_visible(false);
+
     let document_toolbar = ToolbarView::new();
     document_toolbar.add_top_bar(&header);
+    document_toolbar.add_top_bar(&format_toolbar);
     document_toolbar.set_content(Some(&toasts));
 
     let sidebar = adw::OverlaySplitView::new();
@@ -832,6 +886,24 @@ fn make_window(
         page_label, zoom_label, zoom_out, zoom_in, previous, next, stack, title, toasts,
     });
 
+
+    // All formatting commands preserve the selection and return keyboard
+    // focus to the editable document.
+    for (button, action) in [
+        (bold_button, Format::Bold),
+        (italic_button, Format::Italic),
+        (underline_button, Format::Underline),
+    ] {
+        let ui = ui.clone();
+        button.connect_clicked(move |_| apply_user_format(&ui, action));
+    }
+    for (button, action, popover) in format_actions {
+        let ui = ui.clone();
+        button.connect_clicked(move |_| {
+            popover.popdown();
+            apply_user_format(&ui, action);
+        });
+    }
 
     // Click sets the caret, double-click selects a word and triple-click
     // selects a paragraph. Coordinates are relative to the document stack.
