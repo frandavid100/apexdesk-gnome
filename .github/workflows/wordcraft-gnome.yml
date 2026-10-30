@@ -68,7 +68,7 @@ jobs:
               kill "$pid"
               wait "$pid" || true
             }
-            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --adaptive-ui-test 2> adaptive-tools.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --adaptive-ui-test 2> adaptive-tools.log || { cat adaptive-tools.log; exit 1; }
             grep -q ADAPTIVE_UI_OK adaptive-tools.log
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --context-ui-test 2> context-menu.log &
             context_pid=$!
