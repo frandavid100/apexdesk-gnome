@@ -142,7 +142,7 @@ fn show_document_context(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32,kind:D
     if kind==DocumentContext::Text{mount_context_formats(ui,&pop);}
     // GtkModelButton closes before activating its action helper. Keep the
     // hierarchy and action muxer alive until that signal has fully returned.
-    pop.connect_closed(|p|{let p=p.clone();glib::idle_add_local_once(move||{if !p.is_visible()&&p.parent().is_some(){p.unparent();}});});pop.popup();if kind==DocumentContext::Text{pop.child_focus(gtk::DirectionType::TabForward);}pop
+    let weak=Rc::downgrade(ui);pop.connect_closed(move|p|{if let Some(ui)=weak.upgrade(){if !ui.closed.get(){ui.document_box.grab_focus();}}let p=p.clone();glib::idle_add_local_once(move||{if !p.is_visible()&&p.parent().is_some(){p.unparent();}});});pop.popup();if kind==DocumentContext::Text{pop.child_focus(gtk::DirectionType::TabForward);}pop
 }
 fn show_table_context_at(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32){
     let kind=ui.current.borrow().as_ref().map(|d|if pictures::selected(&d.session).is_some(){DocumentContext::Picture}else if wordcraft_gnome::tables::in_table(&d.session){DocumentContext::Table}else{DocumentContext::Text});
@@ -186,7 +186,7 @@ fn context_ui_test(ui:&Rc<Ui>,parent:&ApplicationWindow,app:&Application){
             let row=context_model_row(&pop,"Copiar").unwrap();let r=row.compute_bounds(&pop).unwrap();let surface=pop.surface().unwrap().downcast::<gdk::Popup>().unwrap();let(tx,ty)=pop.surface_transform();
             eprintln!("CONTEXT_ACTION_READY {} {}",(surface.position_x()as f64-tx+r.x()as f64+r.width()as f64/2.0)as i32,(surface.position_y()as f64-ty+r.y()as f64+r.height()as f64/2.0)as i32);
             glib::timeout_add_local_once(std::time::Duration::from_millis(700),move||{
-            assert!(RICH_CLIPBOARD.with(|c|c.borrow().is_some()),"real native row click must copy");
+            assert!(RICH_CLIPBOARD.with(|c|c.borrow().is_some()),"real native row click must copy");assert!(ui.document_box.has_focus(),"closing context must return keyboard focus to editor");
 
             {let mut value=ui.current.borrow_mut();selection::set_caret(&mut value.as_mut().unwrap().session,&Pos::body(1,0),false).unwrap();}
             let edit=show_document_context(&ui,&parent,100,150,DocumentContext::Text);context_activate_row(&edit,"Pegar");assert!(ui.current.borrow().as_ref().unwrap().session.can_undo());apply_user_edit(&ui,Edit::Undo);
