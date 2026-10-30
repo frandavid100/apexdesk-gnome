@@ -3,7 +3,7 @@
 Actualizada: 30 de octubre de 2026. Estado técnico en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Las fases siguientes son propuestas; no implican autorización para implementarlas todas.
 
-## Ahora: cabeceras y chincheta en desplegables
+## Ahora: botones divididos nativos y miniaturas
 
 Validado automáticamente en CI (41094124112), pendiente de prueba del usuario: se han aplicado márgenes simétricos de miniaturas, cabecera de una línea sin contador de páginas, disposición automática de dos páginas y corrección del salto al devolver el foco desde los menús al documento.
 
@@ -15,7 +15,9 @@ Revisión solicitada tras probar la chincheta: eliminar el parpadeo al fijar/des
 
 Cabeceras con nombre y chincheta en los cuatro desplegables de edición. La chincheta permite aplicar varias opciones sin cerrar el panel; al desfijar se recupera el cierre normal. Chevrones pequeños como Nautilus en Párrafo/Texto y coherentes en los botones inferiores. No implica reorganizar todavía todas las opciones de Texto.
 
-Siguiente propuesta: reorganizar el desplegable Texto como Estilo/Párrafo antes de imágenes; no implementarla sin que el usuario la solicite.
+Último ajuste autorizado: usar AdwSplitButton plano como Nautilus, con resaltado conjunto y por mitad, conservando navegación interna; redondear las hojas de miniatura a 6 px como Papers.
+
+Prioridad acordada del MVP: completar imágenes, configuración de página y exportación PDF; después aplicación instalable, y pruebas con usuarios/documentos reales junto al mantenimiento. El rediseño completo de Texto queda aplazado. La publicación en Flathub requiere participación humana para manifiesto y solicitud según la política de IA revisada.
 
 Recoger la prueba del usuario de formato avanzado y compilación optimizada en GNOME OS.
 Corregir los fallos que aparezcan antes de acumular funciones nuevas.
@@ -32,7 +34,7 @@ Antes de Párrafo se añade movimiento suave del cursor y se elimina la apertura
 
 Se ha autorizado e implementado la búsqueda lateral tipo Papers y después el rediseño de Párrafo con tres filas de iconos y gestión en subpáginas. El estilo actual usa fondo de selección. Las pruebas automáticas y las capturas de la CI han pasado; pendiente de validación en el equipo del usuario.
 La revisión de Texto queda pendiente de diseño con el usuario.
-No continuar todavía con imágenes por haber quedado después de esta revisión.
+Se ha acordado priorizar imágenes/configuración de página/PDF sobre la revisión completa de Texto; esta última no bloquea el MVP.
 
 ## Tablas: implementadas, pendientes de prueba manual
 
@@ -69,6 +71,7 @@ metadatos y una versión identificable que sustituya el nombre provisional «fas
 Compatibilidad con documentos reales, accesibilidad/teclado, rendimiento medido en archivos
 largos y actualización controlada del motor según UPDATING_WORDCRAFT.md.
 No modificar el motor por comodidad de la interfaz ni distribuir binarios de desarrollo.
+
 
 
 
