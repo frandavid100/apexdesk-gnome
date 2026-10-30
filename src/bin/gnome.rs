@@ -49,6 +49,7 @@ struct Ui {
     open_button: gtk::Button,
     search: RefCell<Option<Rc<SearchPanel>>>,
     paragraph: RefCell<Option<Rc<ParagraphPopover>>>,
+    format_group:Rc<FormatPopoverGroup>,
     search_highlights: Rc<RefCell<Vec<selection::Rect>>>,
     document_name: RefCell<String>,
     layout_pending: Cell<bool>,
@@ -834,6 +835,7 @@ fn build_tab(
         adw::StyleManager::default().set_color_scheme(adw::ColorScheme::ForceDark);
     }
     install_css();
+    let format_group=Rc::new(FormatPopoverGroup::default());
     let window = host.window.clone();
     // Composición oficial: panel adaptable y dos páginas de barras nativas.
     let side_header = HeaderBar::new();
@@ -980,7 +982,7 @@ fn build_tab(
     let inline_buttons = gtk::Box::new(gtk::Orientation::Horizontal, 6);
     inline_buttons.append(&bold_button); inline_buttons.append(&italic_button);
     inline_buttons.append(&underline_button);
-    format_popover_header(&text_popover,&text_options,"Texto");
+    format_popover_header(&text_popover,&text_options,"Texto",&format_group);
     text_options.append(&inline_buttons);
     let font_label = gtk::Label::new(Some("Fuente")); font_label.set_halign(gtk::Align::Start);
     text_options.append(&font_label);
@@ -1084,7 +1086,7 @@ fn build_tab(
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button, sidebar_pages, navigation_pages,
         outline:RefCell::new(None),host:Rc::downgrade(host),open_button:open_button.clone(),
-        search: RefCell::new(None), paragraph: RefCell::new(None), search_highlights: Rc::new(RefCell::new(Vec::new())),
+        search: RefCell::new(None), paragraph: RefCell::new(None),format_group:format_group.clone(), search_highlights: Rc::new(RefCell::new(Vec::new())),
         document_name:RefCell::new(String::new()),layout_pending:Cell::new(false),viewport_width:Cell::new(0),
         zoom_label, zoom_out, zoom_in, stack, title, toasts,
     });
@@ -1128,6 +1130,7 @@ fn build_tab(
             });
         });
     }
+    {let g=Rc::downgrade(&format_group);let w=window.downgrade();let outside=gtk::GestureClick::new();outside.set_propagation_phase(gtk::PropagationPhase::Capture);outside.set_button(0);outside.connect_pressed(move|c,_,x,y|{if let (Some(g),Some(w))=(g.upgrade(),w.upgrade()){g.outside(c,&w,x,y);}});window.add_controller(outside);}
     let outline_panel=install_outline(&ui,&pages_toggle,&titles_toggle);ui.outline.replace(Some(outline_panel.clone()));
     let search_panel=install_search_panel(&ui,&search_toggle,&compact_search);ui.search.replace(Some(search_panel.clone()));
     let style_popover=install_style_popover(&ui,&style_menu);
@@ -1757,5 +1760,6 @@ fn schedule_thumbnail_refresh(ui: &Rc<Ui>) {
         refresh_thumbnails(&ui);
     });
 }
+
 
 
