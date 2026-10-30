@@ -81,4 +81,8 @@ No modificar el motor por comodidad de la interfaz ni distribuir binarios de des
 
 ## Ajuste previo a la instalación: clic derecho
 
-Autorizados e implementados menús contextuales nativos para texto, tablas e imágenes, con conservación de selección y portapapeles enriquecido entre documentos. Validación de entrega en PROJECT_STATUS.md. Antes de retirar botones inferiores, resolver la propuesta del usuario: Tabla/Imagen dejarían la barra y su inserción pasaría a Añadir en el menú del documento; la gestión seguiría accesible desde el contexto. Esta retirada aún no está autorizada de forma definitiva ni implementada.
+Autorizados e implementados menús contextuales nativos para texto, tablas e imágenes, con conservación de selección y portapapeles enriquecido entre documentos. Validación de entrega en PROJECT_STATUS.md. Antes de retirar botones inferiores, resolver la propuesta del usuario: Tabla/Imagen dejarían la barra y su inserción pasaría a Añadir en el menú del documento; la gestión seguiría accesible desde el contexto. El usuario la autoriza después de probar el contexto: se retiran los dos botones, se incorpora Añadir y se conservan los controles desde el clic derecho.
+
+
+
+Corrección prioritaria autorizada: conservar las acciones al cerrar una fila nativa, aspecto de contexto como Nautilus sin punta, retirar historial redundante del contexto y mover inserción de Tabla/Imagen a Añadir. Validar activación real de filas, no solo invocación directa de acciones, antes de distribuir.
