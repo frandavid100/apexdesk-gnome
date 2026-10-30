@@ -11,7 +11,7 @@ Los guardados siguientes actualizan la copia. El selector nativo confirma sobres
 Al cerrar un documento modificado, ofrece Cancelar, Descartar o Guardar.
 Abrir un archivo conserva el documento actual y añade otra pestaña.
 Ctrl+N crea una pestaña vacía; Ctrl+W cierra la pestaña actual.
-La barra inferior va de lo general a lo específico: Estilo, Párrafo y Texto.
+Los controles de formato van de lo general a lo específico: Estilo, Párrafo y Texto. Se muestran como iconos a la derecha de la cabecera; Deshacer/Rehacer quedan a la izquierda. Si la ventana se estrecha, los cinco pasan a la barra inferior.
 Junto a + y −, el tercer botón abre 100 % y Ajustar al ancho.
 La navegación entre páginas se realiza mediante scroll o miniaturas.
 Cancelar el selector o fallar el guardado mantiene abierto el documento con sus cambios.
@@ -32,7 +32,7 @@ https://developer.gnome.org/hig/patterns/feedback/dialogs.html
 
 ## Edición básica ampliada
 
-La barra inferior empieza con Deshacer/Rehacer y refleja su disponibilidad. El historial también está en el menú nativo del documento, junto a Guardar y Guardar como.
+Deshacer/Rehacer reflejan su disponibilidad tanto en la cabecera como en la disposición inferior. El historial también está en el menú nativo del documento, junto a Guardar y Guardar como.
 Texto incluye el selector nativo de familias instaladas y tamaño libre de
 1 a 1638 puntos, con decimales (botón Aplicar), además de B/I/U y tamaños rápidos.
 Párrafo agrupa iconos en tres filas: alineación; listas y sangrías; interlineado,
@@ -165,3 +165,7 @@ El clic derecho sobre texto, tablas e imágenes abre un menú contextual nativo.
 
 
 Tabla e Imagen se insertan desde Añadir en el menú del documento (tres puntos). Sus opciones de edición están en el clic derecho. El menú contextual no repite Deshacer/Rehacer; conserva los accesos al portapapeles y al formato con el aspecto nativo de Nautilus.
+
+
+
+Estilo, Párrafo y Texto se abren también como submenús dentro del clic derecho, con su propia vuelta al contexto; no abren los desplegables de la cabecera. Comparten controles, estados y chincheta. Las transiciones animan el tamaño como Añadir y respetan el movimiento reducido. Las opciones avanzadas de Texto se distribuyen en subpáginas del mismo menú.
