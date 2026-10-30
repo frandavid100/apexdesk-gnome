@@ -8,7 +8,7 @@ struct ParagraphPopover {
     message: gtk::Label,
     spacing: Cell<f64>,
     shade: RefCell<String>,
-    border: RefCell<String>,
+    border: RefCell<serde_json::Value>,
 }
 fn paragraph_icon(name:&str)->gtk::Widget {
     if !["spacing","shading","borders"].contains(&name){return gtk::Image::from_icon_name(name).upcast();}
@@ -57,9 +57,9 @@ impl ParagraphPopover {
         row.append(&self.icon_action("format-indent-less-symbolic","Reducir sangría","paragraph-outdent",false,"para.outdent",serde_json::json!({})));
         let b=self.icon_action("format-indent-more-symbolic","Aumentar sangría","paragraph-indent",false,"para.indent",serde_json::json!({}));self.split(&row,&b,"indents","sangrías");self.main.append(&row);
         let row=gtk::Box::new(gtk::Orientation::Horizontal,4);
-        let b=self.icon_action("spacing",&format!("Aplicar interlineado {}",self.spacing.get()),"paragraph-spacing",false,"para.lineSpacing",serde_json::json!({"value":self.spacing.get()}));self.split(&row,&b,"spacing","interlineado");
+        let b=self.icon_action("spacing",&format!("Aplicar interlineado {}",self.spacing.get()),"paragraph-spacing",state["lineSpacing"]["rule"].as_str()==Some("multiple") && state["lineSpacing"]["value"].as_f64()==Some(self.spacing.get()),"para.lineSpacing",serde_json::json!({"value":self.spacing.get()}));self.split(&row,&b,"spacing","interlineado");
         let b=self.icon_action("shading","Aplicar el último sombreado elegido","paragraph-shading",state["shading"].is_array(),"para.shading",serde_json::json!({"color":self.shade.borrow().as_str()}));self.split(&row,&b,"shading","sombreado");
-        let b=self.icon_action("borders","Aplicar el último borde elegido","paragraph-borders",state["borders"].is_object(),"para.borders",serde_json::json!({"kind":self.border.borrow().as_str()}));self.split(&row,&b,"borders","bordes");self.main.append(&row);
+        let b=self.icon_action("borders","Aplicar el último borde elegido","paragraph-borders",state["borders"].is_object(),"para.borders",self.border.borrow().clone());self.split(&row,&b,"borders","bordes");self.main.append(&row);
         self.main.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
         let more=style_menu_button("Más opciones de párrafo…");more.set_widget_name("paragraph-more-options");self.main.append(&more);let weak=Rc::downgrade(self);more.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.page("options");}});
         self.stack.set_visible_child_name("main");
@@ -102,7 +102,7 @@ impl ParagraphPopover {
             "borders"=>{
                 self.title("Bordes");let width=self.number("Grosor (pt)",0.5,0.25,12.0);
                 let color=gtk::Entry::new();color.set_placeholder_text(Some("Color RGB, por ejemplo 2266AA"));color.set_text("000000");self.detail.append(&color);
-                for(label,kind)in[("Sin bordes","none"),("Todos","all"),("Exterior","outside"),("Interior","inside"),("Superior","top"),("Inferior","bottom"),("Izquierdo","left"),("Derecho","right"),("Línea horizontal","horizontalLine")]{let b=style_menu_button(label);b.set_widget_name(&format!("paragraph-border-{kind}"));self.detail.append(&b);let weak=Rc::downgrade(self);let width=width.clone();let color=color.clone();b.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){width.update();if let Some(hex)=s.valid_color(&color){s.border.replace(kind.into());s.execute("para.borders",serde_json::json!({"kind":kind,"width":width.value(),"color":hex}));}}});}
+                for(label,kind)in[("Sin bordes","none"),("Todos","all"),("Exterior","outside"),("Interior","inside"),("Superior","top"),("Inferior","bottom"),("Izquierdo","left"),("Derecho","right"),("Línea horizontal","horizontalLine")]{let b=style_menu_button(label);b.set_widget_name(&format!("paragraph-border-{kind}"));self.detail.append(&b);let weak=Rc::downgrade(self);let width=width.clone();let color=color.clone();b.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){width.update();if let Some(hex)=s.valid_color(&color){let args=serde_json::json!({"kind":kind,"width":width.value(),"color":hex});s.border.replace(args.clone());s.execute("para.borders",args);}}});}
             },
             _=>{
                 self.title("Dirección y formato");self.button("Alineación distribuida","paragraph-distribute","para.align",serde_json::json!({"value":"distribute"}));
@@ -130,7 +130,7 @@ fn install_paragraph_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<ParagraphPopo
     let main=gtk::Box::new(gtk::Orientation::Vertical,6);let detail=gtk::Box::new(gtk::Orientation::Vertical,8);
     let scroll=gtk::ScrolledWindow::new();scroll.set_policy(gtk::PolicyType::Never,gtk::PolicyType::Automatic);scroll.set_max_content_height(420);scroll.set_propagate_natural_height(true);scroll.set_child(Some(&detail));
     stack.add_named(&main,Some("main"));stack.add_named(&scroll,Some("detail"));root.append(&stack);let message=gtk::Label::new(None);message.set_wrap(true);message.set_max_width_chars(35);message.set_visible(false);root.append(&message);pop.set_child(Some(&root));
-    let s=Rc::new(ParagraphPopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,main,detail,message,spacing:Cell::new(1.5),shade:RefCell::new("FFF2CC".into()),border:RefCell::new("outside".into())});
+    let s=Rc::new(ParagraphPopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,main,detail,message,spacing:Cell::new(1.5),shade:RefCell::new("FFF2CC".into()),border:RefCell::new(serde_json::json!({"kind":"outside","width":0.5,"color":"000000"}))});
     let state=s.clone();pop.connect_show(move |_|state.home());menu.set_popover(Some(&pop));s
 }
 fn show_paragraph_options(ui:&Rc<Ui>,_parent:&ApplicationWindow){if let Some(s)=ui.paragraph.borrow().as_ref(){if let Some(p)=s.popover.upgrade(){p.popup();}s.page("options");}}
