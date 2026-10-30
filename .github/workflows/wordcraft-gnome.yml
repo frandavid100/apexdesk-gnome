@@ -62,6 +62,10 @@ jobs:
               kill "$pid"
               wait "$pid" || true
             }
+            run_case vista-preferencias.png --preferences-demo
+            run_case vista-buscar.png --search-demo
+            GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --tabs-test 2> tabs.log
+            grep -q TABS_OK tabs.log
             run_case vista-texto.png --text-menu-demo
             run_case vista-zoom.png --zoom-menu-demo
             GSK_RENDERER=cairo ./target/debug/wordcraft-gnome --multiwindow-test 2> multiwindow.log
@@ -119,6 +123,9 @@ jobs:
             vista-texto.png
             vista-zoom.png
             multiwindow.log
+            tabs.log
+            vista-preferencias.png
+            vista-buscar.png
             vista-seleccion.png
             vista-edicion.png
             vista-formato.png
