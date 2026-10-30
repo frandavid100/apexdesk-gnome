@@ -52,6 +52,10 @@ struct Ui {
     drag_anchor: RefCell<Option<Pos>>,
     dirty: Cell<bool>,
     closing_confirmed: Cell<bool>,
+    tab_page: RefCell<Option<adw::TabPage>>,
+    closed: Cell<bool>,
+    restoring: Cell<bool>,
+    autosave_error: RefCell<Option<String>>,
     save_path: RefCell<Option<PathBuf>>,
     source_path: RefCell<Option<PathBuf>>,
     format_toolbar: gtk::ScrolledWindow,
@@ -256,6 +260,7 @@ fn after_content_change(ui: &Rc<Ui>) {
     }
     ui.dirty.set(true);
     ui.title.set_subtitle("● Cambios sin guardar · Fase 3D");
+    sync_tab(ui);
 }
 
 fn apply_user_edit(ui: &Rc<Ui>, edit: Edit) {
@@ -356,6 +361,7 @@ fn ask_discard(ui: &Rc<Ui>, parent: &ApplicationWindow, action: impl FnOnce() + 
     let parent = parent.clone();
     dialog.connect_response(None, move |_, response| {
         if response == "discard" {
+            if let Some(doc)=ui.current.borrow_mut().as_mut(){doc.session.discard_recovery_copy();doc.session.finish_recovery();}
             if let Some(action) = once.borrow_mut().take() { action(); }
         } else if response == "save" {
             let once = once.clone();
@@ -370,7 +376,7 @@ fn ask_discard(ui: &Rc<Ui>, parent: &ApplicationWindow, action: impl FnOnce() + 
 fn save_to(ui: &Rc<Ui>, path: &Path) -> bool {
     // Protect the originally opened file during this experimental phase.
     let original = ui.source_path.borrow().clone();
-    if original.as_ref().is_some_and(|p| p == path ||
+    if wordcraft_gnome::preferences::autosave_mode()!=2 && original.as_ref().is_some_and(|p| p == path ||
         p.canonicalize().ok().zip(path.canonicalize().ok()).is_some_and(|(a,b)| a == b)) {
         ui.toasts.add_toast(Toast::new("Elige otro nombre para proteger el documento original."));
         return false;
@@ -386,6 +392,8 @@ fn save_to(ui: &Rc<Ui>, path: &Path) -> bool {
             ui.dirty.set(false);
             ui.title.set_title(&path.file_name().unwrap_or_default().to_string_lossy());
             ui.title.set_subtitle("Guardado · Fase 3D");
+            if let Some(doc)=ui.current.borrow_mut().as_mut(){doc.session.finish_recovery();}
+            sync_tab(ui);
             ui.toasts.add_toast(Toast::new("Documento guardado"));
             true
         }
@@ -394,7 +402,7 @@ fn save_to(ui: &Rc<Ui>, path: &Path) -> bool {
 }
 
 fn save_document(ui: &Rc<Ui>, parent: &ApplicationWindow, save_as: bool, done: Box<dyn FnOnce()>) {
-    if ui.current.borrow().is_none() { return; }
+    if ui.current.borrow().as_ref().is_none_or(|doc|doc.session.is_untouched_blank()) { return; }
     let existing = ui.save_path.borrow().clone();
     if !save_as {
         if let Some(path) = existing { if save_to(ui, &path) { done(); } return; }
@@ -616,6 +624,11 @@ fn fit_width(ui: &Rc<Ui>) {
 }
 
 fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
+    if !session.recovery_ready() {
+        if let Err(e)=session.enable_recovery(wordcraft_gnome::preferences::recovery_root(),std::sync::Arc::new(||{})) {
+            ui.toasts.add_toast(Toast::new(&format!("Recuperación: {e}")));
+        }
+    }
     let layout = session.layout();
     let sizes: Vec<(f32,f32)> = layout.pages.iter().map(|p| (p.w, p.h)).collect();
     if sizes.is_empty() {
@@ -722,6 +735,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     *ui.drag_anchor.borrow_mut() = None;
     ui.selection_zoom.set(zoom);
     ui.title.set_title(label);
+    sync_tab(ui);
     ui.dirty.set(false);
     ui.save_path.replace(None);
     ui.source_path.replace(ui.current.borrow().as_ref().and_then(|d| d.session.path.clone()));
@@ -758,8 +772,11 @@ fn install_css() {
     }
 }
 
-fn make_window(
+include!("../gnome_host.rs");
+
+fn build_tab(
     app: &Application,
+    host: &Rc<Workspace>,
     sample_on_start: bool,
     sidebar_on_start: bool,
     narrow_on_start: bool,
@@ -768,19 +785,13 @@ fn make_window(
     editing_demo: bool,
     formatting_demo: bool,
     initial_document: Option<(Session, String)>,
-) -> ApplicationWindow {
+) {
     let initial_loaded = initial_document.is_some();
     if dark_on_start {
         adw::StyleManager::default().set_color_scheme(adw::ColorScheme::ForceDark);
     }
     install_css();
-    let window = ApplicationWindow::builder()
-        .application(app)
-        .title("WordCraft GNOME")
-        .default_width(if narrow_on_start { 640 } else { 1140 })
-        .default_height(if narrow_on_start { 600 } else { 840 })
-        .build();
-
+    let window = host.window.clone();
     // Composición oficial: panel adaptable y dos páginas de barras nativas.
     let side_header = HeaderBar::new();
     let side_title = gtk::Label::new(Some("Editor de documentos"));
@@ -790,7 +801,7 @@ fn make_window(
     // Menú de aplicación, independiente del menú de documento.
     let example_button = gtk::Button::with_label("Abrir ejemplo");
     let open_button = gtk::Button::with_label("Abrir… (Ctrl+O)");
-    let new_window_button = gtk::Button::with_label("Nueva ventana (Ctrl+N)");
+    let new_window_button = gtk::Button::with_label("Nueva ventana (Ctrl+Shift+N)");
     let app_popover = gtk::Popover::new();
     let app_content = gtk::Box::new(gtk::Orientation::Vertical, 6);
     app_content.set_margin_top(12);
@@ -800,6 +811,9 @@ fn make_window(
     app_content.append(&open_button);
     app_content.append(&new_window_button);
     app_content.append(&example_button);
+    let preferences_button=gtk::Button::with_label("Preferencias");
+    let recover_button=gtk::Button::with_label("Recuperar documentos…");
+    app_content.append(&recover_button);app_content.append(&preferences_button);
     app_popover.set_child(Some(&app_content));
     let app_menu = gtk::MenuButton::new();
     app_menu.set_icon_name("open-menu-symbolic");
@@ -815,6 +829,9 @@ fn make_window(
     sidebar_button.set_icon_name("sidebar-show-symbolic");
     sidebar_button.set_tooltip_text(Some("Mostrar u ocultar miniaturas (F9)"));
     header.pack_start(&sidebar_button);
+    let new_document=gtk::Button::from_icon_name("tab-new-symbolic");
+    new_document.set_tooltip_text(Some("Documento nuevo en otra pestaña (Ctrl+N)"));
+    header.pack_start(&new_document);
 
     let save_button = gtk::Button::from_icon_name("document-save-symbolic");
     save_button.set_tooltip_text(Some("Guardar (Ctrl+S)"));
@@ -840,6 +857,9 @@ fn make_window(
     menu_content.set_margin_start(12);
     menu_content.set_margin_end(12);
     menu_content.append(&save_as_button);
+    let find_button=gtk::Button::with_label("Buscar… (Ctrl+F)");
+    let replace_button=gtk::Button::with_label("Buscar y reemplazar… (Ctrl+H)");
+    menu_content.append(&find_button);menu_content.append(&replace_button);
 
     menu.set_child(Some(&menu_content));
     // Si el panel lateral está cerrado, su menú de aplicación debe seguir
@@ -852,9 +872,12 @@ fn make_window(
     compact_content.set_margin_start(12);
     compact_content.set_margin_end(12);
     let compact_open = gtk::Button::with_label("Abrir… (Ctrl+O)");
-    let compact_new = gtk::Button::with_label("Nueva ventana (Ctrl+N)");
+    let compact_new = gtk::Button::with_label("Nueva ventana (Ctrl+Shift+N)");
     compact_content.append(&compact_open); compact_content.append(&compact_new);
     compact_content.append(&compact_example_button);
+    let compact_preferences=gtk::Button::with_label("Preferencias");
+    let compact_recover=gtk::Button::with_label("Recuperar documentos…");
+    compact_content.append(&compact_recover);compact_content.append(&compact_preferences);
     compact_app_popover.set_child(Some(&compact_content));
     let compact_app_menu = gtk::MenuButton::new();
     compact_app_menu.set_icon_name("open-menu-symbolic");
@@ -1025,6 +1048,8 @@ fn make_window(
 
     let document_toolbar = ToolbarView::new();
     document_toolbar.add_top_bar(&header);
+    let tab_bar = adw::TabBar::new(); tab_bar.set_view(Some(&host.tabs));
+    tab_bar.set_autohide(true); document_toolbar.add_top_bar(&tab_bar);
     document_toolbar.add_bottom_bar(&format_toolbar);
     document_toolbar.set_content(Some(&toasts));
 
@@ -1032,11 +1057,12 @@ fn make_window(
     sidebar.set_sidebar(Some(&sidebar_toolbar));
     sidebar.set_content(Some(&document_toolbar));
     sidebar.set_show_sidebar(false);
-    sidebar.set_min_sidebar_width(240.0);
-    sidebar.set_max_sidebar_width(310.0);
-    sidebar.set_sidebar_width_fraction(0.27);
+    sidebar.set_min_sidebar_width(190.0);
+    sidebar.set_max_sidebar_width(240.0);
+    sidebar.set_sidebar_width_fraction(0.21);
     sidebar.set_pin_sidebar(true);
-    window.set_content(Some(&sidebar));
+    let tab_page = host.tabs.append(&sidebar);
+    host.tabs.set_selected_page(&tab_page);
 
     // En estrecho la barra lateral se superpone sobre la página.
     let narrow = adw::Breakpoint::new(
@@ -1054,6 +1080,8 @@ fn make_window(
         drag_anchor: RefCell::new(None),
         dirty: Cell::new(false),
         closing_confirmed: Cell::new(false),
+        tab_page: RefCell::new(Some(tab_page.clone())), closed: Cell::new(false),
+        restoring: Cell::new(false), autosave_error: RefCell::new(None),
         save_path: RefCell::new(None),
         source_path: RefCell::new(None),
         format_toolbar,
@@ -1069,6 +1097,24 @@ fn make_window(
     });
 
 
+    host.docs.borrow_mut().push((tab_page,ui.clone()));
+    install_autosave(&ui);
+    {
+        let app=app.clone();let host=host.clone();
+        new_document.connect_clicked(move |_| blank_tab(&app,&host));
+    }
+    for button in [preferences_button,compact_preferences] {
+        let parent=window.clone();let pop1=app_popover.clone();let pop2=compact_app_popover.clone();
+        button.connect_clicked(move |_| {pop1.popdown();pop2.popdown();show_preferences(&parent);});
+    }
+    for button in [recover_button,compact_recover] {
+        let ui=ui.clone();let parent=window.clone();let app=app.clone();let host=host.clone();
+        button.connect_clicked(move |_| show_recovery(&ui,&parent,&app,&host));
+    }
+    for (button,replace) in [(find_button,false),(replace_button,true)] {
+        let ui=ui.clone();let parent=window.clone();let menu=menu.clone();
+        button.connect_clicked(move |_| {menu.popdown();show_search(&ui,&parent,replace);});
+    }
     for (button, edit) in [(undo_button, Edit::Undo), (redo_button, Edit::Redo)] {
         let ui = ui.clone();
         button.connect_clicked(move |_| {
@@ -1315,6 +1361,7 @@ fn make_window(
         let ui = ui.clone();
         let open_button = open_button.clone();
         let save_parent = window.clone();
+        let key_host=host.clone();let key_app=app.clone();
         let new_window_button = new_window_button.clone();
         let controller = gtk::EventControllerKey::new();
         // GTK supplies dead-key composition, accents and input methods.
@@ -1337,6 +1384,7 @@ fn make_window(
                 if widget.has_focus() { input.focus_in(); } else { input.focus_out(); }
             });
         }
+        let key_target=ui.sidebar.clone();
         controller.connect_key_pressed(move |_, key, _, modifiers| {
             let shift = modifiers.contains(gdk::ModifierType::SHIFT_MASK);
             let control = modifiers.contains(gdk::ModifierType::CONTROL_MASK);
@@ -1379,12 +1427,16 @@ fn make_window(
                 return glib::Propagation::Proceed;
             }
             if key == gdk::Key::n || key == gdk::Key::N {
-                if !shift && !modifiers.contains(gdk::ModifierType::ALT_MASK) {
-                    new_window_button.emit_clicked(); return glib::Propagation::Stop;
-                }
+                if shift {new_window_button.emit_clicked();} else {blank_tab(&key_app,&key_host);}
+                return glib::Propagation::Stop;
             }
             if key == gdk::Key::w || key == gdk::Key::W {
-                save_parent.close(); return glib::Propagation::Stop;
+                if let Some(page)=key_host.tabs.selected_page(){key_host.tabs.close_page(&page);}
+                return glib::Propagation::Stop;
+            }
+            if key == gdk::Key::f || key == gdk::Key::F || key == gdk::Key::h || key == gdk::Key::H {
+                show_search(&ui,&save_parent,key==gdk::Key::h || key==gdk::Key::H);
+                return glib::Propagation::Stop;
             }
             if key == gdk::Key::s || key == gdk::Key::S {
                 save_document(&ui, &save_parent, shift, Box::new(|| {}));
@@ -1477,7 +1529,7 @@ fn make_window(
             }
             glib::Propagation::Stop
         });
-        window.add_controller(controller);
+        key_target.add_controller(controller);
     }
     {
         let ui = ui.clone();
@@ -1497,6 +1549,7 @@ fn make_window(
         let ui = ui.clone();
         let parent = window.clone();
         let app = app.clone();
+        let host=host.clone();
         let popover = app_popover.clone();
         open_button.connect_clicked(move |_| {
             popover.popdown();
@@ -1511,6 +1564,7 @@ fn make_window(
             dialog.set_filters(Some(&filters));
             let ui = ui.clone();
             let app = app.clone();
+            let host=host.clone();
             dialog.open(Some(&parent), None::<&gio::Cancellable>, move |result| {
                 let Ok(file) = result else { return };
                 let Some(path) = file.path() else {
@@ -1521,11 +1575,10 @@ fn make_window(
                     Ok(session) => {
                         let label = path.file_name().map(|n| n.to_string_lossy().into_owned())
                             .unwrap_or_else(|| "Documento".to_string());
-                        if ui.current.borrow().is_none() {
+                        if ui.current.borrow().as_ref().is_none_or(|doc|doc.session.is_untouched_blank()) {
                             opened(&ui, session, &label);
                         } else {
-                            make_window(&app, false, false, false, false, false, false, false,
-                                Some((session, label)));
+                            build_tab(&app,&host,false,true,false,false,false,false,false,Some((session,label)));
                         }
                     }
                     Err(err) => ui.toasts.add_toast(Toast::new(&err)),
@@ -1534,28 +1587,24 @@ fn make_window(
         });
     }
 
-    // Closing a modified document without saving would lose the changes.
-    {
-        let ui = ui.clone();
-        let parent = window.clone();
-        window.connect_close_request(move |_| {
-            if !ui.dirty.get() || ui.closing_confirmed.get() {
-                return glib::Propagation::Proceed;
-            }
-            let next = ui.clone();
-            let closing_parent = parent.clone();
-            ask_discard(&ui, &parent, move || {
-                next.closing_confirmed.set(true);
-                closing_parent.close();
-            });
-            glib::Propagation::Stop
-        });
-    }
-
     if let Some((session, label)) = initial_document {
         opened(&ui, session, &label);
     } else if sample_on_start { opened(&ui, sample_session(), "Documento de ejemplo"); }
+    else {opened(&ui,Session::new(wordcraft_doc::Document::new()),"Documento nuevo");}
     window.present();
+    if std::env::args().any(|a|a=="--preferences-demo") {show_preferences(&window);}
+    if std::env::args().any(|a|a=="--search-demo") {show_search(&ui,&window,true);}
+    {
+        let ui=ui.clone();let app=app.clone();let host=host.clone();let parent=window.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_secs(3),move || {
+            let records=ui.current.borrow().as_ref().map(|d|d.session.recovery_documents()).unwrap_or_default();
+            if !records.is_empty() {
+                let toast=Toast::new("Hay documentos pendientes de recuperar");toast.set_button_label(Some("Recuperar"));
+                let next=ui.clone();toast.connect_button_clicked(move |_|show_recovery(&next,&parent,&app,&host));
+                ui.toasts.add_toast(toast);
+            }
+        });
+    }
     if std::env::args().any(|a| a == "--text-menu-demo") {
         let menu = text_menu.clone();
         glib::timeout_add_local_once(std::time::Duration::from_millis(1100), move || menu.popup());
@@ -1564,7 +1613,7 @@ fn make_window(
         let menu = zoom_menu.clone();
         glib::timeout_add_local_once(std::time::Duration::from_millis(1100), move || menu.popup());
     }
-    if sidebar_on_start {
+    if sidebar_on_start || !narrow_on_start {
         // Cuando se aplica AdwBreakpoint, el split puede cambiar por sí mismo
         // la visibilidad del panel; abrimos la miniatura tras estabilizarlo.
         let ui = ui.clone();
@@ -1626,7 +1675,6 @@ fn make_window(
             refresh_selection(&ui);
         });
     }
-    window
 }
 
 fn main() {
