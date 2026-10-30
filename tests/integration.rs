@@ -42,3 +42,15 @@ fn thumbnails_render_at_their_actual_small_scale() {
     assert!(thumb.width as f32 <= full.width as f32 * 0.30);
     assert!(thumb.height as f32 <= full.height as f32 * 0.30);
 }
+
+#[test]
+fn gtk_pixels_match_the_engine_without_a_conversion_copy() {
+    let mut session=sample_session();
+    for scale in [0.28, 1.0] {
+        let actual=wordcraft_gnome::render_page_premultiplied(&mut session,0,scale).unwrap();
+        let layout=session.layout();
+        let expected=wordcraft_render::render_page(&session.doc,&layout.pages[0],scale,&Default::default());
+        assert_eq!((actual.width,actual.height),(expected.width,expected.height));
+        assert_eq!(actual.rgba,expected.pixels);
+    }
+}
