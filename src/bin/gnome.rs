@@ -366,9 +366,9 @@ fn make_window(
     previous.set_sensitive(false);
     let next = gtk::Button::with_label("Página siguiente");
     next.set_sensitive(false);
-    let zoom_out = gtk::Button::from_icon_name("zoom-out-symbolic");
+    let zoom_out = gtk::Button::with_label("−");
     zoom_out.set_tooltip_text(Some("Reducir zoom (Ctrl+-)"));
-    let zoom_in = gtk::Button::from_icon_name("zoom-in-symbolic");
+    let zoom_in = gtk::Button::with_label("+");
     zoom_in.set_tooltip_text(Some("Ampliar zoom (Ctrl++)"));
     let zoom_label = gtk::Label::new(Some("100 %"));
     zoom_label.add_css_class("zoom-value");
@@ -631,8 +631,17 @@ fn make_window(
     }
 
     if sample_on_start { opened(&ui, sample_session(), "Documento de ejemplo"); }
-    if sidebar_on_start { ui.sidebar_button.set_active(true); }
     window.present();
+    if sidebar_on_start {
+        // Cuando se aplica AdwBreakpoint, el split puede cambiar por sí mismo
+        // la visibilidad del panel; abrimos la miniatura tras estabilizarlo.
+        let ui = ui.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_millis(350), move || {
+            ui.sidebar.set_show_sidebar(true);
+            ui.sidebar_button.set_active(true);
+            refresh_thumbnails(&ui);
+        });
+    }
     if sample_on_start {
         let ui = ui.clone();
         glib::idle_add_local_once(move || fit_width(&ui));
