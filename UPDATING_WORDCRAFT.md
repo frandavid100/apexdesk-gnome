@@ -159,7 +159,13 @@ their popup surfaces and menu-button anchors. GTK still handles explicit menu
 button close and Escape. Applying dismisses only when the shared pin is off.
 The single header owns a replaceable back callback (cloned before invocation to
 avoid RefCell reentrancy); subpages no longer insert another navigation row.
-Paragraph split controls use an independent native image-button with a small
-chevron, not a flat linked button. No WordCraft changes or dependencies.
+Paragraph split controls use native flat AdwSplitButton, including shared hover
+background, half-button feedback and native separator/arrow. The documented child
+hierarchy supplies the internal MenuButton; its lazy-popup callback resets the
+button and switches the existing paragraph stack, without a nested popup. Main
+actions retain selected-state feedback. Thumbnail pictures use Papers-style 6px
+radii, a fine border and hidden overflow to clip the raster too. No engine changes
+or added dependencies. Recheck split child hierarchy when upgrading libadwaita.
 Tests wait for GTK frames, assert mapped surfaces, no hide signal/surface
 replacement during pin toggles, and exclusive switching with pin inheritance.
+
