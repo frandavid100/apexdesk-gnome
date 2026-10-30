@@ -122,6 +122,15 @@ fn context_model_row(root:&impl IsA<gtk::Widget>,label:&str)->Option<gtk::Widget
     }
     let mut c=root.first_child();while let Some(child)=c{if let Some(found)=context_model_row(&child,label){return Some(found);}c=child.next_sibling();}None
 }
+fn context_activate_action_row(root:&impl IsA<gtk::Widget>,action:&str){
+    fn find(w:&gtk::Widget,action:&str)->Option<gtk::Widget>{
+        if w.type_().name()=="GtkModelButton"&&w.property::<Option<String>>("action-name").as_deref()==Some(action){return Some(w.clone());}
+        let mut c=w.first_child();while let Some(child)=c{if let Some(row)=find(&child,action){return Some(row);}c=child.next_sibling();}None
+    }
+    // Several subpages contain a row named Columna. Target the native row's
+    // action-name, then emit its activate signal; do not invoke the action API.
+    let row=find(root.as_ref(),action).unwrap_or_else(||panic!("missing native action row {action}"));assert!(row.is_sensitive());assert!(row.activate());
+}
 fn context_activate_row(pop:&gtk::PopoverMenu,label:&str){let row=context_model_row(pop,label).unwrap_or_else(||panic!("missing native row {label}"));assert!(row.is_sensitive());assert!(row.activate(),"native menu row must activate");}
 fn context_picture_editor(ui:&Rc<Ui>){if let Some(s)=ui.picture.borrow().as_ref(){s.refresh();s.pop.popup();}}
 fn context_table_editor(ui:&Rc<Ui>){if let Some(p)=ui.table_popover.borrow().as_ref(){refresh_table_controls(ui,p);p.popup();}}
@@ -158,7 +167,7 @@ fn context_ui_test(ui:&Rc<Ui>,parent:&ApplicationWindow,app:&Application){
             assert_eq!(context_prepare(&ui,cx,cy),Some(DocumentContext::Text));assert!(ui.current.borrow().as_ref().unwrap().session.sel.is_collapsed());
             table_command(&ui,"insert.table",serde_json::json!({"rows":2,"cols":2}));
             let table=show_document_context(&ui,&parent,100,150,DocumentContext::Table);assert!(table.menu_model().unwrap().item_link(1,"section").unwrap().item_link(0,"submenu").is_some());
-            context_activate_row(&table,"Seleccionar");context_activate_row(&table,"Columna");assert!(wordcraft_gnome::tables::selected_cells(&ui.current.borrow().as_ref().unwrap().session)>1);
+            context_activate_row(&table,"Seleccionar");context_activate_action_row(&table,"context.select-2");assert!(wordcraft_gnome::tables::selected_cells(&ui.current.borrow().as_ref().unwrap().session)>1);
             let table=show_document_context(&ui,&parent,100,150,DocumentContext::Table);context_activate_row(&table,"Más opciones de tabla…");assert!(ui.table_popover.borrow().as_ref().unwrap().is_visible());ui.table_popover.borrow().as_ref().unwrap().popdown();
             document_tools_fixture(&ui);
             let u=ui.clone();let p=parent.clone();let a=app.clone();
