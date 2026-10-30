@@ -37,6 +37,16 @@ pub fn open_document(path: &Path) -> Result<Session, String> {
 /// Rasterización fiel de una página, con el propio maquetador de WordCraft.
 /// La escala se limita para evitar imágenes enormes en esta prueba inicial.
 pub fn render_page(session: &mut Session, page_index: usize, scale: f32) -> Result<PageImage, String> {
+    render_page_pixels(session, page_index, scale, false)
+}
+
+/// Native GTK texture data. Retains the renderer's premultiplied RGBA buffer
+/// instead of copying and unpremultiplying every pixel on the UI thread.
+pub fn render_page_premultiplied(session: &mut Session, page_index: usize, scale: f32) -> Result<PageImage, String> {
+    render_page_pixels(session, page_index, scale, true)
+}
+
+fn render_page_pixels(session: &mut Session, page_index: usize, scale: f32, premultiplied: bool) -> Result<PageImage, String> {
     let scale = if scale.is_finite() { scale.clamp(0.15, 2.0) } else { 1.0 };
     let mut options=wordcraft_render::RenderOptions::default();
     options.display.marks=session.view.marks;
@@ -50,7 +60,7 @@ pub fn render_page(session: &mut Session, page_index: usize, scale: f32) -> Resu
         return Err("La página excede el límite de tamaño de esta vista preliminar".into());
     }
     let output = wordcraft_render::render_page(&session.doc, page, scale, &options);
-    let rgba = output.to_straight();
+    let rgba = if premultiplied { output.pixels } else { output.to_straight() };
     if output.width == 0 || output.height == 0 ||
         rgba.len() != output.width as usize * output.height as usize * 4 {
         return Err("WordCraft devolvió una imagen incompleta".into());
