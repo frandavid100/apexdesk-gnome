@@ -1,3 +1,7 @@
+fn cancel_tab_close(ui:&Rc<Ui>) {
+    if let Some((view,page))=ui.pending_tab_close.borrow_mut().take(){view.close_page_finish(&page,false);}
+}
+
 // GNOME host lifecycle. WordCraft remains an unmodified, pinned dependency.
 struct Workspace {
     window: ApplicationWindow,
@@ -36,9 +40,11 @@ fn make_window(app: &Application, sample: bool, sidebar: bool, narrow: bool, dar
             let ui = host2.docs.borrow().iter().find(|(p,_)| p == page).map(|(_,ui)|ui.clone());
             if let Some(ui) = ui {
                 let view = view.clone(); let page = page.clone(); let next = ui.clone();
+                ui.pending_tab_close.replace(Some((view.clone(),page.clone())));
                 ask_discard(&ui, &host2.window, move || {
                     if let Some(doc) = next.current.borrow_mut().as_mut() { doc.session.finish_recovery(); }
                     next.closed.set(true);
+                    next.pending_tab_close.borrow_mut().take();
                     view.close_page_finish(&page,true);
                 });
                 glib::Propagation::Stop
