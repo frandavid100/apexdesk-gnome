@@ -810,6 +810,7 @@ include!("../gnome_host.rs");
 include!("../gnome_format_panels.rs");
 include!("../gnome_tables.rs");
 include!("../gnome_styles.rs");
+include!("../gnome_popover_pin.rs");
 include!("../gnome_search.rs");
 include!("../gnome_navigation.rs");
 include!("../gnome_menus.rs");
@@ -972,13 +973,14 @@ fn build_tab(
     let underline_button = gtk::ToggleButton::with_label("U");
     underline_button.set_tooltip_text(Some("Subrayado (Ctrl+U)"));
     underline_button.add_css_class("flat");
-    let text_popover = gtk::Popover::new();
+    let text_popover = gtk::Popover::new();text_popover.add_css_class("format-popover");
     let text_options = gtk::Box::new(gtk::Orientation::Vertical, 12);
     text_options.set_margin_top(12); text_options.set_margin_bottom(12);
     text_options.set_margin_start(12); text_options.set_margin_end(12);
     let inline_buttons = gtk::Box::new(gtk::Orientation::Horizontal, 6);
     inline_buttons.append(&bold_button); inline_buttons.append(&italic_button);
     inline_buttons.append(&underline_button);
+    format_popover_header(&text_popover,&text_options,"Texto");
     text_options.append(&inline_buttons);
     let font_label = gtk::Label::new(Some("Fuente")); font_label.set_halign(gtk::Align::Start);
     text_options.append(&font_label);
@@ -993,7 +995,7 @@ fn build_tab(
     let size_input = gtk::SpinButton::with_range(1.0, 1638.0, 0.5);
     size_input.set_digits(1); size_input.set_value(12.0); size_input.set_hexpand(true);
     size_input.set_tooltip_text(Some("Tamaño en puntos, también con decimales"));
-    let apply_size = gtk::Button::with_label("Aplicar");
+    let apply_size = gtk::Button::with_label("Aplicar");apply_size.set_widget_name("text-apply-size");
     custom_size_row.append(&size_input); custom_size_row.append(&apply_size);
     text_options.append(&custom_size_row);
     let sizes = gtk::Grid::new();
@@ -1003,19 +1005,19 @@ fn build_tab(
     text_options.append(&more_text);
     text_popover.set_child(Some(&text_options));
     let text_menu = gtk::MenuButton::new();
-    text_menu.set_label("Texto");
+    format_menu_label(&text_menu,"Texto");
     text_menu.set_tooltip_text(Some("Negrita, cursiva, subrayado y tamaño de letra"));
     text_menu.set_popover(Some(&text_popover));
     text_menu.set_direction(gtk::ArrowType::Up);
 
     let mut format_actions: Vec<(gtk::Button, Format, gtk::Popover)> = Vec::new();
-    let style_menu=gtk::MenuButton::new();style_menu.set_label("Estilo");style_menu.set_direction(gtk::ArrowType::Up);style_menu.set_tooltip_text(Some("Aplicar y gestionar estilos"));
+    let style_menu=gtk::MenuButton::new();format_menu_label(&style_menu,"Estilo");style_menu.set_direction(gtk::ArrowType::Up);style_menu.set_tooltip_text(Some("Aplicar y gestionar estilos"));
     for (index, size) in [10u8, 11, 12, 14, 16, 18, 24, 36].iter().enumerate() {
         let button = gtk::Button::with_label(&format!("{size} pt"));
         sizes.attach(&button, (index % 4) as i32, (index / 4) as i32, 1, 1);
         format_actions.push((button, Format::FontSize(*size), text_popover.clone()));
     }
-    let align_menu=gtk::MenuButton::new();align_menu.set_label("Párrafo");align_menu.set_direction(gtk::ArrowType::Up);align_menu.set_tooltip_text(Some("Formato de párrafo"));
+    let align_menu=gtk::MenuButton::new();format_menu_label(&align_menu,"Párrafo");align_menu.set_direction(gtk::ArrowType::Up);align_menu.set_tooltip_text(Some("Formato de párrafo"));
     format_bar.append(&style_menu);
     format_bar.append(&align_menu);
     format_bar.append(&text_menu);
@@ -1088,7 +1090,7 @@ fn build_tab(
     });
 
 
-    {let ui=ui.clone();let parent=window.clone();let pop=text_popover.clone();more_text.connect_clicked(move |_|{pop.popdown();show_text_options(&ui,&parent);});}
+    {let ui=ui.clone();let parent=window.clone();let pop=text_popover.clone();more_text.connect_clicked(move |_|{close_format_popover(&pop);show_text_options(&ui,&parent);});}
     let paragraph_popover=install_paragraph_popover(&ui,&align_menu);ui.paragraph.replace(Some(paragraph_popover.clone()));
     if std::env::args().any(|a| a == "--motion-ui-test") {
         assert!(ui.sidebar.shows_sidebar(), "sidebar must be open before mapping");
@@ -1143,7 +1145,7 @@ fn build_tab(
         let ui = ui.clone(); let popover = text_popover.clone();
         let parent = window.clone();
         font_button.connect_clicked(move |_| {
-            popover.popdown();
+            close_format_popover(&popover);
             let ui = ui.clone();
             font_dialog.choose_family(Some(&parent), None::<&gtk::pango::FontFamily>,
                 None::<&gio::Cancellable>, move |result| {
@@ -1163,7 +1165,7 @@ fn build_tab(
         let input = size_input.clone();
         apply_size.connect_clicked(move |_| {
             input.update();
-            let size = input.value(); popover.popdown();
+            let size = input.value(); close_format_popover(&popover);
             apply_format_operation(&ui, |session| formatting::size(session, size));
         });
     }
@@ -1178,7 +1180,7 @@ fn build_tab(
         let popover = text_popover.clone();
         button.connect_toggled(move |_| {
             if !ui.format_syncing.get() {
-                popover.popdown();
+                close_format_popover(&popover);
                 apply_user_format(&ui, action);
             }
         });
@@ -1186,7 +1188,7 @@ fn build_tab(
     for (button, action, popover) in format_actions {
         let ui = ui.clone();
         button.connect_clicked(move |_| {
-            popover.popdown();
+            close_format_popover(&popover);
             apply_user_format(&ui, action);
         });
     }
@@ -1613,6 +1615,7 @@ fn build_tab(
     if std::env::args().any(|a|a=="--view-pointer-test"){let u=ui.clone();let m=style_menu.clone();let w=window.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1300),move||view_pointer_test(&u,&m,&w,&a));}
     if std::env::args().any(|a|a=="--spreads-demo"){window.set_default_size(1800,950);let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1300),move||{if let Some(d)=u.current.borrow_mut().as_mut(){d.fit_to_width=false;}zoom_to(&u,1.0);});}
     if std::env::args().any(|a|a=="--outline-demo"){let b=titles_toggle.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||b.set_active(true));}
+    if std::env::args().any(|a|a=="--pin-ui-test"){let u=ui.clone();let sm=style_menu.clone();let sp=style_popover.clone();let pm=align_menu.clone();let pp=paragraph_popover.clone();let tm=text_menu.clone();let tp=text_popover.clone();let tb=table_menu.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||pin_ui_test(&u,&sm,&sp,&pm,&pp,&tm,&tp,&tb,&app));}
     if std::env::args().any(|a|a=="--chrome-ui-test"){let u=ui.clone();let m=menu_button.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||chrome_ui_test(&u,&m,&app));}
     if std::env::args().any(|a|a=="--document-menu-demo"){let m=menu_button.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||m.popup());}
     if std::env::args().any(|a|a=="--main-menu-demo"){let m=app_menu.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||m.popup());}
@@ -1754,4 +1757,5 @@ fn schedule_thumbnail_refresh(ui: &Rc<Ui>) {
         refresh_thumbnails(&ui);
     });
 }
+
 
