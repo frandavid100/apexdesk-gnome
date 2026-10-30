@@ -42,7 +42,7 @@ fn paragraph_icon(name:&str)->gtk::Widget {
 }
 impl ParagraphPopover {
     fn execute(self:&Rc<Self>,command:&str,args:serde_json::Value){
-        if let Some(ui)=self.ui.upgrade(){match format_execute(&ui,command,args){Ok(())=>{self.message.set_visible(false);if self.stack.visible_child_name().as_deref()==Some("main"){self.home();}},Err(e)=>{self.message.set_text(&e);self.message.set_visible(true);}}}
+        if let Some(ui)=self.ui.upgrade(){match format_execute(&ui,command,args){Ok(())=>{self.message.set_visible(false);if self.stack.visible_child_name().as_deref()==Some("main"){self.home();}if let Some(p)=self.popover.upgrade(){close_format_popover(&p);}ui.document_box.grab_focus();caret_ensure_visible(&ui);},Err(e)=>{self.message.set_text(&e);self.message.set_visible(true);}}}
     }
     fn action(self:&Rc<Self>,label:&str,name:&str,command:&'static str,args:serde_json::Value)->gtk::Button{
         let b=style_menu_button(label);b.set_widget_name(name);let weak=Rc::downgrade(self);
@@ -54,7 +54,7 @@ impl ParagraphPopover {
     }
     fn split(self:&Rc<Self>,row:&gtk::Box,button:&impl IsA<gtk::Widget>,page:&'static str,label:&str){
         let group=gtk::Box::new(gtk::Orientation::Horizontal,0);group.add_css_class("linked");group.set_hexpand(true);group.append(button);
-        let more=gtk::Button::from_icon_name("go-next-symbolic");more.set_tooltip_text(Some(&format!("Opciones de {label}")));more.set_widget_name(&format!("paragraph-more-{page}"));more.add_css_class("flat");group.append(&more);row.append(&group);
+        let more=gtk::Button::new();more.set_child(Some(&format_chevron()));more.set_tooltip_text(Some(&format!("Opciones de {label}")));more.set_widget_name(&format!("paragraph-more-{page}"));more.add_css_class("flat");group.append(&more);row.append(&group);
         let weak=Rc::downgrade(self);more.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.page(page);}});
     }
     fn home(self:&Rc<Self>){
@@ -142,6 +142,7 @@ impl ParagraphPopover {
 }
 fn install_paragraph_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<ParagraphPopover>{
     let pop=gtk::Popover::new();pop.add_css_class("format-popover");let root=gtk::Box::new(gtk::Orientation::Vertical,6);root.set_width_request(300);root.set_margin_top(8);root.set_margin_bottom(8);root.set_margin_start(8);root.set_margin_end(8);
+    let changing=format_popover_header(&pop,&root,"Párrafo");
     let stack=gtk::Stack::new();stack.set_transition_type(gtk::StackTransitionType::SlideLeftRight);stack.set_vhomogeneous(false);
     let main=gtk::Box::new(gtk::Orientation::Vertical,6);let detail=gtk::Box::new(gtk::Orientation::Vertical,8);
     let scroll=gtk::ScrolledWindow::new();scroll.set_policy(gtk::PolicyType::Never,gtk::PolicyType::Automatic);scroll.set_max_content_height(420);scroll.set_propagate_natural_height(true);scroll.set_child(Some(&detail));
@@ -149,7 +150,7 @@ fn install_paragraph_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<ParagraphPopo
     stack.add_named(&main,Some("main"));stack.add_named(&detail_page,Some("detail"));root.append(&stack);let message=gtk::Label::new(None);message.set_wrap(true);message.set_max_width_chars(35);message.set_visible(false);root.append(&message);pop.set_child(Some(&root));
     let s=Rc::new(ParagraphPopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,main,detail,message,spacing:Cell::new(1.5),shade:RefCell::new("FFF2CC".into()),border:RefCell::new(serde_json::json!({"kind":"outside","width":0.5,"color":"000000"}))});
     let weak=Rc::downgrade(&s);back.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.home();}});
-    let state=s.clone();pop.connect_show(move |_|state.home());menu.set_popover(Some(&pop));s
+    let state=s.clone();pop.connect_show(move |_|{if !changing.get(){state.home();}});menu.set_popover(Some(&pop));s
 }
 fn show_paragraph_options(ui:&Rc<Ui>,_parent:&ApplicationWindow){if let Some(s)=ui.paragraph.borrow().as_ref(){if let Some(p)=s.popover.upgrade(){p.popup();}s.page("options");}}
 
@@ -167,3 +168,4 @@ fn paragraph_ui_test(s:&Rc<ParagraphPopover>,menu:&gtk::MenuButton,app:&Applicat
     assert_eq!(s.stack.visible_child_name().as_deref(),Some("main"));assert_eq!(app.windows().len(),1);
     assert!(ui.current.borrow().as_ref().unwrap().session.can_undo());eprintln!("PARAGRAPH_POPOVER_OK");app.quit();
 }
+
