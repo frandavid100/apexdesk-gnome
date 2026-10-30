@@ -45,3 +45,20 @@ fn invalid_font_sizes_are_rejected() {
     assert!(apply(&mut s, Format::FontSize(0)).is_err());
     assert!(apply(&mut s, Format::FontSize(100)).is_err());
 }
+
+#[test]
+fn formatting_state_is_observable_and_undoable() {
+    let mut s = Session::new(Document::from_text("Texto de ejemplo"));
+    select_all(&mut s).unwrap();
+    let state = |s: &mut Session| s.run("format.state", &serde_json::json!({})).unwrap();
+    assert_eq!(state(&mut s)["bold"], false);
+    apply(&mut s, Format::Bold).unwrap();
+    assert_eq!(state(&mut s)["bold"], true);
+    apply(&mut s, Format::Italic).unwrap();
+    assert_eq!(state(&mut s)["italic"], true);
+    apply(&mut s, Format::Underline).unwrap();
+    assert_eq!(state(&mut s)["underline"], true);
+    s.run("edit.undo", &serde_json::json!({})).unwrap();
+    assert_eq!(state(&mut s)["underline"], false);
+    assert_eq!(text(&s), "Texto de ejemplo");
+}
