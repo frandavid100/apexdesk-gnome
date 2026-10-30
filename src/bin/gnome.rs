@@ -1613,12 +1613,16 @@ fn build_tab(
         });
     }
     if std::env::args().any(|a|a=="--split-states-demo") {
-        let m=align_menu.clone();let s=paragraph_popover.clone();let w=window.clone();
+        let m=align_menu.clone();let s=paragraph_popover.clone();
         glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{
             m.popup();glib::timeout_add_local_once(std::time::Duration::from_millis(400),move||{
-                let body=style_widget(&s.main,"paragraph-indent").unwrap().compute_bounds(&w).unwrap();
-                let arrow=style_widget(&s.main,"paragraph-more-indents").unwrap().compute_bounds(&w).unwrap();
-                eprintln!("SPLIT_POINTER_READY {} {} {} {}",(body.x()+body.width()/2.0)as i32,(body.y()+body.height()/2.0)as i32,(arrow.x()+arrow.width()/2.0)as i32,(arrow.y()+arrow.height()/2.0)as i32);
+                use gdk::prelude::PopupExt;
+                let pop=s.popover.upgrade().unwrap();
+                let body=style_widget(&s.main,"paragraph-indent").unwrap().compute_bounds(&pop).unwrap();
+                let arrow=style_widget(&s.main,"paragraph-more-indents").unwrap().compute_bounds(&pop).unwrap();
+                let surface=pop.surface().unwrap().downcast::<gdk::Popup>().unwrap();
+                let (tx,ty)=pop.surface_transform();let x=surface.position_x() as f64-tx;let y=surface.position_y() as f64-ty;
+                eprintln!("SPLIT_POINTER_READY {} {} {} {}",(x+body.x()as f64+body.width()as f64/2.0)as i32,(y+body.y()as f64+body.height()as f64/2.0)as i32,(x+arrow.x()as f64+arrow.width()as f64/2.0)as i32,(y+arrow.y()as f64+arrow.height()as f64/2.0)as i32);
             });
         });
     }
