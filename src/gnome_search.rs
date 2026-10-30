@@ -37,13 +37,15 @@ impl SearchPanel {
         else {self.status.set_text(&format!("{} coincidencias",hits.len()));}
         for (index,hit) in hits.iter().enumerate(){
             let row=gtk::ListBoxRow::new();row.set_widget_name(&format!("search-hit-{index}"));
-            let content=gtk::Box::new(gtk::Orientation::Horizontal,6);content.set_margin_top(6);content.set_margin_bottom(6);content.set_margin_start(8);content.set_margin_end(6);
+            let content=gtk::Box::new(gtk::Orientation::Horizontal,6);content.set_margin_top(1);content.set_margin_bottom(1);content.set_margin_start(8);content.set_margin_end(6);
             let snippet=gtk::Label::new(None);snippet.set_xalign(0.0);snippet.set_hexpand(true);snippet.set_ellipsize(gtk::pango::EllipsizeMode::End);snippet.set_max_width_chars(1);
             let escaped=|s:&str|glib::markup_escape_text(&s.replace('\n'," ")).to_string();
-            snippet.set_markup(&format!("{}<b>{}</b>{}",escaped(&hit.before),escaped(&hit.matched),escaped(&hit.after)));
+            let before=hit.before.chars().rev().take(8).collect::<Vec<_>>().into_iter().rev().collect::<String>();
+            let before=if before.len()<hit.before.len(){format!("…{before}")}else{before};
+            snippet.set_markup(&format!("{}<b>{}</b>{}",escaped(&before),escaped(&hit.matched),escaped(&hit.after)));
             snippet.set_tooltip_text(Some(&format!("{}{}{}",hit.before,hit.matched,hit.after)));content.append(&snippet);
             let page=gtk::Label::new(Some(&hit.page.map(|p|(p+1).to_string()).unwrap_or_else(||"—".into())));page.add_css_class("dim-label");page.set_tooltip_text(Some("Página"));content.append(&page);
-            if self.replace_mode.is_active(){let b=gtk::Button::from_icon_name("edit-find-replace-symbolic");b.add_css_class("flat");b.set_tooltip_text(Some("Reemplazar esta coincidencia"));b.set_widget_name(&format!("search-replace-{index}"));content.append(&b);
+            if self.replace_mode.is_active(){let b=gtk::Button::new();b.set_child(Some(&paragraph_icon("replace")));b.add_css_class("flat");b.add_css_class("search-replace");b.set_tooltip_text(Some("Reemplazar esta coincidencia"));b.set_widget_name(&format!("search-replace-{index}"));content.append(&b);
                 let weak=Rc::downgrade(self);b.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.replace_hit(index);}});
             }
             row.set_child(Some(&content));self.list.append(&row);
