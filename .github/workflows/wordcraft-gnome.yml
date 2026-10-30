@@ -56,7 +56,7 @@ jobs:
             run_case () {
               output="$1"
               shift
-              GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample "$@" \
+              GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document "$@" \
                 > "out-${output}.log" 2> "err-${output}.log" &
               pid=$!
               sleep 7
@@ -68,7 +68,7 @@ jobs:
               kill "$pid"
               wait "$pid" || true
             }
-            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --view-pointer-test 2> view-pointer.log &
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --view-pointer-test 2> view-pointer.log &
             view_pid=$!
             for attempt in $(seq 1 300); do
               if grep -q VIEW_POINTER_READY view-pointer.log; then break; fi
@@ -106,7 +106,7 @@ jobs:
             xdotool key shift+Tab
             wait "$table_pid"
             grep -q TABLE_KEYBOARD_OK table-keyboard.log
-            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --motion-ui-test 2> motion-ui.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --motion-ui-test 2> motion-ui.log
             grep -q MOTION_UI_OK motion-ui.log
             run_case vista-insertar-tabla.png --table-insert-demo
             run_case vista-menu-tabla.png --table-menu-demo
@@ -120,19 +120,22 @@ jobs:
             run_case vista-estilo-nuevo.png --style-new-demo
             run_case vista-estilos-estrecha.png --styles-demo --narrow
             run_case vista-preferencias.png --preferences-demo
-            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --search-ui-test 2> search-sidebar.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --search-ui-test 2> search-sidebar.log
             grep -q SEARCH_SIDEBAR_OK search-sidebar.log
-            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --paragraph-ui-test 2> paragraph-popover.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --paragraph-ui-test 2> paragraph-popover.log
             grep -q PARAGRAPH_POPOVER_OK paragraph-popover.log
             run_case vista-parrafo.png --paragraph-demo
             run_case vista-interlineado.png --paragraph-spacing-demo
             run_case vista-parrafo-estrecha.png --paragraph-demo --narrow
             run_case vista-parrafo-oscura.png --paragraph-demo --dark
             run_case vista-buscar-estrecha.png --search-demo --narrow
-            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --nav-ui-test 2> sidebar-navigation.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --nav-ui-test 2> sidebar-navigation.log
             grep -q SIDEBAR_NAVIGATION_OK sidebar-navigation.log
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --chrome-ui-test 2> document-chrome.log
+            grep -q DOCUMENT_CHROME_OK document-chrome.log
             run_case vista-titulos.png --outline-demo
             run_case vista-menu-principal.png --main-menu-demo
+            run_case vista-menu-documento.png --document-menu-demo
             run_case vista-todas-pestanas.png --overview-demo
             run_case vista-buscar.png --search-demo
             GSK_RENDERER=cairo ./target/release/wordcraft-gnome --tabs-test 2> tabs.log
@@ -149,10 +152,10 @@ jobs:
             run_case vista-estrecha-panel.png --narrow --sidebar
             run_case vista-estrecha.png --narrow
             run_case vista-oscura.png --dark --sidebar
-            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample >gui-out.log 2>gui-err.log &
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document >gui-out.log 2>gui-err.log &
             pid=$!
             sleep 2
-            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample >gui2-out.log 2>gui2-err.log &
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document >gui2-out.log 2>gui2-err.log &
             pid2=$!
             sleep 2
             kill -0 "$pid"
@@ -178,7 +181,7 @@ jobs:
         run: |
           xvfb-run -a -s "-screen 0 1920x1080x24" bash -c '
             set -e
-            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --sample --spreads-demo > spread-out.log 2> spread-err.log &
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --test-document --spreads-demo > spread-out.log 2> spread-err.log &
             pid=$!
             sleep 7
             kill -0 "$pid"
@@ -230,8 +233,10 @@ jobs:
             paragraph-popover.log
             view-pointer.log
             sidebar-navigation.log
+            document-chrome.log
             vista-titulos.png
             vista-menu-principal.png
+            vista-menu-documento.png
             vista-todas-pestanas.png
             view-pointer-failure.png
             vista-paginas-dobles.png
@@ -249,3 +254,4 @@ jobs:
             performance-debug.txt
             performance-release.txt
           if-no-files-found: warn
+
