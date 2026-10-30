@@ -138,3 +138,12 @@ estado del historial del documento activo. La cabecera no tiene botones de
 pestaña nueva ni guardar. El arranque normal abre un documento vacío.
 El documento usado en CI es una fixture interna (--test-document), sin entrada
 en los menús ni ejemplo que deba abrirse para usar el editor.
+
+
+## Fijar desplegables
+
+Estilo, Párrafo, Texto y Tabla muestran una cabecera con el nombre y una
+chincheta. Al activarla, aplicar opciones o devolver el foco al documento
+mantiene abierto el panel. Al desactivarla se recupera el cierre al aplicar.
+Fijar/desfijar conserva la subpágina y los campos actuales; no cambia contenido
+ni historial. Los botones de formato usan chevrones pequeños hacia abajo.
