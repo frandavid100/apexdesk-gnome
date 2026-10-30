@@ -12,7 +12,7 @@ fn table_navigate(ui:&Rc<Ui>,backwards:bool,literal:bool) {
 }
 
 fn show_insert_table(ui:&Rc<Ui>,parent:&ApplicationWindow) {
-    let w=panel_window(parent,"Insertar tabla");w.set_default_size(440,420);w.set_search_enabled(false);
+    let w=panel_window(parent,"Insertar tabla");w.set_default_size(440,640);w.set_search_enabled(false);
     let p=panel_page(&w,"Tabla");let g=panel_group(&p,"Tamaño de la tabla");
     let grid=gtk::Grid::new();grid.set_row_spacing(3);grid.set_column_spacing(3);grid.set_halign(gtk::Align::Center);
     let label=gtk::Label::new(Some("Elige columnas × filas"));g.add(&label);
@@ -43,6 +43,15 @@ fn table_property_toggle(g:&adw::PreferencesGroup,label:&str,on:bool,key:&'stati
     });
 }
 
+fn table_measurement(g:&adw::PreferencesGroup,label:&str,value:f64,min:f64,ui:&Rc<Ui>,w:&adw::PreferencesWindow,command:&'static str,key:&'static str,extra:serde_json::Value) {
+    let row=adw::ActionRow::new();row.set_title(label);
+    let n=gtk::SpinButton::with_range(min,1584.0,0.5);n.set_digits(1);n.set_value(value);n.set_valign(gtk::Align::Center);
+    let b=gtk::Button::with_label("Aplicar");b.set_valign(gtk::Align::Center);row.add_suffix(&n);row.add_suffix(&b);g.add(&row);
+    let ui=ui.clone();let w=w.clone();b.connect_clicked(move|_|{n.update();let mut args=extra.clone();args[key]=serde_json::json!(n.value());
+        if let Err(e)=format_execute(&ui,command,args){w.add_toast(Toast::new(&e));}
+    });
+}
+
 fn show_table_properties(ui:&Rc<Ui>,parent:&ApplicationWindow) {
     let state={let mut state=ui.current.borrow_mut();let Some(doc)=state.as_mut() else{return};
         match doc.session.run("table.properties",&serde_json::json!({})){Ok(v)=>v,Err(e)=>{ui.toasts.add_toast(Toast::new(&e.to_string()));return;}}};
@@ -53,12 +62,8 @@ fn show_table_properties(ui:&Rc<Ui>,parent:&ApplicationWindow) {
     panel_action(&g,"Distribuir columnas uniformemente",ui,&w,"table.distributeColumns",serde_json::json!({}));
     panel_action(&g,"Distribuir filas uniformemente",ui,&w,"table.distributeRows",serde_json::json!({}));
     let g=panel_group(&p,"Columna y fila seleccionadas (puntos)");
-    let width=panel_number(&g,"Ancho de columna",state["columnWidth"].as_f64().unwrap_or(72.0),6.0,1584.0);
-    let b=gtk::Button::with_label("Aplicar ancho de columna");g.add(&b);
-    {let ui=ui.clone();let w=w.clone();b.connect_clicked(move|_|{width.update();if let Err(e)=format_execute(&ui,"table.columnWidth",serde_json::json!({"width":width.value()})){w.add_toast(Toast::new(&e));}});}
-    let height=panel_number(&g,"Altura mínima de fila",state["row"]["height"].as_f64().unwrap_or(18.0),1.0,1584.0);
-    let b=gtk::Button::with_label("Aplicar altura mínima");g.add(&b);
-    {let ui=ui.clone();let w=w.clone();b.connect_clicked(move|_|{height.update();if let Err(e)=format_execute(&ui,"table.rowHeight",serde_json::json!({"height":height.value(),"rule":"atLeast"})){w.add_toast(Toast::new(&e));}});}
+    table_measurement(&g,"Ancho de columna",state["columnWidth"].as_f64().unwrap_or(72.0),6.0,ui,&w,"table.columnWidth","width",serde_json::json!({}));
+    table_measurement(&g,"Altura mínima de fila",state["row"]["height"].as_f64().unwrap_or(18.0),1.0,ui,&w,"table.rowHeight","height",serde_json::json!({"rule":"atLeast"}));
     panel_action(&g,"Restaurar altura automática de la fila actual",ui,&w,"table.properties",serde_json::json!({"rowHeight":null}));
     let g=panel_group(&p,"Paginación de la fila actual");
     table_property_toggle(&g,"Repetir como cabecera",state["row"]["header"].as_bool().unwrap_or(false),"headerRow",ui,&w);
