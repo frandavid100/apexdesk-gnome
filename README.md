@@ -1,39 +1,39 @@
-# WordCraft GNOME — Fase 3B (edición en memoria)
+# WordCraft GNOME · Fase 3C: formato
 
-Rama experimental `wordcraft-editing` desarrollada sobre la fase 3A
-(`wordcraft-selection`) y los contenedores nativos libadwaita.
+Esta rama `wordcraft-formatting` añade herramientas de formato a la
+interfaz GTK4/libadwaita, reutilizando el motor WordCraft sin egui.
 
-## Lo que funciona
+## Incluido
 
-- Clic, selección, arrastre y copia de la fase 3A.
-- **Escritura** directamente en el documento mediante el contexto de entrada
-  de GTK. El motor de edición es WordCraft, no un GtkTextView.
-- **Intro**: párrafo nuevo; **Shift+Intro**: salto de línea.
-- **Retroceso/Supr**: borrar caracteres o reemplazar la selección.
-- **Ctrl+V**: pegar texto plano; **Ctrl+X**: cortar texto.
-- **Ctrl+Z**, **Ctrl+Shift+Z** y **Ctrl+Y**: deshacer y rehacer.
-- Repaginación y recálculo del cursor tras los cambios, incluidas las
-  modificaciones que hacen crecer o reducir el número de páginas.
-- Miniaturas, navegación y zoom siguen utilizando WordCraft.
+- Negrita **Ctrl+B**, cursiva **Ctrl+I** y subrayado **Ctrl+U**.
+- Estilos de párrafo: Normal y Títulos 1, 2 y 3.
+- Alineación: izquierda, centrada, derecha y justificada.
+- Tamaños de fuente: 10, 11, 12, 14, 16, 18, 24 y 36 puntos.
+- Atajos de párrafo: Ctrl+L/E/R/J, Ctrl+Shift+N,
+  Ctrl+Alt+1/2/3.
+- Barra de formato integrada en `AdwToolbarView`, desplazable
+  horizontalmente en ventanas estrechas.
+- Cambio de formato aplicado a selecciones y texto futuro en el cursor.
+- Paginación, miniaturas, zoom, escritura, copia, pegado, borrado y
+  deshacer/rehacer de las fases anteriores.
 
-## Limitación importante: aún no se puede guardar
+El formato se realiza con comandos del motor (`format.bold`,
+`format.italic`, `format.underline`, `format.size`,
+`para.heading1` y `para.alignCenter`, entre otros).
 
-Este prototipo **no sobrescribe ni guarda en disco** los archivos DOCX/ODT.
-Los cambios existen únicamente durante la sesión. Verás un indicador de
-cambios sin guardar y se pedirá confirmación antes de cerrar o abrir otro
-documento. Si necesitas conservar el resultado provisional,
-**Ctrl+A → Ctrl+C** permite copiar el texto a otra aplicación.
+## Importante
 
-La fase 3D incorporará el guardado y recuperación. Hasta entonces usa
-**copias de documentos**, nunca archivos que contengan datos irremplazables.
+**Todavía no se guardan cambios en DOCX/ODT**. Los cambios en contenido y
+formato permanecen en la sesión. El programa avisa antes de cerrar o
+reemplazar documentos modificados. En esta etapa usa solo documentos de
+prueba y evita editar originales que necesites conservar.
 
-La composición del teclado se conecta al `GtkIMMulticontext`, aunque aún
-quedan por probar el subrayado visual del texto en preedición IME,
-accesibilidad y ediciones grandes.
+Esta versión añade funcionalidades sobre la fase 3B, que aún está
+pendiente de verificación interactiva en GNOME OS. Las pruebas de CI
+no garantizan por sí solas el funcionamiento de todos los teclados,
+tipos de documento o entradas IME.
 
 ## Ejecutar
-
-Extrae el artefacto Linux de GitHub en una carpeta nueva y ejecuta:
 
 ```sh
 chmod +x wordcraft-gnome
@@ -41,20 +41,20 @@ chmod +x wordcraft-gnome
 ./wordcraft-gnome --sample --sidebar
 ```
 
-La identificación debe incluir «fase 3B».
+La versión debe indicar **fase 3C**. Se puede comparar con la rama
+`wordcraft-editing` (fase 3B) y la rama `wordcraft-selection` (fase 3A).
 
-La interfaz se compila y prueba automáticamente con:
+## Pruebas de desarrollo
 
 ```sh
 cargo test
 cargo build --features gui --bin wordcraft-gnome
+cargo run --features gui --bin wordcraft-gnome -- --sample --sidebar --format-demo
 ```
 
-El workflow genera una captura adicional `vista-edicion.png` tras ejecutar
-una mutación real del documento en WordCraft.
+El flujo automático produce `vista-formato.png` y verifica la
+compilación, el motor y el arranque en Xvfb.
 
-## Código y licencias
-
-El motor WordCraft está fijado a
+WordCraft revisión
 [`165d5725`](https://github.com/storytold/wordcraft/commit/165d5725dc25b4a7887d8025c3b1fe506ccc3dcc)
-(MIT OR Apache-2.0). Este proyecto es GPL-3.0-or-later.
+(MIT OR Apache-2.0). Código de esta aplicación: GPL-3.0-or-later.
