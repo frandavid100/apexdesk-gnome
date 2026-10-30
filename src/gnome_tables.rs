@@ -91,7 +91,7 @@ fn install_table_controls(ui:&Rc<Ui>,parent:&ApplicationWindow,bar:&gtk::Box)->g
     let menu=gtk::MenuButton::new();menu.set_widget_name("table-menu");format_menu_label(&menu,"Tabla");menu.set_direction(gtk::ArrowType::Up);menu.set_tooltip_text(Some("Insertar y editar tablas"));
     let pop=gtk::Popover::new();pop.add_css_class("format-popover");let content=gtk::Box::new(gtk::Orientation::Vertical,6);
     content.set_margin_top(8);content.set_margin_bottom(8);content.set_margin_start(8);content.set_margin_end(8);
-    format_popover_header(&pop,&content,"Tabla");
+    format_popover_header(&pop,&content,"Tabla",&ui.format_group);
     let insert=gtk::Button::with_label("Insertar tabla…");insert.add_css_class("flat");content.append(&insert);
     {let ui=ui.clone();let p=parent.clone();let pop=pop.clone();insert.connect_clicked(move|_|{close_format_popover(&pop);show_insert_table(&ui,&p);});}
     let context=gtk::Box::new(gtk::Orientation::Vertical,6);context.set_widget_name("table-context");content.append(&context);
@@ -147,4 +147,5 @@ fn install_table_context_menu(ui:&Rc<Ui>,parent:&ApplicationWindow) {
         refresh_selection(&u);show_table_context_at(&u,&p,x as i32,y as i32);
     });ui.document_box.add_controller(click);
 }
+
 
