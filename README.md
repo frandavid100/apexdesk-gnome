@@ -142,8 +142,10 @@ en los menús ni ejemplo que deba abrirse para usar el editor.
 
 ## Fijar desplegables
 
-Estilo, Párrafo, Texto y Tabla muestran una cabecera con el nombre y una
-chincheta. Al activarla, aplicar opciones o devolver el foco al documento
-mantiene abierto el panel. Al desactivarla se recupera el cierre al aplicar.
-Fijar/desfijar conserva la subpágina y los campos actuales; no cambia contenido
-ni historial. Los botones de formato usan chevrones pequeños hacia abajo.
+Estilo, Párrafo, Texto y Tabla comparten la chincheta y solo uno puede estar
+abierto. Abrir otro sustituye al anterior y conserva la fijación. Fijar/desfijar
+no oculta ni recrea el panel. Al fijarlo se mantiene abierto al aplicar opciones
+y seguir escribiendo; sin fijar se cierra al aplicar o pulsar fuera.
+Las subpáginas tienen una sola cabecera con vuelta atrás, nombre y chincheta.
+Los botones de subopciones de Párrafo tienen fondo y esquinas nativos como
+Nautilus, con chevrones pequeños hacia abajo.
