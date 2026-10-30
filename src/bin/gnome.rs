@@ -213,7 +213,17 @@ fn fit_width(ui: &Rc<Ui>) {
         d.sizes.iter().map(|x| x.0).reduce(f32::max)
     });
     let Some(width) = max_width else { return };
-    let available = (ui.scroll.allocated_width() as f32 - 54.0).max(250.0);
+    // El scroll puede conservar una anchura natural mayor que la del área
+    // visible durante la animación de AdwOverlaySplitView. Tomamos también
+    // el ancho real del split y descontamos el panel si está al lado.
+    let split_width = ui.sidebar.allocated_width() as f32;
+    let sidebar_width = if ui.sidebar.shows_sidebar() && !ui.sidebar.is_collapsed() {
+        ui.sidebar.sidebar().map(|w| w.allocated_width() as f32).unwrap_or(0.0)
+    } else { 0.0 };
+    let layout_width = (split_width - sidebar_width).max(0.0);
+    let available = (ui.scroll.allocated_width() as f32)
+        .min(layout_width)
+        .max(250.0) - 46.0;
     if let Some(doc) = ui.current.borrow_mut().as_mut() {
         doc.fit_to_width = true;
     }
