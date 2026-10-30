@@ -8,7 +8,7 @@ use wordcraft_engine::Session;
 use wordcraft_gnome::{open_document, render_page, sample_session};
 use wordcraft_gnome::viewer_layout::{self, THUMB_SCALE};
 
-const APP_ID: &str = "io.github.frandavid100.WordCraftGnome";
+const APP_ID: &str = "io.github.frandavid100.WordCraftGnome.PapersPreview";
 const STEPS: &[f32] = &[0.5, 0.67, 0.75, 0.85, 1.0, 1.25, 1.5, 1.75, 2.0];
 
 struct Current {
@@ -273,7 +273,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         active: 0,
     }));
     ui.title.set_title(label);
-    ui.title.set_subtitle("WordCraft · solo lectura");
+    ui.title.set_subtitle("WordCraft · visor Papers · solo lectura");
     ui.stack.set_visible_child_name("pages");
     ui.scroll.vadjustment().set_value(0.0);
     ui.thumbnails_scroll.vadjustment().set_value(0.0);
@@ -606,9 +606,17 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
 }
 
 fn main() {
+    if std::env::args().any(|arg| arg == "--version") {
+        println!("WordCraft GNOME · visor Papers · edición 2026-10-30.2");
+        return;
+    }
     let sample_on_start = std::env::args().any(|arg| arg == "--sample");
     let sidebar_on_start = std::env::args().any(|arg| arg == "--sidebar");
-    let app = Application::builder().application_id(APP_ID).build();
+    // Permite probar versiones simultáneas sin activar una ventana anterior por D-Bus.
+    let app = Application::builder()
+        .application_id(APP_ID)
+        .flags(gio::ApplicationFlags::NON_UNIQUE)
+        .build();
     app.connect_activate(move |app| make_window(app, sample_on_start, sidebar_on_start));
     app.run_with_args(&["wordcraft-gnome"]);
 }
