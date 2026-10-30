@@ -243,7 +243,12 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         number.add_css_class("dim-label");
         let content = gtk::Box::new(gtk::Orientation::Vertical, 5);
         content.set_halign(gtk::Align::Center);
-        content.append(&thumb);
+        // El ancho de las hojas pequeñas no debe crecer hasta ocupar
+        // casi todo el panel lateral.
+        let thumb_clamp = adw::Clamp::new();
+        thumb_clamp.set_maximum_size(185);
+        thumb_clamp.set_child(Some(&thumb));
+        content.append(&thumb_clamp);
         content.append(&number);
         let button = gtk::Button::new();
         button.set_child(Some(&content));
@@ -337,7 +342,6 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
 
     let page_label = gtk::Label::new(Some("Sin documento"));
     page_label.add_css_class("page-indicator");
-    header.pack_end(&page_label);
 
     // Las opciones poco frecuentes se trasladan al menú de la cabecera.
     let previous = gtk::Button::with_label("Página anterior");
@@ -372,6 +376,7 @@ fn make_window(app: &Application, sample_on_start: bool, sidebar_on_start: bool)
     menu_button.set_tooltip_text(Some("Opciones del visor"));
     menu_button.set_popover(Some(&menu));
     header.pack_end(&menu_button);
+    header.pack_end(&page_label);
 
     let stack = gtk::Stack::new();
     let empty = StatusPage::builder()
