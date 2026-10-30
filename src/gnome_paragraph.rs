@@ -67,7 +67,7 @@ impl ParagraphPopover {
         let more=main.next_sibling().unwrap().next_sibling().unwrap().downcast::<gtk::MenuButton>().unwrap();
         more.first_child().unwrap().set_widget_name(&format!("paragraph-more-{page}"));
         let weak=Rc::downgrade(self);more.set_create_popup_func(move|m|{
-            m.popdown();if let Some(s)=weak.upgrade(){s.page(page);}
+            m.popdown();if let Some(s)=weak.upgrade(){s.page(page);if std::env::args().any(|a|a=="--split-states-demo"){eprintln!("SPLIT_SUBPAGE_OK");}}
         });
         row.append(&split);
     }
