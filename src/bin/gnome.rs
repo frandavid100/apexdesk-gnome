@@ -49,6 +49,7 @@ struct Ui {
     open_button: gtk::Button,
     search: RefCell<Option<Rc<SearchPanel>>>,
     paragraph: RefCell<Option<Rc<ParagraphPopover>>>,
+    picture: RefCell<Option<Rc<PicturePopover>>>,
     format_group:Rc<FormatPopoverGroup>,
     search_highlights: Rc<RefCell<Vec<selection::Rect>>>,
     document_name: RefCell<String>,
@@ -135,6 +136,7 @@ fn refresh_selection(ui: &Rc<Ui>) {
         }
     }
     refresh_format_controls(ui);
+    if let Some(p)=ui.picture.borrow().as_ref(){p.refresh();}
 }
 
 /// Reflect the actual WordCraft formatting state, rather than leaving B/I/U
@@ -191,6 +193,17 @@ fn pos_at_canvas(ui: &Rc<Ui>, x: f64, y: f64) -> Option<Pos> {
     let px = ((x - f64::from(rect.x())) / z).clamp(0.0, f64::from(w)) as f32;
     let py = ((y - f64::from(rect.y())) / z).clamp(0.0, f64::from(h)) as f32;
     selection::hit(&mut doc.session, page, px, py)
+}
+
+fn select_picture_at_canvas(ui:&Rc<Ui>,x:f64,y:f64)->bool{
+    let mut value=ui.current.borrow_mut();let Some(doc)=value.as_mut()else{return false;};
+    for (i,frame) in doc.page_frames.iter().enumerate(){
+        let Some(r)=frame.compute_bounds(&ui.document_box)else{continue;};
+        if x<r.x()as f64||y<r.y()as f64||x>(r.x()+r.width())as f64||y>(r.y()+r.height())as f64{continue;}
+        let z=doc.zoom as f64;let px=((x-r.x()as f64)/z)as f32;let py=((y-r.y()as f64)/z)as f32;
+        let Some(hit)=doc.session.layout().object_at(i,px,py,0.0)else{return false;};
+        return pictures::select(&mut doc.session,&hit.pos()).is_ok();
+    }false
 }
 
 fn caret_ensure_visible(ui: &Rc<Ui>) {
@@ -808,6 +821,7 @@ fn install_css() {
 }
 
 include!("../gnome_host.rs");
+include!("../gnome_document_tools.rs");
 include!("../gnome_format_panels.rs");
 include!("../gnome_tables.rs");
 include!("../gnome_styles.rs");
@@ -1086,7 +1100,7 @@ fn build_tab(
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button, sidebar_pages, navigation_pages,
         outline:RefCell::new(None),host:Rc::downgrade(host),open_button:open_button.clone(),
-        search: RefCell::new(None), paragraph: RefCell::new(None),format_group:format_group.clone(), search_highlights: Rc::new(RefCell::new(Vec::new())),
+        search: RefCell::new(None), paragraph: RefCell::new(None), picture:RefCell::new(None),format_group:format_group.clone(), search_highlights: Rc::new(RefCell::new(Vec::new())),
         document_name:RefCell::new(String::new()),layout_pending:Cell::new(false),viewport_width:Cell::new(0),
         zoom_label, zoom_out, zoom_in, stack, title, toasts,
     });
@@ -1135,6 +1149,7 @@ fn build_tab(
     let search_panel=install_search_panel(&ui,&search_toggle,&compact_search);ui.search.replace(Some(search_panel.clone()));
     let style_popover=install_style_popover(&ui,&style_menu);
     let table_menu=install_table_controls(&ui,&window,&format_bar);
+    let (picture_menu,picture_panel)=install_picture_controls(&ui,&window,&format_bar);ui.picture.replace(Some(picture_panel.clone()));
     host.docs.borrow_mut().push((tab_page,ui.clone()));
     install_main_menu(&app_menu);install_main_menu(&compact_app_menu);refresh_main_actions(host);
     install_autosave(&ui);
@@ -1204,6 +1219,9 @@ fn build_tab(
         let document_box = ui.document_box.clone();
         let ui = ui.clone();
         click.connect_pressed(move |gesture, count, x, y| {
+            if count==1&&!gesture.current_event_state().contains(gdk::ModifierType::SHIFT_MASK)&&select_picture_at_canvas(&ui,x,y){
+                ui.document_box.grab_focus();refresh_selection(&ui);return;
+            }
             let Some(pos) = pos_at_canvas(&ui, x, y) else { return };
             ui.document_box.grab_focus();
             let shift = gesture.current_event_state().contains(gdk::ModifierType::SHIFT_MASK);
@@ -1626,6 +1644,15 @@ fn build_tab(
             });
         });
     }
+    if std::env::args().any(|a|a=="--picture-demo"||a=="--document-properties-demo"||a=="--document-tools-test") {
+        let u=ui.clone();let p=picture_panel.clone();let m=picture_menu.clone();let w=window.clone();let app=app.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_millis(1200),move||{
+            document_tools_fixture(&u);
+            if std::env::args().any(|a|a=="--document-tools-test"){document_tools_ui_test(&u,&p,&m,&w,&app);}
+            else if std::env::args().any(|a|a=="--document-properties-demo"){show_document_properties(&u,&w);}
+            else{m.popup();}
+        });
+    }
     if std::env::args().any(|a|a=="--paragraph-demo"||a=="--paragraph-spacing-demo") {let m=align_menu.clone();let s=paragraph_popover.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{m.popup();if std::env::args().any(|a|a=="--paragraph-spacing-demo"){s.page("spacing");}});}
     if std::env::args().any(|a|a=="--paragraph-ui-test") {let s=paragraph_popover.clone();let m=align_menu.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||paragraph_ui_test(&s,&m,&app));}
     if std::env::args().any(|a|a=="--search-ui-test") {let s=search_panel.clone();let ui=ui.clone();let app=app.clone();let host=host.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||search_ui_test(&ui,&s,&app,&host));}
@@ -1774,6 +1801,7 @@ fn schedule_thumbnail_refresh(ui: &Rc<Ui>) {
         refresh_thumbnails(&ui);
     });
 }
+
 
 
 
