@@ -59,12 +59,12 @@ tiradores de tamaño con ratón ni fórmulas. Las imágenes nuevas son en línea
 
 ## Última entrega y pruebas
 
-Código del último ejecutable validado: `5931f28b1c7354dd0002f03a1aff15b08a6e9219`.
+Código del último ejecutable validado: `6c8a945dc6b8139e331e52f2768c75dcacdde2d0`.
 Los commits posteriores a esa revisión pueden ser exclusivamente documentación: comprobar el historial.
 
-[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41122192743).
-Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13010370365`.
-Ejecutable actual con cabeceras y chincheta: 33.925.624 bytes.
+[CI completada correctamente](https://github.com/frandavid100/apexdesk-gnome/actions/runs/41127358053).
+Artefacto de esa ejecución: `wordcraft-gnome-fase3d-linux`, ID `13011259052`.
+Ejecutable actual con cabeceras y chincheta: 34.103.448 bytes.
 El usuario recibió `wordcraft-gnome-fase3d.zip` con el ejecutable release y un LEEME.
 Los artefactos de Actions caducan: si no están disponibles, recompilar esa revisión.
 
@@ -107,6 +107,8 @@ Probar manualmente tablas importadas complejas y los controles en ventana estrec
 
 ## Mapa del código
 
+- `src/gnome_document_tools.rs`: Imagen, diálogo de propiedades y selector de exportación PDF.
+- `src/pictures.rs`, `src/document_properties.rs`, `src/pdf_export.rs`: adaptadores de imágenes, sección/documento y PDF con estado editable preservado.
 - `src/bin/gnome.rs`: widgets GTK, selección visual, entrada y lienzo Fixed de páginas.
 - `src/gnome_view_tests.rs`: regresión GTK de foco/clic tras menús, vista doble y márgenes de miniaturas.
 - `src/gnome_host.rs`: pestañas, ventanas, preferencias y recuperación.
@@ -145,6 +147,6 @@ Registrar en ROADMAP los cambios de prioridad para que el plan sobreviva al chat
 Completar el documento mínimo: imágenes (insertar, conservar proporción al redimensionar y eliminar), configuración de tamaño/orientación/márgenes y exportación PDF. Después, distribución instalable; combinar pruebas de documentos reales con primeros usuarios y mantenimiento. El rediseño completo de Texto no bloquea este orden. Flathub requiere colaboración humana para el manifiesto y la solicitud conforme a su política de IA revisada; no presentar la publicación como garantizada.
 
 
-## Ampliación autorizada en validación
+## Imágenes, propiedades y PDF: entrega validada
 
-El usuario ha confirmado que le gusta el resultado de los botones divididos nativos y las miniaturas redondeadas. Autoriza conjuntamente Imagen en barra inferior, Propiedades del documento y Exportar a PDF en menú del documento. La implementación usa API públicas de WordCraft y no cambia las dependencias. Las pruebas de adaptadores han pasado en la primera CI; queda comprobar compilación/GUI y entregar el ejecutable validado.
+El usuario ha confirmado que le gusta el resultado de los botones divididos nativos y las miniaturas redondeadas. Autoriza conjuntamente Imagen en barra inferior, Propiedades del documento y Exportar a PDF en menú del documento. La implementación usa API públicas de WordCraft y no cambia las dependencias. CI 41127358053 completada correctamente, con cargo test --locked y compilación release. Las regresiones verifican imágenes y página en DOCX/ODT, proporción, tamaño original, sustitución, borrado y deshacer; cambios de sección/documento agrupados y formato pendiente conservado; errores y cambios nulos; destino, estado e historial al exportar. IMAGE_POINTER_READY/DOCUMENT_TOOLS_OK verifican clic real, controles de imagen fijados y diálogo de propiedades. PDF renderizado y revisado visualmente: una página A4 horizontal, texto extraíble e imagen incrustada. Capturas ancha/estrecha y propiedades revisadas. No es una confirmación manual del usuario; pendiente de sus documentos reales y del selector nativo en su equipo.
