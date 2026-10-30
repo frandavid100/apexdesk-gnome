@@ -28,6 +28,25 @@ fn engine_recovery_keeps_an_unsaved_document_and_discards_on_request() {
         assert!(std::time::Instant::now()<end,"no recovery snapshot");
         std::thread::sleep(std::time::Duration::from_millis(30));
     }
+    drop(s); // Simulate a host exit without explicit save or discard.
+    let mut s=Session::new(Document::new());
+    s.enable_recovery(root.clone(),std::sync::Arc::new(||{})).unwrap();
+    let end=std::time::Instant::now()+std::time::Duration::from_secs(5);
+    loop {
+        s.recovery_tick();
+        if s.recovery_ready() && !s.recovery_documents().is_empty(){break;}
+        assert!(std::time::Instant::now()<end,"no recovery record after restart");
+        std::thread::sleep(std::time::Duration::from_millis(30));
+    }
+    let id=s.recovery_documents()[0].id.clone();
+    s.run("file.recover",&json!({"restore":id})).unwrap();
+    loop {
+        s.recovery_tick();
+        if s.doc.plain_text(StoryRef::Body)=="Recuperar ñ"{break;}
+        assert!(std::time::Instant::now()<end,"restore did not finish");
+        std::thread::sleep(std::time::Duration::from_millis(30));
+    }
+    assert!(s.dirty);
     s.discard_recovery_copy();s.finish_recovery();
     drop(s);std::fs::remove_dir_all(root).unwrap();
 }
