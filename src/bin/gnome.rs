@@ -56,6 +56,7 @@ struct Ui {
     closed: Cell<bool>,
     restoring: Cell<bool>,
     autosave_error: RefCell<Option<String>>,
+    pending_tab_close: RefCell<Option<(adw::TabView,adw::TabPage)>>,
     save_path: RefCell<Option<PathBuf>>,
     source_path: RefCell<Option<PathBuf>>,
     format_toolbar: gtk::ScrolledWindow,
@@ -368,7 +369,7 @@ fn ask_discard(ui: &Rc<Ui>, parent: &ApplicationWindow, action: impl FnOnce() + 
             save_document(&ui, &parent, false, Box::new(move || {
                 if let Some(action) = once.borrow_mut().take() { action(); }
             }));
-        }
+        } else {cancel_tab_close(&ui);}
     });
     dialog.present();
 }
@@ -405,7 +406,7 @@ fn save_document(ui: &Rc<Ui>, parent: &ApplicationWindow, save_as: bool, done: B
     if ui.current.borrow().as_ref().is_none_or(|doc|doc.session.is_untouched_blank()) { return; }
     let existing = ui.save_path.borrow().clone();
     if !save_as {
-        if let Some(path) = existing { if save_to(ui, &path) { done(); } return; }
+        if let Some(path) = existing { if save_to(ui, &path) { done(); } else {cancel_tab_close(ui);} return; }
     }
     let dialog = gtk::FileDialog::new();
     dialog.set_title("Guardar una copia — DOCX u ODT");
@@ -428,16 +429,16 @@ fn save_document(ui: &Rc<Ui>, parent: &ApplicationWindow, save_as: bool, done: B
         match result {
             Ok(file) => {
                 let Some(path) = file.path() else {
-                    ui.toasts.add_toast(Toast::new("Elige un archivo local")); return;
+                    ui.toasts.add_toast(Toast::new("Elige un archivo local")); cancel_tab_close(&ui); return;
                 };
                 // Require an extension so GTK's overwrite confirmation covers the actual target.
                 if path.extension().is_none() {
-                    ui.toasts.add_toast(Toast::new("Incluye .docx o .odt en el nombre del archivo")); return;
+                    ui.toasts.add_toast(Toast::new("Incluye .docx o .odt en el nombre del archivo")); cancel_tab_close(&ui); return;
                 }
-                if save_to(&ui, &path) { done(); }
+                if save_to(&ui, &path) { done(); } else {cancel_tab_close(&ui);}
             }
-            Err(e) if e.matches(gtk::DialogError::Dismissed) || e.matches(gtk::DialogError::Cancelled) => {},
-            Err(e) => ui.toasts.add_toast(Toast::new(&format!("No se pudo abrir el guardado: {e}"))),
+            Err(e) if e.matches(gtk::DialogError::Dismissed) || e.matches(gtk::DialogError::Cancelled) => {cancel_tab_close(&ui);},
+            Err(e) => {ui.toasts.add_toast(Toast::new(&format!("No se pudo abrir el guardado: {e}")));cancel_tab_close(&ui);},
         }
     });
 }
@@ -1082,6 +1083,7 @@ fn build_tab(
         closing_confirmed: Cell::new(false),
         tab_page: RefCell::new(Some(tab_page.clone())), closed: Cell::new(false),
         restoring: Cell::new(false), autosave_error: RefCell::new(None),
+        pending_tab_close: RefCell::new(None),
         save_path: RefCell::new(None),
         source_path: RefCell::new(None),
         format_toolbar,
