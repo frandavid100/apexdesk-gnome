@@ -69,6 +69,7 @@ fn native_menu_stack(root:&impl IsA<gtk::Widget>)->Option<gtk::Stack>{
 fn mount_context_formats(ui:&Rc<Ui>,host:&gtk::PopoverMenu){
     // Official GtkPopoverMenu custom slots hold the existing widget trees.
     // Keep nonmodality constant, including when pinning inside a custom page.
+    host.add_css_class("format-popover");host.add_css_class("style-popover");
     host.set_autohide(false);ui.format_group.show(host.upcast_ref());
     ui.format_group.hosts.borrow_mut().retain(|p|p.upgrade().is_some());ui.format_group.hosts.borrow_mut().push(host.clone().upcast::<gtk::Popover>().downgrade());
     let mut entries=Vec::new();
