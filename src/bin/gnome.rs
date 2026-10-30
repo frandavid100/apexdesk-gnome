@@ -830,7 +830,8 @@ fn build_tab(
     sidebar_button.set_icon_name("sidebar-show-symbolic");
     sidebar_button.set_tooltip_text(Some("Mostrar u ocultar miniaturas (F9)"));
     header.pack_start(&sidebar_button);
-    let new_document=gtk::Button::from_icon_name("tab-new-symbolic");
+    let new_document=gtk::Button::with_label("+");
+    new_document.add_css_class("flat");
     new_document.set_tooltip_text(Some("Documento nuevo en otra pestaña (Ctrl+N)"));
     header.pack_start(&new_document);
 
@@ -1594,8 +1595,8 @@ fn build_tab(
     } else if sample_on_start { opened(&ui, sample_session(), "Documento de ejemplo"); }
     else {opened(&ui,Session::new(wordcraft_doc::Document::new()),"Documento nuevo");}
     window.present();
-    if std::env::args().any(|a|a=="--preferences-demo") {show_preferences(&window);}
-    if std::env::args().any(|a|a=="--search-demo") {show_search(&ui,&window,true);}
+    if std::env::args().any(|a|a=="--preferences-demo") {let w=window.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_preferences(&w));}
+    if std::env::args().any(|a|a=="--search-demo") {let w=window.clone();let u=ui.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||show_search(&u,&w,true));}
     {
         let ui=ui.clone();let app=app.clone();let host=host.clone();let parent=window.clone();
         glib::timeout_add_local_once(std::time::Duration::from_secs(3),move || {
