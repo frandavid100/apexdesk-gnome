@@ -1,7 +1,7 @@
-name: "WordCraft GNOME — fase 3C formato"
+name: "WordCraft GNOME — fase 3D guardado"
 on:
   push:
-    branches: [wordcraft-migration, wordcraft-viewer, adwaita-layout, wordcraft-selection, wordcraft-editing, wordcraft-formatting]
+    branches: [wordcraft-migration, wordcraft-viewer, adwaita-layout, wordcraft-selection, wordcraft-editing, wordcraft-formatting, wordcraft-saving]
   pull_request:
   workflow_dispatch:
 
@@ -41,7 +41,7 @@ jobs:
       - name: Identificar versión de prueba
         run: |
           ./target/debug/wordcraft-gnome --version | tee version.txt
-          grep -q "fase 3C" version.txt
+          grep -q "fase 3D" version.txt
       - name: Probar escritorio ancho, ventana estrecha, panel y tema oscuro
         run: |
           python -m pip install --disable-pip-version-check pillow==11.3.0
@@ -106,7 +106,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: wordcraft-gnome-fase3c-linux
+          name: wordcraft-gnome-fase3d-linux
           path: |
             wordcraft-gnome
             muestra-wordcraft.png
