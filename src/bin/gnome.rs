@@ -236,6 +236,62 @@ fn apply_user_edit(ui: &Rc<Ui>, edit: Edit) {
 }
 
 
+
+/// Apply formatting through WordCraft. A collapsed selection may change the
+/// pending formatting of future typing without mutating existing paragraphs.
+fn apply_user_format(ui: &Rc<Ui>, action: Format) {
+    let result = {
+        let mut state = ui.current.borrow_mut();
+        state.as_mut().map(|doc| {
+            let old_rev = doc.session.rev();
+            formatting::apply(&mut doc.session, action)
+                .map(|_| doc.session.rev() != old_rev)
+        })
+    };
+    match result {
+        Some(Ok(true)) => {
+            let first = !ui.dirty.get();
+            after_content_change(ui);
+            if first {
+                ui.toasts.add_toast(Toast::new(
+                    "El formato se aplica en memoria. Guardar llegará en otra fase.",
+                ));
+            }
+        },
+        Some(Ok(false)) => refresh_selection(ui),
+        Some(Err(err)) => ui.toasts.add_toast(Toast::new(&err)),
+        None => {},
+    }
+    ui.document_box.grab_focus();
+}
+
+/// Basic GTK/Adwaita menu for existing document and paragraph commands.
+/// Buttons keep the document selection intact; after clicking we return focus.
+fn format_menu(
+    title: &str,
+    options: &[(&str, Format)],
+    callbacks: &mut Vec<(gtk::Button, Format, gtk::Popover)>,
+) -> gtk::MenuButton {
+    let popover = gtk::Popover::new();
+    let column = gtk::Box::new(gtk::Orientation::Vertical, 3);
+    column.set_margin_top(8);
+    column.set_margin_bottom(8);
+    column.set_margin_start(8);
+    column.set_margin_end(8);
+    for (label, action) in options {
+        let button = gtk::Button::with_label(label);
+        button.add_css_class("flat");
+        button.set_halign(gtk::Align::Fill);
+        column.append(&button);
+        callbacks.push((button, *action, popover.clone()));
+    }
+    popover.set_child(Some(&column));
+    let menu = gtk::MenuButton::new();
+    menu.set_label(title);
+    menu.set_popover(Some(&popover));
+    menu
+}
+
 /// Never silently discard in-memory edits. Saving to disk comes in phase 3D.
 fn ask_discard(
     ui: &Rc<Ui>,
