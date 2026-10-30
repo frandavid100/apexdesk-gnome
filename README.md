@@ -101,3 +101,12 @@ permite volver. Incluye una muestra renderizada por WordCraft, actualizar
 según la selección, renombrar y eliminar estilos personalizados. Nuevo estilo
 abre un formulario interno para crearlo desde la selección. Los cambios se
 reflejan al momento; estas operaciones no abren ventanas adicionales.
+
+## Disposición de páginas y cabecera
+
+El visor coloca dos páginas consecutivas por fila cuando caben al zoom actual;
+al estrechar la ventana vuelve a una columna. Conserva las hojas blancas y
+el fondo de Adwaita. Las miniaturas tienen relleno simétrico y el número debajo.
+La cabecera muestra una sola línea, con ● antes del nombre si hay cambios
+pendientes; no incluye subtítulo ni contador de páginas. La vuelta del foco
+desde los menús al documento conserva el desplazamiento del visor.
