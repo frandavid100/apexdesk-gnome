@@ -718,7 +718,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         thumb.set_can_shrink(false);
         thumb.set_content_fit(gtk::ContentFit::Fill);
         thumb.set_halign(gtk::Align::Center);
-        thumb.set_hexpand(false);
+        thumb.set_hexpand(false);thumb.set_vexpand(false);
         thumb.set_size_request(
             (width * THUMB_SCALE).ceil() as i32,
             (height * THUMB_SCALE).ceil() as i32,
@@ -726,9 +726,9 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         thumb.add_css_class("thumbnail-sheet");
         let number = gtk::Label::new(Some(&(i + 1).to_string()));
         number.add_css_class("dim-label");
-        let content=gtk::Box::new(gtk::Orientation::Vertical,5);content.set_halign(gtk::Align::Center);
+        let content=gtk::Box::new(gtk::Orientation::Vertical,5);content.set_halign(gtk::Align::Center);content.set_vexpand(false);
         let button=gtk::Button::new();button.set_child(Some(&thumb));button.add_css_class("flat");button.add_css_class("thumbnail-button");
-        button.set_halign(gtk::Align::Center);button.set_valign(gtk::Align::Start);thumb.set_valign(gtk::Align::Center);
+        button.set_halign(gtk::Align::Center);button.set_valign(gtk::Align::Start);button.set_vexpand(false);thumb.set_valign(gtk::Align::Center);
         content.append(&button);content.append(&number);content.set_margin_top(7);content.set_margin_bottom(14);
         {
             let ui = ui.clone();
@@ -941,6 +941,7 @@ fn build_tab(
     viewport.set_scroll_to_focus(false);viewport.set_child(Some(&document_box));scroll.set_child(Some(&viewport));
 
     let thumbnails_box = gtk::Box::new(gtk::Orientation::Vertical, 0);
+    thumbnails_box.set_valign(gtk::Align::Start);
     let thumbnails_scroll = gtk::ScrolledWindow::new();
     thumbnails_scroll.set_policy(gtk::PolicyType::Never, gtk::PolicyType::Automatic);
     thumbnails_scroll.set_vexpand(true);
