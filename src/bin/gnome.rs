@@ -482,6 +482,7 @@ fn make_window(
     sidebar_on_start: bool,
     narrow_on_start: bool,
     dark_on_start: bool,
+    selection_demo: bool,
 ) {
     if dark_on_start {
         adw::StyleManager::default().set_color_scheme(adw::ColorScheme::ForceDark);
@@ -956,6 +957,20 @@ fn make_window(
         let ui = ui.clone();
         glib::idle_add_local_once(move || fit_width(&ui));
     }
+    if selection_demo {
+        let ui = ui.clone();
+        glib::timeout_add_local_once(std::time::Duration::from_millis(650), move || {
+            {
+                let mut value = ui.current.borrow_mut();
+                if let Some(doc) = value.as_mut() {
+                    let _ = doc.session.run("select.text", &serde_json::json!({
+                        "text": "The Open Studio Handbook"
+                    }));
+                }
+            }
+            refresh_selection(&ui);
+        });
+    }
 }
 
 fn main() {
@@ -967,13 +982,14 @@ fn main() {
     let sidebar_on_start = std::env::args().any(|arg| arg == "--sidebar");
     let narrow_on_start = std::env::args().any(|arg| arg == "--narrow");
     let dark_on_start = std::env::args().any(|arg| arg == "--dark");
+    let selection_demo = std::env::args().any(|arg| arg == "--select-demo");
     // Permite probar versiones simultáneas sin activar una ventana anterior por D-Bus.
     let app = Application::builder()
         .application_id(APP_ID)
         .flags(gio::ApplicationFlags::NON_UNIQUE)
         .build();
     app.connect_activate(move |app| {
-        make_window(app, sample_on_start, sidebar_on_start, narrow_on_start, dark_on_start)
+        make_window(app, sample_on_start, sidebar_on_start, narrow_on_start, dark_on_start, selection_demo)
     });
     app.run_with_args(&["wordcraft-gnome"]);
 }
