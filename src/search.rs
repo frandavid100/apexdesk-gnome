@@ -51,10 +51,30 @@ pub fn replace(s: &mut Session, hit: &Hit, with: &str) -> Result<(), String> {
     crate::editing::apply(s, if with.is_empty() {crate::editing::Edit::Delete} else {crate::editing::Edit::Insert(with.to_owned())}).map(|_|())
 }
 
+/// One native WordCraft command, therefore one undo step for the whole batch.
+pub fn replace_all(s:&mut Session,text:&str,with:&str,match_case:bool)->Result<usize,String>{
+    let hits=query(s,text,match_case)?;let Some(first)=hits.first()else{return Ok(0);};
+    selection::set_caret(s,&first.start,false)?;
+    let result=s.run("edit.replaceAll",&serde_json::json!({"text":text,"with":with,
+        "special":false,"regex":false,"wildcards":false,"matchCase":match_case}))
+        .map_err(|e|e.to_string())?;
+    Ok(result["replaced"].as_u64().unwrap_or(0)as usize)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
     use wordcraft_doc::{Document,StoryRef};
+    #[test]
+    fn bulk_replace_is_literal_case_sensitive_and_a_single_undo_step(){
+        let mut s=Session::new(Document::from_text("Hola hola hola"));
+        assert_eq!(replace_all(&mut s,"hola","$1 ^p",true).unwrap(),2);
+        assert_eq!(s.doc.plain_text(StoryRef::Body),"Hola $1 ^p $1 ^p");
+        s.run("edit.undo",&serde_json::json!({})).unwrap();assert_eq!(s.doc.plain_text(StoryRef::Body),"Hola hola hola");
+        assert_eq!(replace_all(&mut s,"hola","",false).unwrap(),3);
+        assert_eq!(s.doc.plain_text(StoryRef::Body),"  ");
+        s.run("edit.undo",&serde_json::json!({})).unwrap();assert_eq!(query(&mut s,"hola",false).unwrap().len(),3);
+    }
     #[test]
     fn results_include_tables_and_pages_beyond_the_first() {
         let mut s=crate::sample_session();
