@@ -4,7 +4,7 @@ fn format_chevron()->gtk::Widget {
     a.set_draw_func(|w,c,_,_|{let f=w.color();c.set_source_rgba(f.red()as f64,f.green()as f64,f.blue()as f64,f.alpha()as f64);c.set_line_width(1.6);c.set_line_cap(gtk::cairo::LineCap::Round);c.set_line_join(gtk::cairo::LineJoin::Round);c.move_to(4.5,6.5);c.line_to(8.0,10.0);c.line_to(11.5,6.5);let _=c.stroke();});a.upcast()
 }
 fn format_menu_label(menu:&gtk::MenuButton,name:&str){
-    let row=gtk::Box::new(gtk::Orientation::Horizontal,6);row.append(&gtk::Label::new(Some(name)));row.append(&format_chevron());menu.set_child(Some(&row));
+    menu.add_css_class("flat");let row=gtk::Box::new(gtk::Orientation::Horizontal,6);row.append(&gtk::Label::new(Some(name)));row.append(&format_chevron());menu.set_child(Some(&row));
 }
 fn close_format_popover(pop:&gtk::Popover){if pop.is_autohide(){pop.popdown();}}
 // GTK unrealizes an open popover when autohide changes. Reopen synchronously,
