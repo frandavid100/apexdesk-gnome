@@ -1105,6 +1105,7 @@ fn make_window(
             filters.append(&filter);
             dialog.set_filters(Some(&filters));
             let ui = ui.clone();
+            let chooser_parent = parent.clone();
             dialog.open(Some(&parent), None::<&gio::Cancellable>, move |result| {
                 let Ok(file) = result else { return };
                 let Some(path) = file.path() else {
@@ -1116,8 +1117,7 @@ fn make_window(
                         let label = path.file_name().map(|n| n.to_string_lossy().into_owned())
                             .unwrap_or_else(|| "Documento".to_string());
                         let next = ui.clone();
-                        let parent = parent.clone();
-                        ask_discard(&ui, &parent, move || opened(&next, session, &label));
+                        ask_discard(&ui, &chooser_parent, move || opened(&next, session, &label));
                     }
                     Err(err) => ui.toasts.add_toast(Toast::new(&err)),
                 }
