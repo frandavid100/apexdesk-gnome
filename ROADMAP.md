@@ -3,10 +3,21 @@
 Actualizada: 30 de octubre de 2026. Estado técnico en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Las fases siguientes son propuestas; no implican autorización para implementarlas todas.
 
-## Ahora: validar la última entrega
+## Ahora: mejorar los desplegables y validar la última entrega
 
 Recoger la prueba del usuario de formato avanzado y compilación optimizada en GNOME OS.
 Corregir los fallos que aparezcan antes de acumular funciones nuevas.
+
+## Estilos: rediseño autorizado
+
+El desplegable incluye todos los estilos de párrafo/texto del documento,
+búsqueda, aplicación por nombre y botón derecho para abrir una subpágina
+de gestión. Previsualización, actualizar, renombrar, eliminar y crear quedan
+dentro del propio desplegable. La fila superior vuelve a la página anterior.
+Orden acordado de la barra: Estilo → Párrafo → Texto.
+
+La revisión del resto de desplegables queda pendiente de diseño con el usuario.
+No continuar todavía con imágenes por haber quedado después de esta revisión.
 
 ## Tablas: implementadas, pendientes de prueba manual
 
