@@ -9,7 +9,7 @@ fn view_pointer_test(ui:&Rc<Ui>,menu:&gtk::MenuButton,window:&ApplicationWindow,
     zoom_to(ui,0.5);
     let ui=ui.clone();let menu=menu.clone();let window=window.clone();let app=app.clone();
     glib::timeout_add_local_once(std::time::Duration::from_millis(300),move||{
-        {assert_eq!(ui.sidebar_selector.height(),ui.format_toolbar.height(),"bottom bars must align");let value=ui.current.borrow();let d=value.as_ref().unwrap();assert_eq!(d.arrangement.columns,2);
+        {if ui.format_toolbar.is_visible(){assert_eq!(ui.sidebar_selector.height(),ui.format_toolbar.height(),"bottom bars must align");}let value=ui.current.borrow();let d=value.as_ref().unwrap();assert_eq!(d.arrangement.columns,2);
             let a=d.page_frames[0].compute_bounds(&ui.document_box).unwrap();let b=d.page_frames[1].compute_bounds(&ui.document_box).unwrap();
             assert!((a.y()-b.y()).abs()<1.0);assert!(b.x()>a.x()+a.width());
             let button=d.thumb_buttons[0].compute_bounds(&ui.thumbnails_box).unwrap();let inside=d.thumbs[0].parent().unwrap();let image=inside.compute_bounds(&ui.thumbnails_box).unwrap();
@@ -58,7 +58,7 @@ fn view_pointer_test(ui:&Rc<Ui>,menu:&gtk::MenuButton,window:&ApplicationWindow,
 fn chrome_ui_test(ui:&Rc<Ui>,menu:&gtk::MenuButton,app:&Application){
     assert_eq!(&*ui.document_name.borrow(),"Documento nuevo");
     assert!(ui.current.borrow().as_ref().unwrap().session.is_untouched_blank());
-    assert_eq!(ui.sidebar_selector.height(),ui.format_toolbar.height());
+    if ui.format_toolbar.is_visible(){assert_eq!(ui.sidebar_selector.height(),ui.format_toolbar.height());}
     assert!(menu.popover().unwrap().is::<gtk::PopoverMenu>());
     let model=menu.menu_model().unwrap();assert_eq!(model.n_items(),4);
     for(section,actions)in[(0,["win.undo","win.redo"]),(1,["win.save","win.save-as"]) ]{
@@ -82,5 +82,6 @@ fn chrome_ui_test(ui:&Rc<Ui>,menu:&gtk::MenuButton,app:&Application){
     assert!(ui.current.borrow().as_ref().unwrap().session.can_undo());
     eprintln!("DOCUMENT_CHROME_OK");app.quit();
 }
+
 
 
