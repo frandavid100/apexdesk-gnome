@@ -112,55 +112,6 @@ fn show_preferences(parent:&ApplicationWindow) {
     group.add(&row);page.add(&group);dialog.add(&page);dialog.present();
 }
 
-fn search_command(ui:&Rc<Ui>, query:&str, replacement:&str, command:&str, match_case:bool) -> Result<serde_json::Value,String> {
-    if query.is_empty() {return Err("Escribe el texto que quieres buscar".into());}
-    let (result,changed)={
-        let mut state=ui.current.borrow_mut();let doc=state.as_mut().ok_or("No hay documento")?;
-        let rev=doc.session.rev();
-        let result=doc.session.run(command,&serde_json::json!({"text":query,"with":replacement,"matchCase":match_case,"special":false})).map_err(|e|e.to_string())?;
-        (result,rev!=doc.session.rev())
-    };
-    if changed {after_content_change(ui);} else {refresh_selection(ui);caret_ensure_visible(ui);}
-    Ok(result)
-}
-
-fn show_search(ui:&Rc<Ui>, parent:&ApplicationWindow, replace:bool) {
-    let dialog=adw::Window::builder().transient_for(parent).modal(true).title("Buscar y reemplazar")
-        .default_width(420).default_height(280).build();
-    let toolbar=ToolbarView::new();let header=HeaderBar::new();toolbar.add_top_bar(&header);
-    let content=gtk::Box::new(gtk::Orientation::Vertical,12);
-    content.set_margin_top(18);content.set_margin_bottom(18);content.set_margin_start(18);content.set_margin_end(18);
-    let query=gtk::Entry::new();query.set_placeholder_text(Some("Buscar"));
-    let with=gtk::Entry::new();with.set_placeholder_text(Some("Reemplazar por"));with.set_visible(replace);
-    let case=gtk::CheckButton::with_label("Distinguir mayúsculas y minúsculas");
-    let status=gtk::Label::new(None);
-    content.append(&query);content.append(&with);content.append(&case);
-    let navigation=gtk::Box::new(gtk::Orientation::Horizontal,6);
-    for (label,command) in [("Anterior","edit.findPrevious"),("Siguiente","edit.findNext"),("Reemplazar","edit.replace"),("Reemplazar todo","edit.replaceAll")] {
-        let button=gtk::Button::with_label(label);
-        if command.starts_with("edit.replace") && !replace {continue;}
-        let ui=ui.clone();let q=query.clone();let w=with.clone();let c=case.clone();let status=status.clone();
-        button.connect_clicked(move |_| {
-            match search_command(&ui,&q.text(),&w.text(),command,c.is_active()) {
-                Ok(v)=>status.set_text(&format!("{} coincidencias",v["count"].as_u64().or_else(||v["remaining"].as_u64()).unwrap_or(0))),
-                Err(e)=>status.set_text(&e),
-            }
-        });navigation.append(&button);
-    }
-    content.append(&navigation);content.append(&status);toolbar.set_content(Some(&content));dialog.set_content(Some(&toolbar));
-    {
-        let ui=ui.clone();let c=case.clone();let status=status.clone();
-        query.connect_changed(move |q| {
-            if q.text().is_empty() {status.set_text("");return;}
-            match search_command(&ui,&q.text(),"","edit.find",c.is_active()) {
-                Ok(v)=>status.set_text(&format!("{} coincidencias",v["count"].as_u64().unwrap_or(0))),
-                Err(e)=>status.set_text(&e),
-            }
-        });
-    }
-    dialog.present();query.grab_focus();
-}
-
 fn install_autosave(ui:&Rc<Ui>) {
     let weak=Rc::downgrade(ui);let ticks=Rc::new(Cell::new(0u32));
     glib::timeout_add_local(std::time::Duration::from_secs(1),move || {
