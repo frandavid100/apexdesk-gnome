@@ -57,3 +57,5 @@ pub fn render_page(session: &mut Session, page_index: usize, scale: f32) -> Resu
 }
 
 pub mod viewer_layout;
+
+pub mod selection;
