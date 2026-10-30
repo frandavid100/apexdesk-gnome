@@ -148,13 +148,18 @@ with uniform 12px padding. These are host changes only, no engine updates.
 
 ## Pinned editing popovers
 
-`gnome_popover_pin.rs` supplies the fixed title/pin header for Style, Paragraph,
-Text and Table. Pin state belongs to each GTK popover, never the document.
-Actions dismiss through close_format_popover only when autohide is enabled.
-GTK unrealizes an already visible popover when autohide changes; the helper
-explicitly hides it before changing autohide, then reopens through its
-GtkMenuButton under a synchronous guard so show handlers do not reset subpages
-or forms. Calling popup alone leaves a visible but unmapped widget. Tests wait
-for GTK frames and assert is_mapped, not just is_visible. Pinning makes it nonmodal, permitting document focus while it stays open.
-Small foreground-colour Cairo chevrons match the downward menu indicator and do
-not require extra icon-theme assets. No WordCraft changes or dependencies.
+`gnome_popover_pin.rs` supplies a FormatPopoverGroup per tab and shared title,
+back and pin header for Style, Paragraph, Text and Table. Only one panel is
+visible; opening another hides its predecessor and inherits the group's pin.
+Every editing popover is nonmodal from construction. Never change autohide on
+a mapped popup: GTK recreates its surface and visibly blinks even if remapped
+synchronously. Pinning changes only the host's dismissal policy. A non-claiming
+window capture gesture dismisses unpinned panels on outside clicks, excluding
+their popup surfaces and menu-button anchors. GTK still handles explicit menu
+button close and Escape. Applying dismisses only when the shared pin is off.
+The single header owns a replaceable back callback (cloned before invocation to
+avoid RefCell reentrancy); subpages no longer insert another navigation row.
+Paragraph split controls use an independent native image-button with a small
+chevron, not a flat linked button. No WordCraft changes or dependencies.
+Tests wait for GTK frames, assert mapped surfaces, no hide signal/surface
+replacement during pin toggles, and exclusive switching with pin inheritance.
