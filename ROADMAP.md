@@ -93,4 +93,4 @@ Entrega correctiva validada automáticamente en CI 41137708372, código 7cd6deba
 
 ## Ajuste autorizado: barra adaptable y submenús contenidos
 
-En curso: controles con iconos en cabecera cuando hay espacio; mismos controles abajo en estrecho. Estilo/Párrafo/Texto se gestionan también dentro del contexto, con vuelta atrás y chincheta, compartiendo widgets y acciones. Transición nativa de deslizamiento y tamaño en los tres. Texto avanzado pasa a subpáginas. Pendiente de validación completa; no reemplazar la descarga previa hasta pasar pruebas y revisar capturas.
+Implementados y validados: controles con iconos en cabecera cuando hay espacio; mismos controles abajo en estrecho. Estilo/Párrafo/Texto se gestionan también dentro del contexto, con vuelta atrás y chincheta, compartiendo widgets y acciones. Transición nativa de deslizamiento y tamaño en los tres. Texto avanzado pasa a subpáginas. Validación completa en CI 41144295677, código c744dac3f553b0304e631dd80dde7fbe3669e1cd, con capturas revisadas. Pendiente de prueba manual del usuario.
