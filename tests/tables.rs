@@ -28,7 +28,7 @@ fn tab_navigation_adds_a_row_only_at_the_end(){
  assert_eq!(table(&s).rows.len(),2);assert_eq!(s.sel.focus.path.cell().unwrap().1,1);
  run(&mut s,"edit.undo",json!({}));assert_eq!(table(&s).rows.len(),1);
  assert!(tables::navigate(&mut s,false,true).unwrap());
- assert!(s.doc.plain_text(StoryRef::Body).contains('\t'));
+ assert!(s.doc.para_at(&s.sel.focus).unwrap().plain_text().contains('\t'));
 }
 #[test]
 fn dragged_empty_cells_highlight_merge_split_and_undo(){
