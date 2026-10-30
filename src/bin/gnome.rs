@@ -60,6 +60,100 @@ fn texture(img: wordcraft_gnome::PageImage) -> gdk::MemoryTexture {
     )
 }
 
+
+fn refresh_selection(ui: &Rc<Ui>) {
+    let snapshot = {
+        let Ok(mut value) = ui.current.try_borrow_mut() else { return };
+        let Some(doc) = value.as_mut() else { return };
+        selection::geometry(&mut doc.session)
+    };
+    *ui.selection_data.borrow_mut() = snapshot;
+    if let Ok(value) = ui.current.try_borrow() {
+        if let Some(doc) = value.as_ref() {
+            for area in &doc.selection_areas { area.queue_draw(); }
+        }
+    }
+}
+
+/// Compute actual per-page widget bounds in GTK coordinates, then convert to
+/// WordCraft points. This remains correct after scrolling, zooming and opening
+/// or closing the sidebar.
+fn pos_at_canvas(ui: &Rc<Ui>, x: f64, y: f64) -> Option<Pos> {
+    let mut value = ui.current.borrow_mut();
+    let doc = value.as_mut()?;
+    let (page, rect, _) = doc.page_frames.iter().enumerate()
+        .filter_map(|(i, frame)| {
+            let rect = frame.compute_bounds(&ui.document_box)?;
+            let min_x = f64::from(rect.x());
+            let min_y = f64::from(rect.y());
+            let max_x = min_x + f64::from(rect.width());
+            let max_y = min_y + f64::from(rect.height());
+            let dx = (min_x - x).max(0.0).max(x - max_x);
+            let dy = (min_y - y).max(0.0).max(y - max_y);
+            Some((i, rect, (dx * dx + dy * dy).sqrt()))
+        })
+        .min_by(|a, b| a.2.total_cmp(&b.2))?;
+    let z = f64::from(doc.zoom);
+    let (w, h) = doc.sizes[page];
+    let px = ((x - f64::from(rect.x())) / z).clamp(0.0, f64::from(w)) as f32;
+    let py = ((y - f64::from(rect.y())) / z).clamp(0.0, f64::from(h)) as f32;
+    selection::hit(&mut doc.session, page, px, py)
+}
+
+fn caret_ensure_visible(ui: &Rc<Ui>) {
+    let target = {
+        let Ok(mut value) = ui.current.try_borrow_mut() else { return };
+        let Some(doc) = value.as_mut() else { return };
+        let layout = doc.session.layout();
+        layout.caret_on(&doc.session.sel.focus, doc.session.page_hint)
+            .and_then(|c| doc.page_frames.get(c.page)
+                .and_then(|frame| frame.compute_bounds(&ui.document_box))
+                .map(|r| f64::from(r.y()) + f64::from(c.top * doc.zoom)))
+    };
+    if let Some(y) = target {
+        let adjustment = ui.scroll.vadjustment();
+        let top = adjustment.value();
+        let bottom = top + adjustment.page_size();
+        if y < top + 24.0 {
+            adjustment.set_value((y - 32.0).max(0.0));
+        } else if y > bottom - 32.0 {
+            adjustment.set_value((y - adjustment.page_size() + 60.0).max(0.0));
+        }
+    }
+}
+
+fn selected_command(ui: &Rc<Ui>, action: &str, extend: bool) {
+    let result = {
+        let mut value = ui.current.borrow_mut();
+        value.as_mut().map(|doc| {
+            if action == "select-all" {
+                selection::select_all(&mut doc.session)
+            } else {
+                selection::move_caret(&mut doc.session, action, extend)
+            }
+        })
+    };
+    if let Some(Err(e)) = result { ui.toasts.add_toast(Toast::new(&e)); }
+    refresh_selection(ui);
+    caret_ensure_visible(ui);
+}
+
+fn copy_selection(ui: &Rc<Ui>) {
+    let result = {
+        let mut value = ui.current.borrow_mut();
+        value.as_mut().map(|doc| selection::copy_text(&mut doc.session))
+    };
+    match result {
+        Some(Ok(text)) if !text.is_empty() => {
+            if let Some(display) = gdk::Display::default() {
+                display.clipboard().set_text(&text);
+            }
+        }
+        Some(Err(e)) => ui.toasts.add_toast(Toast::new(&e)),
+        _ => (),
+    }
+}
+
 fn clear_box(parent: &gtk::Box) {
     while let Some(child) = parent.first_child() {
         parent.remove(&child);
