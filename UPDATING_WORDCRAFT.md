@@ -9,7 +9,8 @@ There is no forked engine code, egui patch or copied renderer to merge.
 - `selection.rs`, `editing.rs`, `formatting.rs`, `saving.rs`, `tables.rs`: command adapters.
 - `preferences.rs`: GNOME host settings; no engine internals.
 - `gnome_host.rs`: tab lifecycle, recovery scheduling and native host dialogs.
-- `gnome_format_panels.rs`: native advanced formatting via public engine commands.
+- `gnome_format_panels.rs`: native advanced text/paragraph formatting via public engine commands.
+- `styles.rs`, `gnome_styles.rs`: style command adapter, isolated previews and inline popover pages.
 - `gnome_tables.rs`: native insertion, contextual table controls and properties.
 - `bin/gnome.rs`: GTK/libadwaita document view and input.
 
@@ -64,3 +65,17 @@ WordCraft owns rectangular cell selections; highlights use public layout boxes.
 Table regressions cover structure, undo/redo, selected-column shading, empty
 cell selection, merges/splits, DOCX/ODT common properties and multipage rendering.
 CI also sends real Tab/Shift+Tab and text input under Xvfb with xdotool.
+
+## Style popover
+
+The list reads every paragraph/character style from the current stylesheet.
+The host keeps list, detail and name-entry pages in one GtkPopover/GtkStack.
+Preview renders a fresh sample Session with a cloned stylesheet, with proofing
+disabled; it never runs preview commands on the live document. Its small
+premultiplied raster is cropped for display. CRUD uses public commands, with
+client-side empty/duplicate-name checks and built-in deletion disabled.
+Creation supplies the current paragraph style as basedOn.
+
+CI tests preview immutability and style operations, then exercises real widget
+callbacks for creation, rename, update, deletion, navigation and filtering.
+It asserts that no additional application window is opened.
