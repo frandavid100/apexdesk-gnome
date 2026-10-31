@@ -445,7 +445,7 @@ jobs:
       - name: Install Flatpak and desktop validation tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends flatpak desktop-file-utils appstream xvfb xauth scrot libgtk-3-bin librsvg2-common fuse3 python3-gi xdotool xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
+          sudo apt-get install -y --no-install-recommends flatpak desktop-file-utils appstream xvfb xauth scrot libgtk-3-bin librsvg2-common fuse3 python3-gi poppler-utils xdotool xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
           # Ubuntu runner AppArmor restricts bubblewrap's user namespaces by default.
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Validate desktop metadata
