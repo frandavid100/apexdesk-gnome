@@ -71,10 +71,11 @@ fn chrome_ui_test(ui:&Rc<Ui>,menu:&gtk::MenuButton,app:&Application){
     let add=model.item_link(2,"submenu").unwrap();assert_eq!(add.n_items(),2);
     assert_eq!(add.item_attribute_value(0,"action",None).unwrap().get::<String>().unwrap(),"win.insert-table");
     assert_eq!(add.item_attribute_value(1,"action",None).unwrap().get::<String>().unwrap(),"win.insert-picture");
-    let extra=model.item_link(3,"section").unwrap();assert_eq!(extra.n_items(),2);
+    let extra=model.item_link(3,"section").unwrap();assert_eq!(extra.n_items(),3);
     assert_eq!(extra.item_attribute_value(0,"action",None).unwrap().get::<String>().unwrap(),"win.document-properties");
     assert_eq!(extra.item_attribute_value(1,"action",None).unwrap().get::<String>().unwrap(),"win.export-pdf");
-    let h=ui.host.upgrade().unwrap();assert!(h.window.lookup_action("example").is_none());
+    assert_eq!(extra.item_attribute_value(2,"action",None).unwrap().get::<String>().unwrap(),"win.print");
+    let h=ui.host.upgrade().unwrap();assert!(h.window.lookup_action("print").unwrap().is_enabled());assert!(h.window.lookup_action("example").is_none());
     assert!(!h.window.lookup_action("undo").unwrap().is_enabled());
     apply_user_edit(ui,Edit::Insert("Prueba".into()));refresh_main_actions(&h);
     assert!(h.window.lookup_action("undo").unwrap().is_enabled());

@@ -323,6 +323,12 @@ jobs:
           echo "Después de strip:"
           ls -lh wordcraft-gnome
           test -s wordcraft-gnome
+      - name: Show GTK failure details
+        if: failure()
+        run: |
+          for file in keyboard-ui.log document-chrome.log adaptive-tools.log styles-popover.log paragraph-popover.log popover-pin.log; do
+            if test -f "$file"; then tail -n 60 "$file"; fi
+          done
       - uses: actions/upload-artifact@v4
         if: always()
         with:
