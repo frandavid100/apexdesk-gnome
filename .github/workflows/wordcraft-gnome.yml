@@ -60,6 +60,13 @@ jobs:
           fi
       - name: Compilar lector GNOME
         run: cargo build --release --locked --features gui --bin wordcraft-gnome
+      - name: GTK ownership and memory regression
+        run: |
+          set -o pipefail
+          XDG_CONFIG_HOME=$(mktemp -d) XDG_STATE_HOME=$(mktemp -d) GSK_RENDERER=cairo xvfb-run -a timeout 150s ./target/release/wordcraft-gnome --lifecycle-ui-test 2>&1 | tee lifecycle-fixed.log
+          grep -q LIFECYCLE_UI_OK lifecycle-fixed.log
+          XDG_CONFIG_HOME=$(mktemp -d) XDG_STATE_HOME=$(mktemp -d) GSK_RENDERER=cairo xvfb-run -a timeout 150s ./target/release/wordcraft-gnome --lifecycle-dialog-test 2>&1 | tee lifecycle-dialogs.log
+          grep -q LIFECYCLE_UI_OK lifecycle-dialogs.log
       - name: Keyboard navigation and native print portal handoff
         run: |
           sudo apt-get install -y --no-install-recommends python3-gi dbus-x11
@@ -79,7 +86,7 @@ jobs:
       - name: Identificar versión de prueba
         run: |
           ./target/release/wordcraft-gnome --version | tee version.txt
-          grep -q "Leaf 0.1.0-alpha.5" version.txt
+          grep -q "Leaf 0.1.0-alpha.6" version.txt
       - name: Probar escritorio ancho, ventana estrecha, panel y tema oscuro
         run: |
           python -m pip install --disable-pip-version-check pillow==11.3.0
@@ -334,6 +341,7 @@ jobs:
         with:
           name: wordcraft-gnome-fase3d-linux
           path: |
+            lifecycle-*.log
             keyboard-ui.log
             print-*.log
             print-*.pdf
@@ -455,7 +463,7 @@ jobs:
       - name: Download previous alpha for upgrade verification
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release download v0.1.0-alpha.4 --pattern 'Leaf-0.1.0-alpha.4-x86_64.flatpak' --dir prior-release
+        run: gh release download v0.1.0-alpha.5 --pattern 'Leaf-0.1.0-alpha.5-x86_64.flatpak' --dir prior-release
       - name: Build and install the bundle
         run: bash packaging/build-bundle.sh native-artifact/wordcraft-gnome
       - name: Exercise the installed sandbox and desktop launcher
@@ -484,7 +492,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v0.1.0-alpha.5 dist/Leaf-0.1.0-alpha.5-x86_64.flatpak dist/SHA256SUMS dist/INSTALL.md dist/source-commit.txt dist/runtime.txt dist/runtime-commit.txt dist/flatpak-metadata.txt dist/leaf-installed.png dist/flatpak-smoke.log --target "$GITHUB_SHA" --title 'Leaf 0.1.0-alpha.5' --prerelease --notes-file packaging/RELEASE_NOTES.md
+          gh release create v0.1.0-alpha.6 dist/Leaf-0.1.0-alpha.6-x86_64.flatpak dist/SHA256SUMS dist/INSTALL.md dist/source-commit.txt dist/runtime.txt dist/runtime-commit.txt dist/flatpak-metadata.txt dist/leaf-installed.png dist/flatpak-smoke.log --target "$GITHUB_SHA" --title 'Leaf 0.1.0-alpha.6' --prerelease --notes-file packaging/RELEASE_NOTES.md
 
   lifecycle-baseline:
     if: contains(github.event.head_commit.message, '[lifecycle-baseline]')

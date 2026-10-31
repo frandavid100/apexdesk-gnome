@@ -1,5 +1,13 @@
+// Explicit window owners; signal handlers only borrow their Workspace weakly.
+thread_local! {static WORKSPACES:RefCell<Vec<Rc<Workspace>>>=const{RefCell::new(Vec::new())};}
+fn shutdown_workspaces(){
+    let owners=WORKSPACES.with(|v|std::mem::take(&mut *v.borrow_mut()));
+    for host in owners {for(_,ui)in host.docs.borrow().iter(){release_document(ui);}host.allow_close.set(true);host.window.destroy();}
+}
+fn forget_workspace(host:&Rc<Workspace>){WORKSPACES.with(|v|v.borrow_mut().retain(|h|!Rc::ptr_eq(h,host)));}
 fn release_document(ui:&Rc<Ui>) {
-    ui.closed.set(true);
+    if ui.closed.replace(true){return;}
+    if let Some(source)=ui.autosave_source.borrow_mut().take(){source.remove();}
     ui.printing.cancel();
     let current=ui.current.borrow_mut().take();
     if let Some(mut doc)=current {doc.session.finish_recovery();}
@@ -45,11 +53,13 @@ fn make_window(app: &Application, sample: bool, sidebar: bool, narrow: bool, dar
     let overview=adw::TabOverview::new();overview.set_view(Some(&tabs));overview.set_child(Some(&tabs));overview.set_enable_new_tab(false);
     window.set_content(Some(&overview));
     let host = Rc::new(Workspace {window:window.clone(),tabs,overview,docs:RefCell::new(Vec::new()),allow_close:Cell::new(false)});
+    WORKSPACES.with(|v|v.borrow_mut().push(host.clone()));
     lifecycle_track(&host);
+    {let weak=Rc::downgrade(&host);window.connect_destroy(move |_|{if let Some(host)=weak.upgrade(){for(_,ui)in host.docs.borrow().iter(){release_document(ui);}forget_workspace(&host);}});}
     setup_main_actions(&host,app);
     {
         let host2 = host.clone();
-        host.tabs.connect_close_page(move |view, page| {
+        host.tabs.connect_close_page(glib::clone!(#[weak] host2, #[upgrade_or] glib::Propagation::Proceed, move |view, page| {
             let ui = host2.docs.borrow().iter().find(|(p,_)| p == page).map(|(_,ui)|ui.clone());
             if let Some(ui) = ui {
                 let view = view.clone(); let page = page.clone(); let next = ui.clone();
@@ -61,24 +71,24 @@ fn make_window(app: &Application, sample: bool, sidebar: bool, narrow: bool, dar
                 });
                 glib::Propagation::Stop
             } else { glib::Propagation::Proceed }
-        });
+        }));
     }
     {
         let host2 = host.clone();
-        host.tabs.connect_page_detached(move |view,page,_| {
+        host.tabs.connect_page_detached(glib::clone!(#[weak] host2, move |view,page,_| {
             host2.docs.borrow_mut().retain(|(p,_)|p != page);
             if view.n_pages() == 0 {host2.allow_close.set(true);host2.window.close();}
-        });
+        }));
     }
     {
         let host2=host.clone();
-        window.connect_close_request(move |_| {
-            if host2.allow_close.get() {glib::Propagation::Proceed}
+        window.connect_close_request(glib::clone!(#[weak] host2, #[upgrade_or] glib::Propagation::Proceed, move |_| {
+            if host2.allow_close.get() {forget_workspace(&host2);glib::Propagation::Proceed}
             else {
                 for (_,ui) in host2.docs.borrow().iter(){ui.closing_confirmed.set(false);}
                 close_workspace(&host2);glib::Propagation::Stop
             }
-        });
+        }));
     }
     build_tab(app,&host,sample,sidebar,narrow,dark,select_demo,edit_demo,format_demo,initial);
     if std::env::args().any(|a|a=="--tabs-test") {
@@ -110,17 +120,17 @@ fn show_preferences(parent:&ApplicationWindow) {
     row.set_model(Some(&gtk::StringList::new(&["Desactivado","Archivo de recuperación","En el propio archivo"])));
     row.set_selected(wordcraft_gnome::preferences::autosave_mode());
     let dialog2=dialog.clone();
-    row.connect_selected_notify(move |row| {
+    row.connect_selected_notify(glib::clone!(#[weak] dialog2, move |row| {
         if let Err(e)=wordcraft_gnome::preferences::set_autosave_mode(row.selected()) {
             dialog2.add_toast(Toast::new(&format!("No se guardaron las preferencias: {e}")));
         }
-    });
+    }));
     group.add(&row);page.add(&group);dialog.add(&page);dialog.present();
 }
 
 fn install_autosave(ui:&Rc<Ui>) {
     let weak=Rc::downgrade(ui);let ticks=Rc::new(Cell::new(0u32));
-    glib::timeout_add_local(std::time::Duration::from_secs(1),move || {
+    let source=glib::timeout_add_local(std::time::Duration::from_secs(1),move || {
         let Some(ui)=weak.upgrade() else{return glib::ControlFlow::Break};
         if ui.closed.get() {return glib::ControlFlow::Break;}
         let mode=wordcraft_gnome::preferences::autosave_mode();
@@ -158,6 +168,7 @@ fn install_autosave(ui:&Rc<Ui>) {
         } else {ui.autosave_error.replace(None);}
         glib::ControlFlow::Continue
     });
+    ui.autosave_source.replace(Some(source));
 }
 
 fn sync_tab(ui:&Rc<Ui>) {
@@ -175,15 +186,16 @@ fn show_recovery(ui:&Rc<Ui>, parent:&ApplicationWindow, app:&Application, host:&
     if records.is_empty(){list.append(&gtk::Label::new(Some("No hay documentos pendientes de recuperar.")));}
     for record in records {
         let button=gtk::Button::with_label(&record.name);let app=app.clone();let host=host.clone();let dialog=dialog.clone();
-        button.connect_clicked(move |_| {
+        button.connect_clicked(glib::clone!(#[weak] app, #[weak] host, #[weak] dialog, move |_| {
             blank_tab(&app,&host);
             if let Some((_,ui))=host.docs.borrow().last() {
                 let mut state=ui.current.borrow_mut();if let Some(doc)=state.as_mut() {
                     doc.session.recovery_tick();
-                    let id=record.id.clone();let ui2=ui.clone();
+                    let id=record.id.clone();let ui2=Rc::downgrade(ui);
                     
                     let attempts=Cell::new(0u32);
                     glib::timeout_add_local(std::time::Duration::from_millis(100),move || {
+                        let Some(ui2)=ui2.upgrade()else{return glib::ControlFlow::Break;};
                         if ui2.closed.get(){return glib::ControlFlow::Break;}
                         let mut state=ui2.current.borrow_mut();
                         let Some(doc)=state.as_mut() else{return glib::ControlFlow::Break;};
@@ -202,7 +214,7 @@ fn show_recovery(ui:&Rc<Ui>, parent:&ApplicationWindow, app:&Application, host:&
                 }
             }
             dialog.close();
-        });list.append(&button);
+        }));list.append(&button);
     }
     toolbar.set_content(Some(&list));dialog.set_content(Some(&toolbar));dialog.present();
 }

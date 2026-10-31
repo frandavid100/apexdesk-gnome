@@ -63,7 +63,7 @@ fn install_text_pages(ui:&Rc<Ui>,pop:&gtk::Popover,root:&gtk::Box,_inline:&gtk::
     let stack=gtk::Stack::new();stack.set_transition_type(gtk::StackTransitionType::SlideLeftRight);stack.set_interpolate_size(true);stack.set_vhomogeneous(false);stack.set_hhomogeneous(false);
     let main=gtk::Box::new(gtk::Orientation::Vertical,8);let mut child=root.first_child().and_then(|w|w.next_sibling()).and_then(|w|w.next_sibling());while let Some(w)=child{child=w.next_sibling();root.remove(&w);main.append(&w);}
     let detail=gtk::Box::new(gtk::Orientation::Vertical,6);let scroll=gtk::ScrolledWindow::new();scroll.set_policy(gtk::PolicyType::Never,gtk::PolicyType::Automatic);scroll.set_max_content_height(420);scroll.set_propagate_natural_height(true);scroll.set_child(Some(&detail));stack.add_named(&main,Some("main"));stack.add_named(&scroll,Some("detail"));root.append(&stack);root.set_width_request(330);
-    let s=Rc::new(TextTools{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,detail,header:header.clone()});let weak=Rc::downgrade(&s);more.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.page("options");}});let state=s.clone();pop.connect_show(move |_|{if !state.ui.upgrade().is_some_and(|u|u.format_reflowing.get()){state.home();}});s.home();s
+    let s=Rc::new(TextTools{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,detail,header:header.clone()});let weak=Rc::downgrade(&s);more.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.page("options");}});let state=s.clone();pop.connect_show(glib::clone!(#[weak] state, move |_|{if !state.ui.upgrade().is_some_and(|u|u.format_reflowing.get()){state.home();}}));s.home();s
 }
 
 fn adaptive_ui_test(ui:&Rc<Ui>,window:&ApplicationWindow,app:&Application){

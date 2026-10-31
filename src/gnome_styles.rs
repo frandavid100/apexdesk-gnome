@@ -106,7 +106,7 @@ fn install_style_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<StylePopover>{
     let state=Rc::new(StylePopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,list,search:search.clone(),detail,form,message,header});
     let weak=Rc::downgrade(&state);search.connect_search_changed(move|_|{if let Some(s)=weak.upgrade(){s.refresh_list();}});
     let weak=Rc::downgrade(&state);create.connect_clicked(move|_|{if let Some(s)=weak.upgrade(){s.show_form(None);}});
-    let s=state.clone();pop.connect_show(move|_|{if !s.ui.upgrade().is_some_and(|u|u.format_reflowing.get()){s.main();}});menu.set_popover(Some(&pop));state
+    let s=state.clone();pop.connect_show(glib::clone!(#[weak] s, move|_|{if !s.ui.upgrade().is_some_and(|u|u.format_reflowing.get()){s.main();}}));menu.set_popover(Some(&pop));state
 }
 
 // Exercise actual widget callbacks on every subpage without opening a dialog.

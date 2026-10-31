@@ -33,7 +33,7 @@ fn choose_picture(ui:&Rc<Ui>,parent:&ApplicationWindow,replace:bool){
     let filter=gtk::FileFilter::new();filter.set_name(Some("Imágenes (PNG, JPEG, GIF, WebP, BMP, TIFF)"));
     for mime in ["image/png","image/jpeg","image/gif","image/webp","image/bmp","image/tiff"]{filter.add_mime_type(mime);}
     let filters=gio::ListStore::new::<gtk::FileFilter>();filters.append(&filter);dialog.set_filters(Some(&filters));
-    let ui=ui.clone();dialog.open(Some(parent),None::<&gio::Cancellable>,move|result|match result{
+    let ui=ui.clone();dialog.open(Some(parent),None::<&gio::Cancellable>,glib::clone!(#[weak] ui, move|result|match result{
         Ok(file)=>{
             if ui.closed.get()||document_identity(&ui)!=identity{ui.toasts.add_toast(Toast::new("El documento ha cambiado; vuelve a elegir la imagen"));return;}
             let Some(path)=file.path()else{ui.toasts.add_toast(Toast::new("Elige un archivo local"));return;};
@@ -45,7 +45,7 @@ fn choose_picture(ui:&Rc<Ui>,parent:&ApplicationWindow,replace:bool){
         },
         Err(e)if e.matches(gtk::DialogError::Cancelled)||e.matches(gtk::DialogError::Dismissed)=>{},
         Err(e)=>ui.toasts.add_toast(Toast::new(&e.to_string())),
-    });
+    }));
 }
 fn install_picture_controls(ui:&Rc<Ui>,parent:&ApplicationWindow,bar:&gtk::Box)->(gtk::MenuButton,Rc<PicturePopover>){
     let menu=gtk::MenuButton::new();format_menu_label(&menu,"Imagen");menu.set_direction(gtk::ArrowType::Up);bar.append(&menu);
@@ -73,7 +73,7 @@ fn install_picture_controls(ui:&Rc<Ui>,parent:&ApplicationWindow,bar:&gtk::Box)-
     for(is_width,n)in[(true,&state.width),(false,&state.height)]{let weak=Rc::downgrade(&state);n.connect_value_changed(move|n|{let Some(s)=weak.upgrade()else{return;};if s.syncing.get(){return;}s.width_changed.set(is_width);
         if s.lock.is_active(){if let Some((_,w,h))=s.target.borrow().as_ref(){s.syncing.set(true);if is_width{s.height.set_value(n.value()* *h as f64/ *w as f64);}else{s.width.set_value(n.value()* *w as f64/ *h as f64);}s.syncing.set(false);}}
     });}
-    {let weak=Rc::downgrade(&state);apply.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.width.update();s.height.update();let (w,h,lock,by_width)=(s.width.value()as f32*PT_PER_MM as f32,s.height.value()as f32*PT_PER_MM as f32,s.lock.is_active(),s.width_changed.get());s.execute(move|session|pictures::resize(session,w,h,lock,by_width));}});}
+    {let weak=Rc::downgrade(&state);apply.connect_clicked(glib::clone!(#[weak] ui, move |_|{if let Some(s)=weak.upgrade(){s.width.update();s.height.update();let (w,h,lock,by_width)=(s.width.value()as f32*PT_PER_MM as f32,s.height.value()as f32*PT_PER_MM as f32,s.lock.is_active(),s.width_changed.get());s.execute(move|session|pictures::resize(session,w,h,lock,by_width));}}));}
     {let weak=Rc::downgrade(&state);original.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.execute(pictures::original);}});}
     {let weak=Rc::downgrade(&state);delete.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.execute(pictures::delete);}});}
     for(b,replacing)in[(insert,false),(replace,true)]{let weak=Rc::downgrade(ui);let parent=parent.downgrade();b.connect_clicked(move |_|{if let(Some(ui),Some(parent))=(weak.upgrade(),parent.upgrade()){choose_picture(&ui,&parent,replacing);}});}
@@ -107,20 +107,20 @@ fn show_document_properties(ui:&Rc<Ui>,parent:&ApplicationWindow)->DocumentPrope
     {let width=width.downgrade();let height=height.downgrade();let syncing=syncing.clone();orientation.connect_selected_notify(move|r|{let(Some(width),Some(height))=(width.upgrade(),height.upgrade())else{return;};let (w,h)=(width.value(),height.value());if (r.selected()==1&&w<h)||(r.selected()==0&&w>h){syncing.set(true);width.set_value(h);height.set_value(w);syncing.set(false);}});}
     for n in [&width,&height]{let sizes=sizes.downgrade();let orientation=orientation.downgrade();let width=width.downgrade();let height=height.downgrade();let syncing=syncing.clone();n.connect_value_changed(move |_|{if !syncing.get(){let(Some(sizes),Some(orientation),Some(width),Some(height))=(sizes.upgrade(),orientation.upgrade(),width.upgrade(),height.upgrade())else{return;};sizes.set_selected(0);orientation.set_selected(if width.value()>height.value(){1}else{0});}});}
     {let weak=window.downgrade();cancel.connect_clicked(move |_|{if let Some(w)=weak.upgrade(){w.close();}});}
-    {let ui=ui.clone();let window=window.downgrade();let fields=[width.clone(),height.clone(),top.clone(),bottom.clone(),left.clone(),right.clone()];apply.connect_clicked(move |_|{
+    {let ui=ui.clone();let window=window.downgrade();let fields=[width.clone(),height.clone(),top.clone(),bottom.clone(),left.clone(),right.clone()];apply.connect_clicked(glib::clone!(#[weak] ui, move |_|{
         if ui.closed.get()||document_identity(&ui)!=identity{message.set_text("El documento ha cambiado. Cierra y vuelve a abrir las propiedades.");message.set_visible(true);return;}
         for n in &fields{n.update();}let values=fields.each_ref().map(|n|n.value()as f32*PT_PER_MM as f32);
         let setup=PageSetup{width:values[0],height:values[1],top:values[2],bottom:values[3],left:values[4],right:values[5]};
         let result={let mut value=ui.current.borrow_mut();document_properties::apply(&mut value.as_mut().unwrap().session,setup,scope.selected()==0)};
         match result {Ok(changed)=>{if changed{after_content_change(&ui);}if let Some(w)=window.upgrade(){w.close();}},Err(e)=>{message.set_text(&e);message.set_visible(true);}}
-    });}
+    }));}
     window.present();DocumentProperties{window,width,height,top,bottom,left,right,apply}
 }
 fn export_pdf_dialog(ui:&Rc<Ui>,parent:&ApplicationWindow){
     let dialog=gtk::FileDialog::new();dialog.set_title("Exportar a PDF");dialog.set_modal(true);
     let filter=gtk::FileFilter::new();filter.set_name(Some("Documento PDF (.pdf)"));filter.add_pattern("*.pdf");let filters=gio::ListStore::new::<gtk::FileFilter>();filters.append(&filter);dialog.set_filters(Some(&filters));
     let name=ui.document_name.borrow().clone();let stem=Path::new(&name).file_stem().unwrap_or_default().to_string_lossy();dialog.set_initial_name(Some(&format!("{stem}.pdf")));
-    let identity=document_identity(ui);let ui=ui.clone();dialog.save(Some(parent),None::<&gio::Cancellable>,move|result|match result{
+    let identity=document_identity(ui);let ui=ui.clone();dialog.save(Some(parent),None::<&gio::Cancellable>,glib::clone!(#[weak] ui, move|result|match result{
         Ok(file)=>{
             if ui.closed.get()||document_identity(&ui)!=identity{ui.toasts.add_toast(Toast::new("El documento ha cambiado; vuelve a exportarlo"));return;}
             let Some(path)=file.path()else{ui.toasts.add_toast(Toast::new("Elige un archivo local"));return;};
@@ -131,7 +131,7 @@ fn export_pdf_dialog(ui:&Rc<Ui>,parent:&ApplicationWindow){
                 if let Some(ui)=weak.upgrade(){if !ui.closed.get(){let text=match result{Ok(Ok(()))=>"PDF exportado".to_string(),Ok(Err(e))=>e,Err(_)=>"No se pudo exportar el PDF".to_string()};ui.toasts.add_toast(Toast::new(&text));}}
             });
         },Err(e)if e.matches(gtk::DialogError::Cancelled)||e.matches(gtk::DialogError::Dismissed)=>{},Err(e)=>ui.toasts.add_toast(Toast::new(&e.to_string())),
-    });
+    }));
 }
 
 fn document_tools_fixture(ui:&Rc<Ui>){

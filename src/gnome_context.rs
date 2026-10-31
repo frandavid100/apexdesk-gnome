@@ -5,9 +5,15 @@ enum DocumentContext { Text, Table, Picture }
 // Share the engine fragment between tabs only while GTK still owns this exact
 // clipboard provider. Never paste an old fragment after another app copies.
 thread_local! {
+    static CLIPBOARD_WATCHED:Cell<bool>=const{Cell::new(false)};
     static RICH_CLIPBOARD: RefCell<Option<(gdk::ContentProvider,wordcraft_doc::edit::Fragment)>> = const { RefCell::new(None) };
 }
 fn context_copy(ui:&Rc<Ui>)->bool {
+    if !CLIPBOARD_WATCHED.with(|v|v.replace(true)){
+        ui.document_box.clipboard().connect_changed(|clipboard|{
+            RICH_CLIPBOARD.with(|c|{let mut c=c.borrow_mut();if c.as_ref().is_some_and(|(provider,_)|clipboard.content().as_ref()!=Some(provider)){c.take();}});
+        });
+    }
     let result={let mut value=ui.current.borrow_mut();let Some(d)=value.as_mut()else{return false;};
         if d.session.sel.is_collapsed(){return false;}
         d.session.run("edit.copy",&serde_json::json!({})).map(|v|(v,d.session.clipboard.clone()))};

@@ -17,8 +17,9 @@ fn focus_zone(ui: &Rc<Ui>, backwards: bool) {
         0 => { ui.document_box.grab_focus(); },
         1 => {
             ui.sidebar_button.set_active(true);
-            let ui = ui.clone();
+            let weak=Rc::downgrade(ui);
             glib::idle_add_local_once(move || {
+                let Some(ui)=weak.upgrade().filter(|u|!u.closed.get())else{return;};
                 if ui.search.borrow().as_ref().is_some_and(|s| s.toggle.is_active()) {
                     if let Some(s) = ui.search.borrow().as_ref() { s.query.grab_focus(); }
                 } else if let Some(side) = ui.sidebar.sidebar() { side.child_focus(gtk::DirectionType::TabForward); }

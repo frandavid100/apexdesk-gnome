@@ -14,7 +14,7 @@ use wordcraft_engine::Session;
 use wordcraft_gnome::{open_document, render_page_premultiplied as render_page, sample_session};
 use wordcraft_gnome::viewer_layout::{self, THUMB_SCALE};
 
-const APP_VERSION: &str = "0.1.0-alpha.5";
+const APP_VERSION: &str = "0.1.0-alpha.6";
 const APP_ID: &str = "io.github.frandavid100.leaf";
 const STEPS: &[f32] = &[0.5, 0.67, 0.75, 0.85, 1.0, 1.25, 1.5, 1.75, 2.0];
 
@@ -75,6 +75,7 @@ struct Ui {
     closing_confirmed: Cell<bool>,
     tab_page: RefCell<Option<adw::TabPage>>,
     closed: Cell<bool>,
+    autosave_source:RefCell<Option<glib::SourceId>>,
     restoring: Cell<bool>,
     autosave_error: RefCell<Option<String>>,
     pending_tab_close: RefCell<Option<(adw::TabView,adw::TabPage)>>,
@@ -285,8 +286,9 @@ fn after_content_change(ui: &Rc<Ui>) {
                 }
                 zoom_to(ui, old_zoom);
             }
-            let ui = ui.clone();
+            let weak=Rc::downgrade(ui);
             glib::idle_add_local_once(move || {
+                let Some(ui)=weak.upgrade().filter(|u|!u.closed.get())else{return;};
                 if fit_width_mode { fit_width(&ui); }
                 let vadj = ui.scroll.vadjustment();
                 vadj.set_value(old_scroll.min((vadj.upper()-vadj.page_size()).max(0.0)));
@@ -301,8 +303,8 @@ fn after_content_change(ui: &Rc<Ui>) {
         refresh_pages(ui);
         schedule_thumbnail_refresh(ui);
         refresh_selection(ui);
-        let ui = ui.clone();
-        glib::idle_add_local_once(move || caret_ensure_visible(&ui));
+        let weak=Rc::downgrade(ui);
+        glib::idle_add_local_once(move ||{if let Some(ui)=weak.upgrade().filter(|u|!u.closed.get()){caret_ensure_visible(&ui);}});
     }
     if let Some(s)=ui.search.borrow().as_ref(){s.schedule();}
     if let Some(s)=ui.outline.borrow().as_ref(){s.schedule();}
@@ -379,7 +381,7 @@ fn ask_discard(ui: &Rc<Ui>, parent: &ApplicationWindow, action: impl FnOnce() + 
     let once = Rc::new(RefCell::new(Some(action)));
     let ui = ui.clone();
     let parent = parent.clone();
-    dialog.connect_response(None, move |_, response| {
+    dialog.connect_response(None, glib::clone!(#[weak] ui, #[weak] parent, move |_, response| {
         if response == "discard" {
             if let Some(doc)=ui.current.borrow_mut().as_mut(){doc.session.discard_recovery_copy();doc.session.finish_recovery();}
             if let Some(action) = once.borrow_mut().take() { action(); }
@@ -388,8 +390,8 @@ fn ask_discard(ui: &Rc<Ui>, parent: &ApplicationWindow, action: impl FnOnce() + 
             save_document(&ui, &parent, false, Box::new(move || {
                 if let Some(action) = once.borrow_mut().take() { action(); }
             }));
-        } else {cancel_tab_close(&ui);}
-    });
+        } else {once.borrow_mut().take();cancel_tab_close(&ui);}
+    }));
     dialog.present();
 }
 
@@ -443,7 +445,8 @@ fn save_document(ui: &Rc<Ui>, parent: &ApplicationWindow, save_as: bool, done: B
         dialog.set_initial_folder(Some(&gio::File::for_path(folder)));
     }
     let ui = ui.clone();
-    dialog.save(Some(parent), None::<&gio::Cancellable>, move |result| {
+    dialog.save(Some(parent), None::<&gio::Cancellable>, glib::clone!(#[weak] ui, move |result| {
+        if ui.closed.get(){return;}
         match result {
             Ok(file) => {
                 let Some(path) = file.path() else {
@@ -458,7 +461,7 @@ fn save_document(ui: &Rc<Ui>, parent: &ApplicationWindow, save_as: bool, done: B
             Err(e) if e.matches(gtk::DialogError::Dismissed) || e.matches(gtk::DialogError::Cancelled) => {cancel_tab_close(&ui);},
             Err(e) => {ui.toasts.add_toast(Toast::new(&format!("No se pudo abrir el guardado: {e}")));cancel_tab_close(&ui);},
         }
-    });
+    }));
 }
 
 fn clear_box(parent: &gtk::Box) {
@@ -599,9 +602,9 @@ fn zoom_to(ui: &Rc<Ui>, zoom: f32) {
     layout_pages(ui);
     refresh_selection(ui);
     update_status(ui);
-    let ui = ui.clone();
-    // Ejecutarlo después de que GTK recalcule las dimensiones de las páginas.
-    glib::idle_add_local_once(move || jump_to(&ui, current_page));
+    let weak=Rc::downgrade(ui);
+    // Wait for allocation without keeping a closed document alive.
+    glib::idle_add_local_once(move ||{if let Some(ui)=weak.upgrade().filter(|u|!u.closed.get()){jump_to(&ui,current_page);}});
 }
 
 fn zoom_step(ui: &Rc<Ui>, positive: bool) {
@@ -663,6 +666,7 @@ fn clear_canvas(canvas:&gtk::Fixed){
 }
 
 fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
+    if ui.closed.get(){return;}
     if !session.recovery_ready() {
         if let Err(e)=session.enable_recovery(wordcraft_gnome::preferences::recovery_root(),std::sync::Arc::new(||{})) {
             ui.toasts.add_toast(Toast::new(&format!("Recuperación: {e}")));
@@ -755,7 +759,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
         content.append(&thumb);content.append(&number);button.set_child(Some(&content));button.set_margin_top(7);button.set_margin_bottom(14);
         {
             let ui = ui.clone();
-            button.connect_clicked(move |_| jump_to(&ui, i));
+            button.connect_clicked(glib::clone!(#[weak] ui, move |_| jump_to(&ui, i)));
         }
         ui.thumbnails_box.append(&button);
         thumbs.push(thumb);
@@ -787,14 +791,17 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     refresh_pages(ui);
     refresh_thumbnails(ui);
     refresh_selection(ui);
-    let ui = ui.clone();
+    let weak=Rc::downgrade(ui);
     glib::idle_add_local_once(move || {
+        let Some(ui)=weak.upgrade().filter(|u|!u.closed.get())else{return;};
         refresh_pages(&ui);
         refresh_thumbnails(&ui);
     });
 }
 
+thread_local!{static CSS_INSTALLED:Cell<bool>=const{Cell::new(false)};}
 fn install_css() {
+    if CSS_INSTALLED.with(|s|s.replace(true)){return;}
     let provider = gtk::CssProvider::new();
     // Adwaita suministra color, espaciados y estados; CSS mínimo para papel.
     provider.load_from_data("
@@ -1092,7 +1099,7 @@ fn build_tab(
         drag_anchor: RefCell::new(None),
         dirty: Cell::new(false), thumbnail_refresh_pending: Cell::new(false),
         closing_confirmed: Cell::new(false),
-        tab_page: RefCell::new(Some(tab_page.clone())), closed: Cell::new(false),
+        tab_page: RefCell::new(Some(tab_page.clone())), closed: Cell::new(false),autosave_source:RefCell::new(None),
         restoring: Cell::new(false), autosave_error: RefCell::new(None),
         pending_tab_close: RefCell::new(None),
         save_path: RefCell::new(None),
@@ -1171,18 +1178,19 @@ fn build_tab(
     install_autosave(&ui);
     for (button, edit) in [(undo_button, Edit::Undo), (redo_button, Edit::Redo)] {
         let ui = ui.clone();
-        button.connect_clicked(move |_| {
+        button.connect_clicked(glib::clone!(#[weak] ui, move |_| {
             apply_user_edit(&ui, edit.clone()); ui.document_box.grab_focus();
-        });
+        }));
     }
     {
         let ui = ui.clone(); let popover = text_popover.clone();
         let parent = window.clone();
-        font_button.connect_clicked(move |_| {
+        font_button.connect_clicked(glib::clone!(#[weak] ui, #[weak] popover, #[weak] parent, move |_| {
             close_format_popover(&popover);
             let ui = ui.clone();
             font_dialog.choose_family(Some(&parent), None::<&gtk::pango::FontFamily>,
-                None::<&gio::Cancellable>, move |result| {
+                None::<&gio::Cancellable>, glib::clone!(#[weak] ui, move |result| {
+                    if ui.closed.get(){return;}
                     match result {
                         Ok(family) => {
                             let name = family.name();
@@ -1191,17 +1199,17 @@ fn build_tab(
                         Err(e) if e.matches(gtk::DialogError::Dismissed) || e.matches(gtk::DialogError::Cancelled) => {},
                         Err(e) => ui.toasts.add_toast(Toast::new(&format!("No se pudo elegir fuente: {e}"))),
                     }
-                });
-        });
+                }));
+        }));
     }
     {
         let ui = ui.clone(); let popover = text_popover.clone();
         let input = size_input.clone();
-        apply_size.connect_clicked(move |_| {
+        apply_size.connect_clicked(glib::clone!(#[weak] ui, #[weak] popover, #[weak] input, move |_| {
             input.update();
             let size = input.value(); close_format_popover(&popover);
             apply_format_operation(&ui, |session| formatting::size(session, size));
-        });
+        }));
     }
     // All formatting commands preserve the selection and return keyboard
     // focus to the editable document.
@@ -1212,19 +1220,19 @@ fn build_tab(
     ] {
         let ui = ui.clone();
         let popover = text_popover.clone();
-        button.connect_toggled(move |_| {
+        button.connect_toggled(glib::clone!(#[weak] ui, #[weak] popover, move |_| {
             if !ui.format_syncing.get() {
                 close_format_popover(&popover);
                 apply_user_format(&ui, action);
             }
-        });
+        }));
     }
     for (button, action, popover) in format_actions {
         let ui = ui.clone();
-        button.connect_clicked(move |_| {
+        button.connect_clicked(glib::clone!(#[weak] ui, #[weak] popover, move |_| {
             close_format_popover(&popover);
             apply_user_format(&ui, action);
-        });
+        }));
     }
 
     // Click sets the caret, double-click selects a word and triple-click
@@ -1234,7 +1242,7 @@ fn build_tab(
         click.set_button(gdk::BUTTON_PRIMARY);
         let document_box = ui.document_box.clone();
         let ui = ui.clone();
-        click.connect_pressed(move |gesture, count, x, y| {
+        click.connect_pressed(glib::clone!(#[weak] ui, move |gesture, count, x, y| {
             if count==1&&!gesture.current_event_state().contains(gdk::ModifierType::SHIFT_MASK)&&select_picture_at_canvas(&ui,x,y){
                 ui.document_box.grab_focus();refresh_selection(&ui);return;
             }
@@ -1258,7 +1266,7 @@ fn build_tab(
             };
             if let Err(e) = result { ui.toasts.add_toast(Toast::new(&e)); }
             refresh_selection(&ui);
-        });
+        }));
         document_box.add_controller(click);
     }
     // One drag gesture for the entire document, including page boundaries.
@@ -1267,14 +1275,14 @@ fn build_tab(
         drag.set_button(gdk::BUTTON_PRIMARY);
         {
             let ui = ui.clone();
-            drag.connect_drag_begin(move |_, x, y| {
+            drag.connect_drag_begin(glib::clone!(#[weak] ui, move |_, x, y| {
                 *ui.drag_anchor.borrow_mut() = pos_at_canvas(&ui, x, y);
                 ui.document_box.grab_focus();
-            });
+            }));
         }
         {
             let ui = ui.clone();
-            drag.connect_drag_update(move |gesture, dx, dy| {
+            drag.connect_drag_update(glib::clone!(#[weak] ui, move |gesture, dx, dy| {
                 let Some((sx, sy)) = gesture.start_point() else { return };
                 let Some(anchor) = ui.drag_anchor.borrow().clone() else { return };
                 let Some(focus) = pos_at_canvas(&ui, sx + dx, sy + dy) else { return };
@@ -1286,89 +1294,80 @@ fn build_tab(
                 };
                 if let Some(Err(e)) = result { ui.toasts.add_toast(Toast::new(&e)); }
                 refresh_selection(&ui);
-            });
+            }));
         }
         {
             let ui = ui.clone();
-            drag.connect_drag_end(move |_, _, _| {
+            drag.connect_drag_end(glib::clone!(#[weak] ui, move |_, _, _| {
                 ui.drag_anchor.borrow_mut().take();
                 refresh_selection(&ui);
-            });
+            }));
         }
         ui.document_box.add_controller(drag);
     }
 
     {
-        let ui = ui.clone();
-        ui.sidebar_button.connect_toggled({
-            let ui = ui.clone();
-            move |button| ui.sidebar.set_show_sidebar(button.is_active())
-        });
+        let weak=Rc::downgrade(&ui);
+        ui.sidebar_button.connect_toggled(move |button|{if let Some(ui)=weak.upgrade(){ui.sidebar.set_show_sidebar(button.is_active());}});
     }
     {
         let ui = ui.clone();
         let split = ui.sidebar.clone();
         let compact_menu = compact_app_menu.clone();
         let compact_search=compact_search.clone();
-        split.connect_show_sidebar_notify(move |split| {
+        split.connect_show_sidebar_notify(glib::clone!(#[weak] ui, #[weak] compact_menu, #[weak] compact_search, move |split| {
             let visible = split.shows_sidebar();
             compact_menu.set_visible(!visible);compact_search.set_visible(!visible);
             if ui.sidebar_button.is_active() != visible {
                 ui.sidebar_button.set_active(visible);
             }
             if visible {
-                let ui = ui.clone();
-                glib::idle_add_local_once(move || refresh_thumbnails(&ui));
+                let weak=Rc::downgrade(&ui);
+                glib::idle_add_local_once(move ||{if let Some(ui)=weak.upgrade().filter(|u|!u.closed.get()){refresh_thumbnails(&ui);}});
             }
             // Ajustar al ancho sigue siendo un modo, no un zoom fijo. Tras
             // la animación del panel el ancho disponible puede cambiar.
-            let ui = ui.clone();
+            let weak=Rc::downgrade(&ui);
             glib::timeout_add_local_once(std::time::Duration::from_millis(400), move || {
-                refit_if_needed(&ui);
+                if let Some(ui)=weak.upgrade().filter(|u|!u.closed.get()){refit_if_needed(&ui);}
             });
-        });
+        }));
     }
     {
         let ui = ui.clone();
-        ui.scroll.vadjustment().connect_value_changed(move |_| refresh_pages(&ui));
+        ui.scroll.vadjustment().connect_value_changed(glib::clone!(#[weak] ui, move |_| refresh_pages(&ui)));
     }
     {let weak=Rc::downgrade(&ui);ui.scroll.hadjustment().connect_changed(move |a|{if let Some(ui)=weak.upgrade(){let width=a.page_size().round()as i32;if width>0&&ui.viewport_width.replace(width)!=width{if let Some(a)=ui.adaptive.borrow().as_ref(){a.sync_width(width);}schedule_layout(&ui);}}});}
     {
         let ui = ui.clone();
-        ui.thumbnails_scroll.vadjustment().connect_value_changed(move |_| refresh_thumbnails(&ui));
+        ui.thumbnails_scroll.vadjustment().connect_value_changed(glib::clone!(#[weak] ui, move |_| refresh_thumbnails(&ui)));
     }
     {
-        let ui = ui.clone();
-        ui.zoom_out.connect_clicked({
-            let ui = ui.clone();
-            move |_| zoom_step(&ui, false)
-        });
+        let weak=Rc::downgrade(&ui);
+        ui.zoom_out.connect_clicked(move |_|{if let Some(ui)=weak.upgrade(){zoom_step(&ui,false);}});
     }
     {
-        let ui = ui.clone();
-        ui.zoom_in.connect_clicked({
-            let ui = ui.clone();
-            move |_| zoom_step(&ui, true)
-        });
+        let weak=Rc::downgrade(&ui);
+        ui.zoom_in.connect_clicked(move |_|{if let Some(ui)=weak.upgrade(){zoom_step(&ui,true);}});
     }
     {
         let ui = ui.clone();
         let menu = zoom_popover.clone();
-        fit_button.connect_clicked(move |_| {
+        fit_button.connect_clicked(glib::clone!(#[weak] ui, #[weak] menu, move |_| {
             fit_width(&ui);
             menu.popdown();
-        });
+        }));
     }
     {
         let ui = ui.clone();
         let menu = zoom_popover.clone();
-        normal_zoom.connect_clicked(move |_| {
+        normal_zoom.connect_clicked(glib::clone!(#[weak] ui, #[weak] menu, move |_| {
             if let Some(doc) = ui.current.borrow_mut().as_mut() {
                 doc.fit_to_width = false;
             }
             zoom_to(&ui, 1.0);
             menu.popdown();
-        });
+        }));
     }
     {
         let ui = ui.clone();
@@ -1384,20 +1383,20 @@ fn build_tab(
         controller.set_im_context(Some(&input));
         {
             let ui = ui.clone();
-            input.connect_commit(move |_, text| {
+            input.connect_commit(glib::clone!(#[weak] ui, move |_, text| {
                 if ui.document_box.has_focus() && !text.is_empty() {
                     apply_user_edit(&ui, Edit::Insert(text.to_owned()));
                 }
-            });
+            }));
         }
         {
             let input = input.clone();
-            ui.document_box.connect_notify_local(Some("has-focus"), move |widget, _| {
+            ui.document_box.connect_notify_local(Some("has-focus"), glib::clone!(#[weak] input, move |widget, _| {
                 if widget.has_focus() { input.focus_in(); } else { input.focus_out(); }
-            });
+            }));
         }
         let key_target=ui.sidebar.clone();
-        controller.connect_key_pressed(move |_, key, _, modifiers| {
+        controller.connect_key_pressed(glib::clone!(#[weak] ui, #[weak] key_host, #[weak] key_app, #[weak] save_parent, #[weak] open_button, #[upgrade_or] glib::Propagation::Proceed, move |_, key, _, modifiers| {
             let shift = modifiers.contains(gdk::ModifierType::SHIFT_MASK);
             let control = modifiers.contains(gdk::ModifierType::CONTROL_MASK);
             if ui.document_box.has_focus() {
@@ -1541,21 +1540,21 @@ fn build_tab(
                 _ => return glib::Propagation::Proceed,
             }
             glib::Propagation::Stop
-        });
+        }));
         key_target.add_controller(controller);
     }
     {
         let ui = ui.clone();
         let scroll = ui.scroll.clone();
         let controller = gtk::EventControllerScroll::new(gtk::EventControllerScrollFlags::VERTICAL);
-        controller.connect_scroll(move |ctrl, _, dy| {
+        controller.connect_scroll(glib::clone!(#[weak] ui, #[upgrade_or] glib::Propagation::Proceed, move |ctrl, _, dy| {
             if ctrl.current_event_state().contains(gdk::ModifierType::CONTROL_MASK) {
                 zoom_step(&ui, dy < 0.0);
                 glib::Propagation::Stop
             } else {
                 glib::Propagation::Proceed
             }
-        });
+        }));
         scroll.add_controller(controller);
     }
     {
@@ -1563,7 +1562,7 @@ fn build_tab(
         let parent = window.clone();
         let app = app.clone();
         let host=host.clone();
-        open_button.connect_clicked(move |_| {
+        open_button.connect_clicked(glib::clone!(#[weak] ui, #[weak] parent, #[weak] app, #[weak] host, move |_| {
             let dialog = gtk::FileDialog::new();
             dialog.set_title("Abrir documento");
             let filter = gtk::FileFilter::new();
@@ -1576,7 +1575,8 @@ fn build_tab(
             let ui = ui.clone();
             let app = app.clone();
             let host=host.clone();
-            dialog.open(Some(&parent), None::<&gio::Cancellable>, move |result| {
+            dialog.open(Some(&parent), None::<&gio::Cancellable>, glib::clone!(#[weak] ui, #[weak] host, #[weak] app, move |result| {
+                if ui.closed.get(){return;}
                 let Ok(file) = result else { return };
                 let Some(path) = file.path() else {
                     ui.toasts.add_toast(Toast::new("Solo se admiten archivos locales"));
@@ -1594,8 +1594,8 @@ fn build_tab(
                     }
                     Err(err) => ui.toasts.add_toast(Toast::new(&err)),
                 }
-            });
-        });
+            }));
+        }));
     }
 
     if let Some((session, label)) = initial_document {
@@ -1693,14 +1693,15 @@ fn build_tab(
     if std::env::args().any(|a|a=="--search-demo") {let s=search_panel.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{s.show(true);s.query.set_text("the");s.replacement.set_text("THE");s.refresh();});}
     {
         let ui=ui.clone();let app=app.clone();let host=host.clone();let parent=window.clone();
-        glib::timeout_add_local_once(std::time::Duration::from_secs(3),move || {
+        glib::timeout_add_local_once(std::time::Duration::from_secs(3),glib::clone!(#[weak] ui, #[weak] app, #[weak] host, #[weak] parent, move || {
+            if ui.closed.get(){return;}
             let records=ui.current.borrow().as_ref().map(|d|d.session.recovery_documents()).unwrap_or_default();
             if !records.is_empty() {
                 let toast=Toast::new("Hay documentos pendientes de recuperar");toast.set_button_label(Some("Recuperar"));
-                let next=ui.clone();toast.connect_button_clicked(move |_|show_recovery(&next,&parent,&app,&host));
+                let next=ui.clone();toast.connect_button_clicked(glib::clone!(#[weak] next, #[weak] parent, #[weak] app, #[weak] host, move |_|show_recovery(&next,&parent,&app,&host)));
                 ui.toasts.add_toast(toast);
             }
-        });
+        }));
     }
     if std::env::args().any(|a| a == "--text-menu-demo") {
         let menu = text_menu.clone();
@@ -1839,6 +1840,7 @@ fn main() {
         }
         make_window(app, sample_on_start, sidebar_on_start, narrow_on_start, dark_on_start, selection_demo, editing_demo, formatting_demo, None);
     });
+    app.connect_shutdown(|_|shutdown_workspaces());
     app.run_with_args(&["wordcraft-gnome"]);
 }
 

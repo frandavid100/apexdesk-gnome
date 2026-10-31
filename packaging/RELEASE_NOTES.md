@@ -1,7 +1,7 @@
-Leaf 0.1.0-alpha.5 adds native printing and improves keyboard navigation.
+Leaf 0.1.0-alpha.6 fixes retained GTK document and window state after closing tabs/windows.
 
-Print from the document menu or Ctrl+P. Leaf prepares a vector PDF snapshot of the current document, including unsaved changes, then uses GTK's native print dialog and the desktop print portal. Printing does not change your editable file, dirty state or undo history. Temporary files are private and removed after the operation. Cancellation and errors are handled without saving the document.
+Window owners are explicit and signal callbacks borrow their state weakly. Closed tabs stop their autosave timer; deferred UI callbacks no longer keep them alive. The same CSS provider is no longer registered on every tab. Obsolete rich clipboard data is released when clipboard ownership changes. Document editing and the pinned engine are unchanged.
 
-F6 / Shift+F6 move between the document, sidebar and formatting controls; F10 opens the main menu. Search fields, image/page dimensions and icon controls have clearer accessible names. About now shows the same version as the executable. This improves control accessibility; full screen-reader access to the custom document canvas is still unfinished.
+A repeatable ownership/memory audit checks real DOCX opening, sidebar search, menus, tab/window closure and object release. A second regression covers properties/columns dialogs and clipboard replacement. Native and installed sandbox tests must pass before publication. The report distinguishes object leaks from allocator/font caches; these measurements are not a general speed benchmark.
 
-Install Leaf-0.1.0-alpha.5-x86_64.flatpak over alpha.4. GNOME 49 runtime; source builds now require GTK 4.14+. No automatic Leaf update feed. AI-assisted development. Use document copies. ODT compatibility fixes from alpha.4 remain included. Physical printer testing is still needed.
+Install Leaf-0.1.0-alpha.6-x86_64.flatpak over alpha.5. GNOME 49 runtime; no automatic update feed. AI-assisted development. Keep document copies. The existing Orca/canvas and GTK print-backend limitations remain documented.

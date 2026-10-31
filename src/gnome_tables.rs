@@ -21,36 +21,36 @@ fn show_insert_table(ui:&Rc<Ui>,parent:&ApplicationWindow) {
         let b=gtk::Button::with_label("□");b.set_tooltip_text(Some(&format!("{col} columnas × {row} filas")));accessible_name(&b,&format!("Insertar tabla de {col} columnas y {row} filas"));
         b.set_size_request(30,28);grid.attach(&b,col-1,row-1,1,1);
         let motion=gtk::EventControllerMotion::new();let l=label.clone();motion.connect_enter(move|_,_,_|l.set_text(&format!("{col} columnas × {row} filas")));b.add_controller(motion);
-        let ui=ui.clone();let win=w.clone();b.connect_clicked(move|_|{
+        let ui=ui.clone();let win=w.clone();b.connect_clicked(glib::clone!(#[weak] ui, #[weak] win, move|_|{
             if let Err(e)=format_execute(&ui,"insert.table",serde_json::json!({"rows":row,"cols":col})) {win.add_toast(Toast::new(&e));}
             else {win.close();ui.document_box.grab_focus();caret_ensure_visible(&ui);}
-        });
+        }));
     }}g.add(&grid);
     let g=panel_group(&p,"Tamaño personalizado");
     let rows=panel_number(&g,"Filas",3.0,1.0,1000.0);rows.set_digits(0);rows.set_increments(1.0,5.0);
     let cols=panel_number(&g,"Columnas",3.0,1.0,63.0);cols.set_digits(0);cols.set_increments(1.0,5.0);
     let b=gtk::Button::with_label("Insertar tabla");b.add_css_class("suggested-action");g.add(&b);
-    let ui=ui.clone();let win=w.clone();b.connect_clicked(move|_|{
+    let ui=ui.clone();let win=w.clone();b.connect_clicked(glib::clone!(#[weak] ui, #[weak] win, move|_|{
         rows.update();cols.update();
         if let Err(e)=format_execute(&ui,"insert.table",serde_json::json!({"rows":rows.value_as_int(),"cols":cols.value_as_int()})){win.add_toast(Toast::new(&e));}
         else {win.close();ui.document_box.grab_focus();caret_ensure_visible(&ui);}
-    });w.present();
+    }));w.present();
 }
 
 fn table_property_toggle(g:&adw::PreferencesGroup,label:&str,on:bool,key:&'static str,ui:&Rc<Ui>,w:&adw::PreferencesWindow) {
     let row=adw::SwitchRow::new();row.set_title(label);row.set_active(on);g.add(&row);
-    let ui=ui.clone();let w=w.clone();row.connect_active_notify(move|r|{
+    let ui=ui.clone();let w=w.clone();row.connect_active_notify(glib::clone!(#[weak] ui, #[weak] w, move|r|{
         if let Err(e)=format_execute(&ui,"table.properties",serde_json::json!({key:r.is_active()})){w.add_toast(Toast::new(&e));}
-    });
+    }));
 }
 
 fn table_measurement(g:&adw::PreferencesGroup,label:&str,value:f64,min:f64,ui:&Rc<Ui>,w:&adw::PreferencesWindow,command:&'static str,key:&'static str,extra:serde_json::Value) {
     let row=adw::ActionRow::new();row.set_title(label);
     let n=gtk::SpinButton::with_range(min,1584.0,0.5);n.set_digits(1);n.set_value(value);n.set_valign(gtk::Align::Center);
     let b=gtk::Button::with_label("Aplicar");b.set_valign(gtk::Align::Center);accessible_name(&n,label);accessible_name(&b,&format!("Aplicar {label}"));row.set_activatable_widget(Some(&n));row.add_suffix(&n);row.add_suffix(&b);g.add(&row);
-    let ui=ui.clone();let w=w.clone();b.connect_clicked(move|_|{n.update();let mut args=extra.clone();args[key]=serde_json::json!(n.value());
+    let ui=ui.clone();let w=w.clone();b.connect_clicked(glib::clone!(#[weak] ui, #[weak] w, move|_|{n.update();let mut args=extra.clone();args[key]=serde_json::json!(n.value());
         if let Err(e)=format_execute(&ui,command,args){w.add_toast(Toast::new(&e));}
-    });
+    }));
 }
 
 fn show_table_properties(ui:&Rc<Ui>,parent:&ApplicationWindow) {
@@ -76,14 +76,14 @@ fn show_table_properties(ui:&Rc<Ui>,parent:&ApplicationWindow) {
     let rows=panel_number(&g,"Filas",1.0,1.0,63.0);rows.set_digits(0);rows.set_increments(1.0,1.0);
     let hint=gtk::Label::new(Some("Varias celdas seleccionadas se combinan antes de dividirse."));hint.set_wrap(true);hint.add_css_class("dim-label");g.add(&hint);
     let b=gtk::Button::with_label("Dividir celdas seleccionadas");g.add(&b);
-    {let ui=ui.clone();let w=w.clone();b.connect_clicked(move|_|{cols.update();rows.update();if let Err(e)=format_execute(&ui,"table.split",serde_json::json!({"columns":cols.value_as_int(),"rows":rows.value_as_int()})){w.add_toast(Toast::new(&e));}});}
+    {let ui=ui.clone();let w=w.clone();b.connect_clicked(glib::clone!(#[weak] ui, #[weak] w, move|_|{cols.update();rows.update();if let Err(e)=format_execute(&ui,"table.split",serde_json::json!({"columns":cols.value_as_int(),"rows":rows.value_as_int()})){w.add_toast(Toast::new(&e));}}));}
     let p=panel_page(&w,"Aspecto");let g=panel_group(&p,"Bordes y sombreado de la selección");
     panel_color(&g,"Color de fondo",ui,&w,"table.shading");panel_action(&g,"Sin color de fondo",ui,&w,"table.shading",serde_json::json!({"color":null}));
     panel_choice(&g,"Bordes",&[("Todos","all"),("Exteriores","outside"),("Interiores","inside"),("Ninguno","none"),("Superior","top"),("Inferior","bottom"),("Izquierdo","left"),("Derecho","right")],ui,&w,"table.borders","kind");
     let width=panel_number(&g,"Grosor de bordes (pt)",0.5,0.25,12.0);let color=panel_entry(&g,"Color de bordes (RRGGBB)","808080");
     let b=gtk::Button::with_label("Aplicar a todos los bordes");g.add(&b);
-    {let ui=ui.clone();let w=w.clone();b.connect_clicked(move|_|{width.update();let c=color.text().trim().to_string();if c.len()!=6||!c.bytes().all(|b|b.is_ascii_hexdigit()){w.add_toast(Toast::new("Introduce seis caracteres hexadecimales, por ejemplo 808080"));return;}
-        if let Err(e)=format_execute(&ui,"table.borders",serde_json::json!({"kind":"all","width":width.value(),"color":c})){w.add_toast(Toast::new(&e));}});}
+    {let ui=ui.clone();let w=w.clone();b.connect_clicked(glib::clone!(#[weak] ui, #[weak] w, move|_|{width.update();let c=color.text().trim().to_string();if c.len()!=6||!c.bytes().all(|b|b.is_ascii_hexdigit()){w.add_toast(Toast::new("Introduce seis caracteres hexadecimales, por ejemplo 808080"));return;}
+        if let Err(e)=format_execute(&ui,"table.borders",serde_json::json!({"kind":"all","width":width.value(),"color":c})){w.add_toast(Toast::new(&e));}}));}
     w.present();
 }
 
@@ -93,7 +93,7 @@ fn install_table_controls(ui:&Rc<Ui>,parent:&ApplicationWindow,bar:&gtk::Box)->g
     content.set_margin_top(8);content.set_margin_bottom(8);content.set_margin_start(8);content.set_margin_end(8);
     format_popover_header(&pop,&content,"Tabla",&ui.format_group);
     let insert=gtk::Button::with_label("Insertar tabla…");insert.add_css_class("flat");insert.set_visible(tool_diagnostics());content.append(&insert);
-    {let ui=ui.clone();let p=parent.clone();let pop=pop.clone();insert.connect_clicked(move|_|{close_format_popover(&pop);show_insert_table(&ui,&p);});}
+    {let ui=ui.clone();let p=parent.clone();let pop=pop.clone();insert.connect_clicked(glib::clone!(#[weak] ui, #[weak] p, #[weak] pop, move|_|{close_format_popover(&pop);show_insert_table(&ui,&p);}));}
     let context=gtk::Box::new(gtk::Orientation::Vertical,6);context.set_widget_name("table-context");content.append(&context);
     let heading=gtk::Label::new(Some("Tabla actual"));heading.add_css_class("heading");context.append(&heading);
     for items in [
@@ -106,14 +106,14 @@ fn install_table_controls(ui:&Rc<Ui>,parent:&ApplicationWindow,bar:&gtk::Box)->g
     ] {
         let row=gtk::Box::new(gtk::Orientation::Horizontal,4);
         for(label,command)in items {let b=gtk::Button::with_label(label);b.add_css_class("flat");b.set_hexpand(true);row.append(&b);b.set_widget_name(&format!("table-action-{command}"));if command=="table.merge"{b.set_widget_name("table-merge");}
-            let ui=ui.clone();let pop=pop.clone();b.connect_clicked(move|_|{close_format_popover(&pop);table_command(&ui,command,serde_json::json!({}));});}
+            let ui=ui.clone();let pop=pop.clone();b.connect_clicked(glib::clone!(#[weak] ui, #[weak] pop, move|_|{close_format_popover(&pop);table_command(&ui,command,serde_json::json!({}));}));}
         context.append(&row);
     }
     let properties=gtk::Button::with_label("Propiedades y dividir celdas…");properties.add_css_class("flat");context.append(&properties);
-    {let ui=ui.clone();let parent=parent.clone();let pop=pop.clone();properties.connect_clicked(move|_|{close_format_popover(&pop);show_table_properties(&ui,&parent);});}
+    {let ui=ui.clone();let parent=parent.clone();let pop=pop.clone();properties.connect_clicked(glib::clone!(#[weak] ui, #[weak] parent, #[weak] pop, move|_|{close_format_popover(&pop);show_table_properties(&ui,&parent);}));}
     let remove=gtk::Button::with_label("Eliminar tabla");remove.set_widget_name("table-delete");remove.add_css_class("destructive-action");context.append(&remove);
-    {let ui=ui.clone();let pop=pop.clone();remove.connect_clicked(move|_|{close_format_popover(&pop);table_command(&ui,"table.deleteTable",serde_json::json!({}));});}
-    {let ui=ui.clone();pop.connect_show(move|p|refresh_table_controls(&ui,p));}
+    {let ui=ui.clone();let pop=pop.clone();remove.connect_clicked(glib::clone!(#[weak] ui, #[weak] pop, move|_|{close_format_popover(&pop);table_command(&ui,"table.deleteTable",serde_json::json!({}));}));}
+    {let ui=ui.clone();pop.connect_show(glib::clone!(#[weak] ui, move|p|refresh_table_controls(&ui,p)));}
     pop.set_child(Some(&content));menu.set_popover(Some(&pop));bar.append(&menu);menu
 }
 

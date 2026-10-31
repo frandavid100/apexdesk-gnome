@@ -3,6 +3,10 @@
 Actualizada: 31 de octubre de 2026. Estado técnico en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Las fases siguientes son propuestas; no implican autorización para implementarlas todas.
 
+## En curso: auditoría GTK antes de ampliar funciones
+
+Autorizado revisar y corregir ciclos de referencias, señales, temporizadores y liberación de documentos/ventanas; medir repetidamente apertura y cierre. Medición inicial confirma Ui/Workspace retenidos. Corregir, comprobar liberación exacta y documentar memoria distinguiendo cachés de fugas. No se añade funcionalidad al editor.
+
 ## Ahora: validar impresión y accesibilidad con usuarios
 
 Alpha.5 publicada: impresión nativa (menú del documento/Ctrl+P), navegación F6/Mayús+F6 y F10, etiquetas accesibles y versión Acerca de corregida. Pruebas nativas y del Flatpak superadas; [evidencia y límites](docs/KEYBOARD_PRINTING.md). Motor y dependencias Rust sin cambios. GTK mínimo 4.14 para código fuente; GNOME 49 en Flatpak.

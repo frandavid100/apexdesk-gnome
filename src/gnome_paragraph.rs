@@ -170,7 +170,7 @@ fn install_paragraph_popover(ui:&Rc<Ui>,menu:&gtk::MenuButton)->Rc<ParagraphPopo
     let detail_page=gtk::Box::new(gtk::Orientation::Vertical,6);detail_page.append(&scroll);
     stack.add_named(&main,Some("main"));stack.add_named(&detail_page,Some("detail"));root.append(&stack);let message=gtk::Label::new(None);message.set_wrap(true);message.set_max_width_chars(35);message.set_visible(false);root.append(&message);pop.set_child(Some(&root));
     let s=Rc::new(ParagraphPopover{ui:Rc::downgrade(ui),popover:pop.downgrade(),stack,main,detail,message,header,spacing:Cell::new(1.5),shade:RefCell::new("FFF2CC".into()),border:RefCell::new(serde_json::json!({"kind":"outside","width":0.5,"color":"000000"}))});
-    let state=s.clone();pop.connect_show(move |_|{if !state.ui.upgrade().is_some_and(|u|u.format_reflowing.get()){state.home();}});menu.set_popover(Some(&pop));s
+    let state=s.clone();pop.connect_show(glib::clone!(#[weak] state, move |_|{if !state.ui.upgrade().is_some_and(|u|u.format_reflowing.get()){state.home();}}));menu.set_popover(Some(&pop));s
 }
 fn show_paragraph_options(ui:&Rc<Ui>,_parent:&ApplicationWindow){if let Some(s)=ui.paragraph.borrow().as_ref(){if let Some(p)=s.popover.upgrade(){p.popup();}s.page("options");}}
 

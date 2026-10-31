@@ -2,6 +2,10 @@
 
 Actualizado: 31 de octubre de 2026. Punto de entrada para continuar desde otra conversación.
 
+## En curso: auditoría GTK de propiedad y memoria autorizada
+
+Medición inicial en b7b5b7f792856fc5ca02f1f3b7769ad96320bd3a, CI 41234617745: tras cerrar 15 documentos, 15 Ui y 6 Workspace permanecen vivos; cuerpos de documento e imágenes de página sí se liberan. RSS tras malloc_trim: 188684 → 212208 → 235676 KiB en tres tandas. Corrección en curso: propietarios explícitos de ventanas, referencias débiles en señales, temporizadores detenidos al cerrar, CSS registrado una vez y liberación de portapapeles obsoleto. Pendientes prueba estricta posterior, comparación y paquete; no presentar mejora medida hasta validar.
+
 ## Última entrega: alpha.5 — teclado, controles accesibles e impresión (31-10-2026)
 
 Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.5
