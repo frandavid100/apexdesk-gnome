@@ -10,6 +10,8 @@ Leaf is an experimental GTK4/libadwaita document editor for Linux, powered by [W
 
 ## Status
 
+**Known data-loss issue:** saving ODT drops headers and footers, including tables in those areas. Avoid saving affected ODT files. [Audit results and reproduction](https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/CORPUS_AUDIT_2026-10-31.md).
+
 The current development version implements DOCX/ODT editing and saving, PDF export, section columns, styles, tables, inline images, tabs and sidebar search/replacement. Complex document fidelity is still being tested: use copies of your files.
 
 **[Download the current x86_64 Flatpak alpha](https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.3).** Open the `.flatpak` with GNOME Software or follow the release's INSTALL.md. The GNOME 49 runtime is downloaded from Flathub if required. Leaf itself is not on Flathub. This is experimental: use copies of your documents.
