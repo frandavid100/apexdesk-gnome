@@ -56,11 +56,12 @@ fn context_prepare(ui:&Rc<Ui>,x:f64,y:f64)->Option<DocumentContext>{
 fn context_open_format(ui:&Rc<Ui>,name:&str){
     if let Some(menu)=format_button(ui,name){menu.popup();}
 }
-struct ContextFormatLease {host:glib::WeakRef<gtk::PopoverMenu>,entries:Vec<(gtk::Popover,gtk::Widget,Rc<FormatHeader>)>,restored:Cell<bool>}
+struct ContextFormatLease {host:glib::WeakRef<gtk::PopoverMenu>,entries:RefCell<Vec<(gtk::Popover,gtk::Widget,Rc<FormatHeader>)>>,restored:Cell<bool>}
 impl ContextFormatLease {
     fn restore(&self){
         if self.restored.replace(true){return;}
-        for(origin,body,header)in &self.entries{
+        let entries=std::mem::take(&mut *self.entries.borrow_mut());
+        for(origin,body,header)in &entries{
             if let Some(host)=self.host.upgrade(){host.remove_child(body);}
             if body.parent().is_none(){origin.set_child(Some(body));}
             header.parent_back.borrow_mut().take();header.home();
@@ -72,7 +73,7 @@ fn native_menu_stack(root:&impl IsA<gtk::Widget>)->Option<gtk::Stack>{
     let root=root.as_ref();if let Some(s)=root.downcast_ref::<gtk::Stack>(){return Some(s.clone());}
     let mut child=root.first_child();while let Some(w)=child{if let Some(s)=native_menu_stack(&w){return Some(s);}child=w.next_sibling();}None
 }
-fn mount_context_formats(ui:&Rc<Ui>,host:&gtk::PopoverMenu){
+fn mount_context_formats(ui:&Rc<Ui>,host:&gtk::PopoverMenu)->Rc<ContextFormatLease>{
     // Official GtkPopoverMenu custom slots hold the existing widget trees.
     // Keep nonmodality constant, including when pinning inside a custom page.
     host.add_css_class("format-popover");host.add_css_class("style-popover");
@@ -94,8 +95,8 @@ fn mount_context_formats(ui:&Rc<Ui>,host:&gtk::PopoverMenu){
         entries.push((origin,body,header));
     }
     if let Some(s)=ui.style.borrow().as_ref(){s.main();}if let Some(s)=ui.paragraph.borrow().as_ref(){s.home();}if let Some(s)=ui.text_tools.borrow().as_ref(){s.home();}
-    let lease=Rc::new(ContextFormatLease{host:host.downgrade(),entries,restored:Cell::new(false)});
-    host.connect_closed(move |_|lease.restore());
+    let lease=Rc::new(ContextFormatLease{host:host.downgrade(),entries:RefCell::new(entries),restored:Cell::new(false)});
+    let closed=lease.clone();host.connect_closed(move |_|closed.restore());lease
 }
 fn context_item(menu:&gio::Menu,group:&gio::SimpleActionGroup,pop:&gtk::PopoverMenu,ui:&Rc<Ui>,label:&str,name:&str,enabled:bool,callback:impl Fn(&Rc<Ui>)+'static){
     let action=gio::SimpleAction::new(name,None);action.set_enabled(enabled);
@@ -145,10 +146,12 @@ fn show_document_context(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32,kind:D
         }
     }
     root.append_section(None,&specific);
-    if kind==DocumentContext::Text{mount_context_formats(ui,&pop);}
+    let lease=if kind==DocumentContext::Text{Some(mount_context_formats(ui,&pop))}else{None};
+    ui.context_popovers.borrow_mut().retain(|(p,_)|p.upgrade().is_some());
+    ui.context_popovers.borrow_mut().push((pop.downgrade(),lease));
     // GtkModelButton closes before activating its action helper. Keep the
     // hierarchy and action muxer alive until that signal has fully returned.
-    let weak=Rc::downgrade(ui);pop.connect_closed(move|p|{if let Some(ui)=weak.upgrade(){if !ui.closed.get(){ui.document_box.grab_focus();}}let p=p.clone();glib::idle_add_local_once(move||{if !p.is_visible()&&p.parent().is_some(){p.unparent();}});});pop.popup();if kind==DocumentContext::Text{pop.child_focus(gtk::DirectionType::TabForward);}pop
+    let weak=Rc::downgrade(ui);pop.connect_closed(move|p|{if let Some(ui)=weak.upgrade(){if !ui.closed.get(){ui.document_box.grab_focus();}ui.context_popovers.borrow_mut().retain(|(weak,_)|weak.upgrade().as_ref()!=Some(p));}let p=p.clone();glib::idle_add_local_once(move||{if !p.is_visible()&&p.parent().is_some(){p.unparent();}});});pop.popup();if kind==DocumentContext::Text{pop.child_focus(gtk::DirectionType::TabForward);}pop
 }
 fn show_table_context_at(ui:&Rc<Ui>,parent:&ApplicationWindow,x:i32,y:i32){
     let kind=ui.current.borrow().as_ref().map(|d|if pictures::selected(&d.session).is_some(){DocumentContext::Picture}else if wordcraft_gnome::tables::in_table(&d.session){DocumentContext::Table}else{DocumentContext::Text});

@@ -54,6 +54,8 @@ struct Ui {
     paragraph: RefCell<Option<Rc<ParagraphPopover>>>,
     picture: RefCell<Option<Rc<PicturePopover>>>,
     table_popover: RefCell<Option<gtk::Popover>>,
+    outside_controller:RefCell<Option<gtk::GestureClick>>,
+    context_popovers:RefCell<Vec<(glib::WeakRef<gtk::PopoverMenu>,Option<Rc<ContextFormatLease>>)>>,
     format_group:Rc<FormatPopoverGroup>,
     search_highlights: Rc<RefCell<Vec<selection::Rect>>>,
     document_name: RefCell<String>,
@@ -1114,7 +1116,7 @@ fn build_tab(
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button, sidebar_pages, navigation_pages,
         outline:RefCell::new(None),host:Rc::downgrade(host),open_button:open_button.clone(),
-        search: RefCell::new(None), paragraph: RefCell::new(None), picture:RefCell::new(None),table_popover:RefCell::new(None),format_group:format_group.clone(), search_highlights: Rc::new(RefCell::new(Vec::new())),
+        search: RefCell::new(None), paragraph: RefCell::new(None), picture:RefCell::new(None),table_popover:RefCell::new(None),context_popovers:RefCell::new(Vec::new()),outside_controller:RefCell::new(None),format_group:format_group.clone(), search_highlights: Rc::new(RefCell::new(Vec::new())),
         document_name:RefCell::new(String::new()),layout_pending:Cell::new(false),viewport_width:Cell::new(0),
         zoom_label, zoom_out, zoom_in, stack, title, toasts,
     });
@@ -1159,7 +1161,7 @@ fn build_tab(
             });
         });
     }
-    {let g=Rc::downgrade(&format_group);let w=window.downgrade();let outside=gtk::GestureClick::new();outside.set_propagation_phase(gtk::PropagationPhase::Capture);outside.set_button(0);outside.connect_pressed(move|c,_,x,y|{if let (Some(g),Some(w))=(g.upgrade(),w.upgrade()){g.outside(c,&w,x,y);}});window.add_controller(outside);}
+    {let g=Rc::downgrade(&format_group);let w=window.downgrade();let outside=gtk::GestureClick::new();outside.set_propagation_phase(gtk::PropagationPhase::Capture);outside.set_button(0);outside.connect_pressed(move|c,_,x,y|{if let (Some(g),Some(w))=(g.upgrade(),w.upgrade()){g.outside(c,&w,x,y);}});window.add_controller(outside.clone());ui.outside_controller.replace(Some(outside));}
     let outline_panel=install_outline(&ui,&pages_toggle,&titles_toggle);ui.outline.replace(Some(outline_panel.clone()));
     let search_panel=install_search_panel(&ui,&search_toggle,&compact_search);ui.search.replace(Some(search_panel.clone()));
     style_menu.set_widget_name("style-menu");align_menu.set_widget_name("paragraph-menu");text_menu.set_widget_name("text-menu");

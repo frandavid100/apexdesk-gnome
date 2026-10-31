@@ -67,6 +67,7 @@ impl LifecycleAudit {
         let documents=tabs.iter().filter(|p|p.body.upgrade().is_some()).count();
         let pictures=tabs.iter().filter(|p|p.picture.upgrade().is_some()).count();
         let windows=self.windows.borrow().iter().filter(|p|p.upgrade().is_some()).count();
+        for (i,p) in tabs.iter().enumerate(){for weak in &p.controls{if let Some(w)=weak.upgrade(){eprintln!("LIFECYCLE_RETAINED tab={} type={} name={} parent={}",i,w.type_().name(),w.widget_name(),w.parent().map(|p|p.type_().name().to_string()).unwrap_or_default());}}}
         let controls=tabs.iter().flat_map(|p|p.controls.iter()).filter(|p|p.upgrade().is_some()).count();
         let dialogs=self.dialogs.borrow().iter().filter(|p|p.upgrade().is_some()).count();
         let columns=self.columns.borrow().iter().filter(|p|p.upgrade().is_some()).count();

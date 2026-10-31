@@ -9,8 +9,17 @@ fn release_document(ui:&Rc<Ui>) {
     if ui.closed.replace(true){return;}
     if let Some(source)=ui.autosave_source.borrow_mut().take(){source.remove();}
     ui.printing.cancel();
+    if let Some(controller)=ui.outside_controller.borrow_mut().take(){if let Some(widget)=controller.widget(){widget.remove_controller(&controller);}}
     let current=ui.current.borrow_mut().take();
     if let Some(mut doc)=current {doc.session.finish_recovery();}
+    // A popup closed before mapping may never emit closed. Restore borrowed
+    // format bodies explicitly on tab teardown, then detach transient surfaces.
+    let contexts=std::mem::take(&mut *ui.context_popovers.borrow_mut());
+    for(weak,lease)in contexts{if let Some(lease)=lease{lease.restore();}if let Some(pop)=weak.upgrade(){pop.popdown();if pop.parent().is_some(){pop.unparent();}}}
+    for menu in ui.format_buttons.borrow().iter(){if let Some(pop)=menu.popover(){pop.popdown();}menu.set_popover(None::<&gtk::Popover>);}
+    if let Some(pop)=ui.table_popover.borrow_mut().take(){pop.popdown();if pop.parent().is_some(){pop.unparent();}}
+    if let Some(panel)=ui.picture.borrow_mut().take(){panel.pop.popdown();if panel.pop.parent().is_some(){panel.pop.unparent();}}
+    ui.style.borrow_mut().take();ui.paragraph.borrow_mut().take();ui.text_tools.borrow_mut().take();
     clear_canvas(&ui.document_box);clear_box(&ui.thumbnails_box);
     ui.tab_page.borrow_mut().take();
 }
