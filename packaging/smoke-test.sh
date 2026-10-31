@@ -37,9 +37,22 @@ DOCX
 flatpak run --socket=x11 --nosocket=wayland --file-forwarding "$app_id" --launch-file-test @@u file:///tmp/launch-test.docx @@ 2>dist/flatpak-file-open.log
 grep -q LAUNCH_FILE_OK dist/flatpak-file-open.log
 # Preferences written inside application data survive reinstalling the same bundle.
-flatpak run "$app_id" --package-storage-test | grep PACKAGE_STORAGE_OK
+flatpak run --command=sh "$app_id" -c '
+  leaf_state_root="${XDG_STATE_HOME:-$XDG_DATA_HOME/state}/wordcraft-gnome/recovery"
+  leaf_app_root="${XDG_DATA_HOME%/data}"
+  case "$leaf_state_root" in "$leaf_app_root"/*) ;; *) echo "State path outside persistent app data" >&2; exit 1;; esac
+  test -d "$leaf_state_root"
+  printf persistent > "$leaf_state_root/package-default-test"
+'
+# Also exercise the host fallback used when a runtime does not define XDG_STATE_HOME.
+flatpak run --command=sh "$app_id" -c 'unset XDG_STATE_HOME; exec /app/bin/leaf --package-storage-test' | grep PACKAGE_STORAGE_OK
 flatpak --user install -y --noninteractive --reinstall dist/Leaf-0.1.0-alpha.1-x86_64.flatpak
-flatpak run --command=sh "$app_id" -c 'grep -q "autosave.*0" "$XDG_CONFIG_HOME/wordcraft-gnome/preferences.json"'
+flatpak run --command=sh "$app_id" -c '
+  grep -q "autosave.*0" "$XDG_CONFIG_HOME/wordcraft-gnome/preferences.json"
+  leaf_state_root="${XDG_STATE_HOME:-$XDG_DATA_HOME/state}/wordcraft-gnome/recovery"
+  grep -q persistent "$leaf_state_root/package-default-test"
+  grep -q persistent "$XDG_DATA_HOME/state/wordcraft-gnome/recovery/package-test"
+'
 # This CI seed is not shipped: every tester receives the normal recovery-mode default.
 echo FLATPAK_INSTALLED_LAUNCHER_OK
 echo FLATPAK_PORTAL_FILE_OPEN_OK
