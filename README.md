@@ -22,7 +22,9 @@ These are implemented features, not a claim of complete Microsoft Word or LibreO
 
 ## Try Leaf
 
-There is **no public installable release yet**. A Flatpak alpha for GitHub Releases is being prepared; it has not been built or installation-tested. Release downloads will appear on the [Releases page](https://github.com/frandavid100/leaf/releases). Leaf is not currently on Flathub.
+The first **x86_64 Flatpak alpha** is available on [GitHub Releases](https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.1). Download `Leaf-0.1.0-alpha.1-x86_64.flatpak` and open it with GNOME Software, or follow [installation instructions](packaging/INSTALL.md). It uses the GNOME 49 runtime from Flathub, downloaded separately if missing. Leaf itself is not currently on Flathub.
+
+The installed package has passed automated launcher, interface, document-portal opening and persistent-data reinstall checks on Ubuntu CI. Manual testing on GNOME OS and with your own documents is still needed. This standalone bundle has no automatic Leaf update feed.
 
 Experienced testers can build the development branch. Requirements: Rust 1.95 or newer, Git, pkg-config, GTK 4.10+ and libadwaita 1.4+ development libraries. The existing CI runs on Ubuntu 24.04; other host environments have not been comprehensively tested.
 
@@ -34,7 +36,7 @@ cargo build --release --locked --features gui --bin wordcraft-gnome
 ./target/release/wordcraft-gnome
 ```
 
-The executable and some interface strings still use the previous development name, WordCraft GNOME. The Leaf name and icon are not yet integrated into an installed launcher. GNOME OS users should wait for the Flatpak rather than install development packages on the host.
+The source-build target retains its internal name, `wordcraft-gnome`; the installed application is Leaf, ID `io.github.frandavid100.leaf`, and its installed executable is `leaf`. GNOME OS users should install the Flatpak rather than add development packages to the host.
 
 ## Help test it
 

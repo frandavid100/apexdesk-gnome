@@ -4,7 +4,7 @@ Leaf is an alpha. Test copies, not your only copy of an important document. Repo
 
 ## Before starting
 
-Record the release tag (or source commit), installation method, distribution, GNOME version, architecture, display scaling and whether you use Wayland or X11. For a source build, record `git rev-parse HEAD`; the old `--version` string does not uniquely identify current development snapshots.
+Record the release tag (or source commit), installation method, distribution, GNOME version, architecture, display scaling and whether you use Wayland or X11. For a source build, record `git rev-parse HEAD`; development snapshots may share a version string, so include the commit as well.
 
 Copy a short DOCX or ODT document to a test folder. In Preferences, keep autosave in **recovery-file mode**. Autosave to the original file can overwrite it if you explicitly enable that mode.
 
@@ -35,6 +35,6 @@ Attach the smallest non-confidential original and affected copy if you can. Use 
 
 ## Current validation baseline
 
-The last executable validated by automated CI is commit `c744dac3f553b0304e631dd80dde7fbe3669e1cd`, [run 41144295677](https://github.com/frandavid100/leaf/actions/runs/41144295677). It includes release compilation, engine integration tests and actual GTK interaction checks. Later documentation/icon commits do not imply a new executable. There is no verified public Flatpak build yet.
+The first installed Flatpak alpha is [v0.1.0-alpha.1](https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.1), packaged from tag commit `07d5ff9a6f7b1dd0ff0a0fa399e2b258a254769a`. Its native source and tests are identical to the validated native build `497cd6c5aad7a71f4b580e933f4c3e505b9126c5` (successful test job 124494863399 in run 41186663675). The [final packaging run](https://github.com/frandavid100/leaf/actions/runs/41188080151) passed installation, launcher, portal-file opening and persistent-data reinstall checks. This is automated Ubuntu/Xvfb validation with the GNOME 49 runtime, not manual GNOME OS testing. See [installation instructions](../packaging/INSTALL.md).
 
 Record findings in [TEST_RESULTS.md](TEST_RESULTS.md) only when a person has actually performed the test. Do not turn automated success into a manual confirmation.

@@ -1,6 +1,6 @@
 # AI assistance
 
-Leaf's native frontend has been developed with substantial AI assistance under the project owner's direction. This includes a large portion of the GTK/libadwaita host and editing adapters, integration/regression tests, CI configuration and project documentation. The original Leaf SVG icon and symbolic companion were also created with AI assistance.
+Leaf's native frontend has been developed with substantial AI assistance under the project owner's direction. This includes a large portion of the GTK/libadwaita host and editing adapters, integration/regression tests, CI configuration, GitHub Flatpak packaging scripts and project documentation. The original Leaf SVG icon and symbolic companion were also created with AI assistance.
 
 This is an approximate scope statement, not an audited line-count percentage. The pinned upstream WordCraft engine is consumed without modifications; this statement does not claim knowledge of how upstream code was authored. Existing dependency licenses and attribution continue to apply.
 

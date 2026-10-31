@@ -207,3 +207,12 @@ Text/Style/Paragraph use GtkStack interpolation and native slide transitions. Gt
 Viewport size notifications capture open panels synchronously before GTK unmaps a resizing anchor. Do not postpone that capture to idle: visibility can already have been lost. Reopening waits briefly for the new allocation, with a generation guard. Nonmodal context hosts explicitly focus their first native menu row because GtkPopover only does that automatically with autohide enabled. Context hosts inherit the same style-popover/format-popover classes, keeping font weight and active-state styling identical. Pointer regression targets the left of the document so the new header popup does not intercept its dismissing click.
 
 Closing a nonmodal contextual host explicitly restores canvas focus (as Nautilus does), before deferred unparenting. The real-click regression checks both focus acquisition on opening and focus return after Copy, allowing normal keyboard editing to continue. Final validated revision: c744dac3f553b0304e631dd80dde7fbe3669e1cd, CI 41144295677.
+
+
+## GitHub Flatpak alpha
+
+Application ID: `io.github.frandavid100.leaf`. Internal Cargo target remains `wordcraft-gnome`; installed executable is `leaf`. Desktop and AppStream metadata live in data/. packaging/build-bundle.sh stages the tested native release executable into GNOME 49 using Flatpak build-init/export/bundle, with no Flatpak-builder manifest. This is GitHub distribution, not a Flathub source build or submission.
+
+packaging/smoke-test.sh validates the installed application, desktop launcher, document-portal forwarding and persistent application data across reinstall. XDG_STATE_HOME is respected; when absent inside Flatpak, the host uses XDG_DATA_HOME/state for recovery. Existing non-Flatpak settings paths are preserved. Reinstall testing preserves data and does not yet verify updating between two distinct version bundles.
+
+The workflow publishes only push commits on wordcraft-saving explicitly marked [release-alpha]. It never overwrites an existing release. The one-off [bundle-only] path reuses native artifact run 41186663675 only after git diff proves src/Cargo/tests identical to 497cd6c5aad7a71f4b580e933f4c3e505b9126c5. Future code changes require full native validation; do not bypass that guard. Bump application/version strings, package filenames and release notes together for the next alpha. Packaging scripts and documentation have used AI assistance; do not present them as human-authored Flathub manifests.
