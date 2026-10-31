@@ -1,13 +1,7 @@
-Leaf 0.1.0-alpha.2 adds document columns and native symbolic formatting icons.
+Leaf 0.1.0-alpha.3 fixes document and thumbnail raster resolution on HiDPI screens.
 
-**Columns:** open Paragraph → Columnas…. Choose 1–12 equal columns, asymmetric presets or custom widths/gaps, and an optional separator. Apply to the current section, the whole document, selected body text or from the cursor onward. Selection mode creates continuous sections through WordCraft; the change is one undo step. Going back without applying leaves the document unchanged.
+Page rendering now accounts for GTK display density as well as document zoom. A logical-size paintable keeps page geometry, scrolling and hit testing independent of texture resolution. Cached pages and thumbnails are invalidated when the widget scale factor changes. The old 2 pixels-per-point cap is removed; the existing 12-million-pixel page allocation guard remains.
 
-**Icons:** Style, Paragraph and Text now use GTK symbolic icons with native sizing and alignment instead of Cairo-drawn letters.
+Automated checks cover 100% and 200% display scaling, 100% and 200% document zoom, texture dimensions, logical page geometry and unchanged document revision. Real multi-monitor Wayland/fractional-scale testing remains pending. This fixes a concrete integration defect; confirmation from the original Reddit reporter is still needed.
 
-Download **Leaf-0.1.0-alpha.2-x86_64.flatpak** and open it with GNOME Software. It uses the same application ID and GNOME 49 runtime as alpha.1. No automatic Leaf update feed. See INSTALL.md.
-
-**Known limitations:** primarily Spanish interface and experimental file fidelity. Unequal column widths round-trip in DOCX; the pinned WordCraft ODT exporter writes equal widths (count, spacing and separator remain). The popover explains this limitation. Test copies and compare saved documents in another editor.
-
-Native release tests and installed-Flatpak checks run before publication, including upgrading from alpha.1. Manual GNOME OS and broader real-document testing remain necessary. Development, tests, packaging, documentation and artwork have used substantial AI assistance.
-
-[Testing guide](https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/TESTING.md) · [Report a problem](https://github.com/frandavid100/leaf/issues/new/choose)
+Download Leaf-0.1.0-alpha.3-x86_64.flatpak and install over alpha.2. GNOME 49 runtime required. No automatic Leaf update feed. AI-assisted development. Experimental DOCX/ODT fidelity; test copies. Unequal column widths remain DOCX-only on round-trip.

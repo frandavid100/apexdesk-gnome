@@ -28,6 +28,7 @@ struct Current {
     selection_areas: Vec<gtk::DrawingArea>,
     thumbs: Vec<gtk::Picture>,
     thumb_buttons: Vec<gtk::Button>,
+    raster_scale: i32,
     painted_pages: HashSet<usize>,
     painted_thumbs: HashSet<usize>,
     active: usize,
@@ -493,6 +494,7 @@ fn update_status(ui: &Rc<Ui>) {
 
 /// Renderizado bajo demanda: solo hojas cercanas al área visible.
 fn refresh_pages(ui: &Rc<Ui>) {
+    sync_raster_scale(ui);
     let adj = ui.scroll.vadjustment();
     let top = adj.value();
     let bottom = top + adj.page_size().max(600.0);
@@ -510,9 +512,9 @@ fn refresh_pages(ui: &Rc<Ui>) {
             }
             for index in visible {
                 if !doc.painted_pages.contains(&index) {
-                    match render_page(&mut doc.session, index, doc.zoom) {
+                    match render_page(&mut doc.session, index, doc.zoom * doc.raster_scale as f32) {
                         Ok(img) => {
-                            doc.pages[index].set_paintable(Some(&texture(img)));
+                            doc.pages[index].set_paintable(Some(&page_paintable::new(img, (doc.sizes[index].0*doc.zoom).ceil() as i32, (doc.sizes[index].1*doc.zoom).ceil() as i32)));
                             doc.painted_pages.insert(index);
                         }
                         Err(error) => errors.push(error),
@@ -527,6 +529,7 @@ fn refresh_pages(ui: &Rc<Ui>) {
 
 /// Renderizar miniaturas solo alrededor de la zona desplazada del panel.
 fn refresh_thumbnails(ui: &Rc<Ui>) {
+    sync_raster_scale(ui);
     if !ui.sidebar.shows_sidebar() { return; }
     let adj = ui.thumbnails_scroll.vadjustment();
     let top = adj.value();
@@ -540,8 +543,8 @@ fn refresh_thumbnails(ui: &Rc<Ui>) {
                 let (start,end)=doc.thumb_buttons[i].compute_bounds(&ui.thumbnails_box).map(|r|(r.y()as f64,(r.y()+r.height())as f64)).filter(|(_,end)|*end>0.0).unwrap_or((offset,offset+height));
                 let is_visible = start <= bottom + 250.0 && end >= top - 250.0;
                 if is_visible && !doc.painted_thumbs.contains(&i) {
-                    if let Ok(image) = render_page(&mut doc.session, i, THUMB_SCALE) {
-                        doc.thumbs[i].set_paintable(Some(&texture(image)));
+                    if let Ok(image) = render_page(&mut doc.session, i, THUMB_SCALE * doc.raster_scale as f32) {
+                        doc.thumbs[i].set_paintable(Some(&page_paintable::new(image, (doc.sizes[i].0*THUMB_SCALE).ceil() as i32, (doc.sizes[i].1*THUMB_SCALE).ceil() as i32)));
                         doc.painted_thumbs.insert(i);
                     }
                 } else if !is_visible && doc.painted_thumbs.remove(&i) {
@@ -760,6 +763,7 @@ fn opened(ui: &Rc<Ui>, mut session: Session, label: &str) {
     ui.current.replace(Some(Current {
         session, sizes, arrangement, zoom, fit_to_width: true,
         pages, page_frames, selection_areas, thumbs, thumb_buttons,
+        raster_scale: 0,
         painted_pages: HashSet::new(),
         painted_thumbs: HashSet::new(),
         active: 0, status_active: None,
@@ -827,6 +831,7 @@ include!("../gnome_navigation.rs");
 include!("../gnome_menus.rs");
 include!("../gnome_paragraph.rs");
 include!("../gnome_view_tests.rs");
+include!("../gnome_hidpi.rs");
 
 fn build_tab(
     app: &Application,
@@ -1590,6 +1595,9 @@ fn build_tab(
         opened(&ui, session, &label);
     } else if sample_on_start { opened(&ui, sample_session(), "Prueba de interfaz"); }
     else {opened(&ui,Session::new(wordcraft_doc::Document::new()),"Documento nuevo");}
+    {let weak=Rc::downgrade(&ui);ui.document_box.connect_scale_factor_notify(move |_|{
+        let weak=weak.clone();glib::idle_add_local_once(move||{if let Some(ui)=weak.upgrade(){if !ui.closed.get(){refresh_pages(&ui);refresh_thumbnails(&ui);}}});
+    });}
     window.present();
     install_table_context_menu(&ui,&window);
     if std::env::args().any(|a|a=="--adaptive-ui-test"){let u=ui.clone();let w=window.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1400),move||adaptive_ui_test(&u,&w,&app));}
@@ -1649,6 +1657,7 @@ fn build_tab(
         });
     }
     if std::env::args().any(|a|a=="--columns-demo"){let u=ui.clone();let m=align_menu.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{m.popup();if let Some(s)=u.paragraph.borrow().as_ref(){s.page("columns");}});}
+    if std::env::args().any(|a|a=="--hidpi-ui-test"){let u=ui.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1300),move||hidpi_ui_test(&u,&a));}
     if std::env::args().any(|a|a=="--columns-ui-test"){let u=ui.clone();let w=window.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||columns_ui_test(&u,&w,&a));}
     if std::env::args().any(|a|a=="--paragraph-demo"||a=="--paragraph-spacing-demo") {let m=align_menu.clone();let s=paragraph_popover.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{m.popup();if std::env::args().any(|a|a=="--paragraph-spacing-demo"){s.page("spacing");}});}
     if std::env::args().any(|a|a=="--paragraph-ui-test") {let s=paragraph_popover.clone();let m=align_menu.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||paragraph_ui_test(&s,&m,&app));}
@@ -1744,7 +1753,7 @@ fn build_tab(
 
 fn main() {
     if std::env::args().any(|arg| arg == "--version") {
-        println!("Leaf 0.1.0-alpha.2");
+        println!("Leaf 0.1.0-alpha.3");
         return;
     }
     if std::env::args().any(|a|a=="--package-storage-test") {

@@ -2,6 +2,9 @@
 
 Actualizado: 31 de octubre de 2026. Punto de entrada para continuar desde otra conversación.
 
+## En curso: HiDPI (31-10-2026)
+Corregido en el host: resolución zoom × escala GTK, paintable con tamaño lógico independiente, invalidación por cambios de escala y retirada del límite de 2 píxeles/punto conservando el tope de asignación de 12 millones de píxeles/página. Pruebas nuevas 1×/2× pantalla y zoom 1×/2×. Pendiente CI y confirmación manual; motor sin cambios.
+
 ## Última entrega: alpha.2 — columnas e iconos (31-10-2026)
 
 - Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.2
