@@ -10,6 +10,7 @@ permissions:
 
 jobs:
   test:
+    if: ${{ !contains(github.event.head_commit.message, '[bundle-only]') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -360,21 +361,29 @@ jobs:
   flatpak-alpha:
     name: Package and publish GitHub Flatpak alpha
     needs: test
-    if: github.event_name == 'push' && github.ref == 'refs/heads/wordcraft-saving' && contains(github.event.head_commit.message, '[release-alpha]')
+    if: always() && github.event_name == 'push' && github.ref == 'refs/heads/wordcraft-saving' && contains(github.event.head_commit.message, '[release-alpha]') && (needs.test.result == 'success' || (needs.test.result == 'skipped' && contains(github.event.head_commit.message, '[bundle-only]')))
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
       contents: write
+      actions: read
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Verify reused native build is source-identical
+        if: contains(github.event.head_commit.message, '[bundle-only]')
+        run: git diff --exit-code 497cd6c5aad7a71f4b580e933f4c3e505b9126c5 -- src Cargo.toml Cargo.lock tests
       - uses: actions/download-artifact@v4
         with:
           name: wordcraft-gnome-fase3d-linux
           path: native-artifact
+          run-id: ${{ contains(github.event.head_commit.message, '[bundle-only]') && '41186663675' || github.run_id }}
+          github-token: ${{ github.token }}
       - name: Install Flatpak and desktop validation tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends flatpak desktop-file-utils appstream xvfb xauth scrot libgtk-3-bin fuse3 xdotool xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
+          sudo apt-get install -y --no-install-recommends flatpak desktop-file-utils appstream xvfb xauth scrot libgtk-3-bin librsvg2-common fuse3 xdotool xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
           # Ubuntu runner AppArmor restricts bubblewrap's user namespaces by default.
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Validate desktop metadata
