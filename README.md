@@ -12,9 +12,11 @@ Leaf is an experimental GTK4/libadwaita document editor for Linux, powered by [W
 
 Alpha.4 repairs the ODT header/footer and repeating-row defects found in our one-off audit. [Follow-up results and remaining limits](https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/ODT_PRESERVATION_2026-10-31.md). Older alpha releases still have those defects.
 
-The current development version implements DOCX/ODT editing and saving, PDF export, section columns, styles, tables, inline images, tabs and sidebar search/replacement. Complex document fidelity is still being tested: use copies of your files.
+The current development version implements DOCX/ODT editing and saving, PDF export, native printing, section columns, styles, tables, inline images, tabs and sidebar search/replacement. Complex document fidelity is still being tested: use copies of your files.
 
-**[Download the current x86_64 Flatpak alpha](https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.4).** Open the `.flatpak` with GNOME Software or follow the release's INSTALL.md. The GNOME 49 runtime is downloaded from Flathub if required. Leaf itself is not on Flathub. This is experimental: use copies of your documents.
+**[Download the current x86_64 Flatpak alpha](https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.5).** Open the `.flatpak` with GNOME Software or follow the release's INSTALL.md. The GNOME 49 runtime is downloaded from Flathub if required. Leaf itself is not on Flathub. This is experimental: use copies of your documents.
+
+Alpha.5 adds native printing (document menu / Ctrl+P), F6 pane navigation and clearer accessible control names. [Validation and remaining accessibility/printing limits](https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/KEYBOARD_PRINTING.md). The custom document canvas does not yet provide full screen-reader text access.
 
 ## Get involved
 
