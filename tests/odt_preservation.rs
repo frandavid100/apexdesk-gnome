@@ -24,7 +24,7 @@ fn all_six_page_parts_keep_text_format_nested_tables_and_images(){
  d.last_section.footers=HeaderSet{default:Some(4),even:Some(5),first:Some(6)};
  d.parts.get_mut(&4).unwrap().blocks.push(table(false,true));
  let png:Vec<u8>=vec![137,80,78,71,13,10,26,10,0,0,0,13,73,72,68,82,0,0,0,3,0,0,0,3,8,2,0,0,0,217,74,34,232,0,0,0,23,73,68,65,84,120,156,99,188,35,34,194,192,192,192,192,192,192,196,0,3,8,22,0,29,176,1,10,58,105,173,217,0,0,0,0,73,69,78,68,174,66,96,130];d.media.insert("logo.png".into(),Arc::new(png.clone()));
- let mut picture=Paragraph::with_text("\u{fffc}",Default::default());
+ let mut picture=Paragraph::new();picture.text="\u{fffc}".into();picture.runs.push(wordcraft_doc::Run{len:3,props:Default::default()});
  picture.objects.push(InlineObject::Image{media:"logo.png".into(),w:12.0,h:12.0,alt:"Header logo".into(),float:Default::default(),crop:[0.0;4],ole:None});
  d.parts.get_mut(&1).unwrap().blocks.push(Arc::new(Block::Para(picture)));
  let out=roundtrip(&d);assert!(out.media.values().any(|b|b.as_slice()==png.as_slice()));let h=out.last_section.headers;let f=out.last_section.footers;
@@ -71,4 +71,15 @@ fn save_failure_and_success_preserve_selection_and_history(){
  let path=root.join("saved.odt");wordcraft_gnome::saving::save(&mut s,&path).unwrap();
  assert_eq!(s.path.as_ref(),Some(&path));assert!(!s.dirty);assert_eq!(s.sel,sel);assert_eq!(s.undo_depth(),depth);assert_eq!(s.rev(),rev);
  std::fs::remove_dir_all(root).unwrap();
+}
+
+#[test]
+fn dormant_variants_do_not_enable_first_or_even_page_modes(){
+ let mut d=Document::from_text("Body");
+ d.last_section.headers=HeaderSet{default:Some(1),first:Some(2),even:Some(3)};
+ for (id,text) in [(1,"Default"),(2,"Dormant first"),(3,"Dormant even")]{
+  d.parts.insert(id,Part{kind:PartKind::Header,blocks:vec![paragraph(text)],body:Default::default()});
+ }
+ let out=roundtrip(&d);assert!(!out.last_section.title_page);assert!(!out.settings.even_odd_headers);
+ assert_eq!(id_text(&out,out.last_section.headers.default),"Default");
 }

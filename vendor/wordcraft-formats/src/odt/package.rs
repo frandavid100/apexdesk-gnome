@@ -175,7 +175,9 @@ pub fn export(doc: &Document) -> Result<Vec<u8>, String> {
             for (slot, id) in [("", set.default), ("-left", set.even), ("-first", set.first)] {
                 if let Some(part) = id.and_then(|id| doc.parts.get(&id)).filter(|part| part.kind == kind) {
                     w.pending_start = None; w.continue_list = false;
-                    content.push_str(&format!("<style:{prefix}{slot}>"));
+                    let enabled = match slot { "-first" => sec.title_page, "-left" => doc.settings.even_odd_headers, _ => true };
+                    let display = if enabled { "" } else { " style:display=\"false\"" };
+                    content.push_str(&format!("<style:{prefix}{slot}{display}>"));
                     let header_flow = odt_flow(doc, &part.blocks);
                     w.blocks(&header_flow.blocks, &mut content, 0);
                     w.close_ins(&mut content);
