@@ -5,7 +5,7 @@ Las fases siguientes son propuestas; no implican autorización para implementarl
 
 ## Ahora: conservación de ODT y validación con usuarios
 
-La auditoría puntual ha confirmado pérdida de cabeceras/pies ODT, incluidas tablas, y cambios de cabecera repetida de tabla. [Resultados y reproducción](docs/CORPUS_AUDIT_2026-10-31.md). Prioridad propuesta: corregir esos casos con regresiones pequeñas antes de más funciones; la corrección todavía no está implementada ni autorizada por esta petición de comprobación. Auditoría manual, sin requisito automático por versión.
+Alpha.4 publicada: corregidos los fallos de conservación de cabeceras/pies ODT y filas repetidas descubiertos en la auditoría inicial. [Seguimiento, segunda ejecución de 24 archivos y límites](docs/ODT_PRESERVATION_2026-10-31.md). Siete regresiones pequeñas, comprobación independiente con LibreOffice, CI GTK y Flatpak superadas. Parche aislado de wordcraft-formats con procedencia y actualización documentadas; resto del motor sin cambios. Pendiente prueba manual con documentos reales. La auditoría sigue siendo manual, sin requisito automático por versión. Prioridad siguiente: recoger fallos concretos de usuarios y ampliar reproducciones pequeñas; no implica autorización para nuevas funciones.
 
 ## Validar HiDPI, columnas y recoger tareas bloqueadas
 

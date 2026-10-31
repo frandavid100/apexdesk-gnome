@@ -1,0 +1,1616 @@
+{
+  "manifest": {
+    "repository": "LibreOffice/core",
+    "revision": "6e0b39149b549bd05065d451006c4d060589891d",
+    "files": [
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/defaultStyle.docx",
+        "blob_sha": "8e3faa70da8cf56f93494de17a82479c4202c986",
+        "size": 5126
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/2_table_doc.docx",
+        "blob_sha": "21513ec2cc72d86c9ca1d28d3dec6e64ba6ab2d9",
+        "size": 10090
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/Table_cell_auto_width_fdo69656.docx",
+        "blob_sha": "10b8f9de21d8ea05674cb7bde0d19186f564db85",
+        "size": 18939
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/floating-table-position.docx",
+        "blob_sha": "de7a467aac1bf6acd01bb9e44aedcbf2a4de7099",
+        "size": 13236
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/2col-header.docx",
+        "blob_sha": "3e8f2c459d5b213fd35f4df52358f3577310e00c",
+        "size": 17060
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/multi-column-separator-with-line.docx",
+        "blob_sha": "c19ed697b55cb7694925de5c5bef2a3923fcc6bd",
+        "size": 11618
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/ImageCrop.docx",
+        "blob_sha": "120ce78eb7de094d235a7dbef3412000912e4bfd",
+        "size": 71650
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/image_data.docx",
+        "blob_sha": "08d0eb84164309c162afd79fc00c9b2e3f044ac5",
+        "size": 41168
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/footnote.docx",
+        "blob_sha": "f5c94bd2700410502294670764e7f53dc9f56e96",
+        "size": 15779
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/firstheadernofooter.docx",
+        "blob_sha": "40e5cae3d385162378ef003983c5474cba323be3",
+        "size": 15621
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/footer-margin-lost.docx",
+        "blob_sha": "d6a9d7bd8df9341e892cd290a2c623e88bcc539d",
+        "size": 21058
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/margins_from_style.docx",
+        "blob_sha": "721982458e4f3a22183534eacf3ab67e6ab559f0",
+        "size": 13878
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/NumberedList.docx",
+        "blob_sha": "53f4490d4077326f5e9f9a9d83321951702cdd8a",
+        "size": 55519
+      },
+      {
+        "path": "sw/qa/extras/ooxmlexport/data/TextEffects_InStyle.docx",
+        "blob_sha": "5be6d9c5f987da84827ec5c3dd2ea634250a9e5a",
+        "size": 13028
+      },
+      {
+        "path": "sw/qa/extras/odfexport/data/listformat.odt",
+        "blob_sha": "ec3992c8fde93afac4abd1511f91868fa0af0658",
+        "size": 9221
+      },
+      {
+        "path": "sw/qa/extras/odfexport/data/table_styles_1.odt",
+        "blob_sha": "701fd92c2aaa42efda0c36b7ed6ba5879f06f27e",
+        "size": 9874
+      },
+      {
+        "path": "sw/qa/extras/odfexport/data/table_styles_2.odt",
+        "blob_sha": "735ea4431909e367ec770f544bb12a2f93789534",
+        "size": 10727
+      },
+      {
+        "path": "sw/qa/extras/odfexport/data/nestedTableInFooter.odt",
+        "blob_sha": "0356f04ee14ea6e6f97a62f8519523422861c0b7",
+        "size": 8611
+      },
+      {
+        "path": "sw/qa/extras/odfexport/data/image-mimetype.odt",
+        "blob_sha": "4c4924a1b254a99af8555720444152ca6d14d737",
+        "size": 88597
+      },
+      {
+        "path": "sw/qa/extras/odfexport/data/ooo321_stylepagenumber.odt",
+        "blob_sha": "aae70e1063c5f3b1862cb6d188fcca78ff3d2778",
+        "size": 8558
+      },
+      {
+        "path": "sw/qa/extras/odfexport/data/tdf133507_contextualSpacingSection.odt",
+        "blob_sha": "efc1c3f592c1ccdddec624dba9cbe7277c094c7e",
+        "size": 40288
+      },
+      {
+        "path": "sw/qa/extras/odfexport/data/tdf135338_firstLeftPageFooter.odt",
+        "blob_sha": "4f9808875812afd334de9df9252127f35fda28c0",
+        "size": 10687
+      },
+      {
+        "path": "sw/qa/extras/odfexport/data/arabic-zero-numbering.odt",
+        "blob_sha": "2a445b22748a31e473e7704cc11cc07319e82902",
+        "size": 8730
+      },
+      {
+        "path": "sw/qa/extras/odfexport/data/tdf104254_noHeaderWrapping.odt",
+        "blob_sha": "06dde4802b431fb36e32ed92d6ddaeeb1b2f1fdd",
+        "size": 63167
+      }
+    ]
+  },
+  "results": [
+    {
+      "file": "defaultStyle.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/defaultStyle.docx",
+      "source_blob_sha": "8e3faa70da8cf56f93494de17a82479c4202c986",
+      "status": "unchanged",
+      "source_sha256": "25bf51eecc8ecb0d542d565b67c5b9e4aa8564329fc3fe721e957904f85cc949",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 7,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            420,
+            298
+          ],
+          "after_size": [
+            420,
+            298
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "2_table_doc.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/2_table_doc.docx",
+      "source_blob_sha": "21513ec2cc72d86c9ca1d28d3dec6e64ba6ab2d9",
+      "status": "unchanged",
+      "source_sha256": "06ef510c600a2ded4058f843afac1f30c04133641a8e018c46a7d08260b51533",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        2,
+        2
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 4,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            612,
+            792
+          ],
+          "after_size": [
+            612,
+            792
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "Table_cell_auto_width_fdo69656.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/Table_cell_auto_width_fdo69656.docx",
+      "source_blob_sha": "10b8f9de21d8ea05674cb7bde0d19186f564db85",
+      "status": "unchanged",
+      "source_sha256": "f6d6e7d58ab69164269ed495075372ab1739bfd4be37e64b6f0487d9a56dc010",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        1,
+        1
+      ],
+      "part_counts": [
+        6,
+        6
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 0,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            612,
+            792
+          ],
+          "after_size": [
+            612,
+            792
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "floating-table-position.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/floating-table-position.docx",
+      "source_blob_sha": "de7a467aac1bf6acd01bb9e44aedcbf2a4de7099",
+      "status": "unchanged",
+      "source_sha256": "6e4ea74b6c749d5db5efbe30e5cd77d7db175307a1aa65f617c0316e2351e8fc",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        1,
+        1
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 0,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "2col-header.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/2col-header.docx",
+      "source_blob_sha": "3e8f2c459d5b213fd35f4df52358f3577310e00c",
+      "status": "unchanged",
+      "source_sha256": "01ee36c8a1f2ea9e0082c2a6a46f435657a317cd0b14365eb3e171361cb5d348",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        2,
+        2
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 3,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            612,
+            792
+          ],
+          "after_size": [
+            612,
+            792
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "multi-column-separator-with-line.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/multi-column-separator-with-line.docx",
+      "source_blob_sha": "c19ed697b55cb7694925de5c5bef2a3923fcc6bd",
+      "status": "unchanged",
+      "source_sha256": "22b9d6c36eb8ef14885888be621f1cecce695f192410638d8e4dc29af971ad04",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 4,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            612,
+            792
+          ],
+          "after_size": [
+            612,
+            792
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "ImageCrop.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/ImageCrop.docx",
+      "source_blob_sha": "120ce78eb7de094d235a7dbef3412000912e4bfd",
+      "status": "unchanged",
+      "source_sha256": "01747a0de65a3d1a016a03b6968508d6e6196a06520ef2e00aafc602bf7ac308",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        1,
+        1
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        1,
+        1
+      ],
+      "source_tokens": 4,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            612,
+            792
+          ],
+          "after_size": [
+            612,
+            792
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "image_data.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/image_data.docx",
+      "source_blob_sha": "08d0eb84164309c162afd79fc00c9b2e3f044ac5",
+      "status": "unchanged",
+      "source_sha256": "8a9500281582daa58b6906053d6da5d97998742d40c631413784e078010d7e54",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        2,
+        2
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        1,
+        1
+      ],
+      "source_tokens": 1,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "footnote.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/footnote.docx",
+      "source_blob_sha": "f5c94bd2700410502294670764e7f53dc9f56e96",
+      "status": "unchanged",
+      "source_sha256": "9c3ef260d32723c6e8195c47a504f40d275afa5b82d98d60faecf55a39f60eda",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        1,
+        1
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 2,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            612,
+            792
+          ],
+          "after_size": [
+            612,
+            792
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "firstheadernofooter.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/firstheadernofooter.docx",
+      "source_blob_sha": "40e5cae3d385162378ef003983c5474cba323be3",
+      "status": "unchanged",
+      "source_sha256": "874ed45b1580e71606e8e9e278cbeacb12af020c3a2b0efe5900a41012fe5c61",
+      "changes": {},
+      "pages": [
+        2,
+        2
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        2,
+        2
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 8,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        },
+        {
+          "page": 2,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "footer-margin-lost.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/footer-margin-lost.docx",
+      "source_blob_sha": "d6a9d7bd8df9341e892cd290a2c623e88bcc539d",
+      "status": "unchanged",
+      "source_sha256": "3477d04b1d2cdb18e289abc633eeff74314444e4a8e247b289c3dc76fd81a75b",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        4,
+        4
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 3,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "margins_from_style.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/margins_from_style.docx",
+      "source_blob_sha": "721982458e4f3a22183534eacf3ab67e6ab559f0",
+      "status": "unchanged",
+      "source_sha256": "eb04d5c77e1b990b95609628b47e1a798ec54c255a82efbfce0bdd032e300c86",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 28,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "NumberedList.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/NumberedList.docx",
+      "source_blob_sha": "53f4490d4077326f5e9f9a9d83321951702cdd8a",
+      "status": "unchanged",
+      "source_sha256": "ebb078d791b6deb4d0a2dae69a15a5274baf2ade815f07b336b394bb43af4c88",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        2,
+        2
+      ],
+      "part_counts": [
+        1,
+        1
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 11,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            612,
+            792
+          ],
+          "after_size": [
+            612,
+            792
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "TextEffects_InStyle.docx",
+      "source_path": "sw/qa/extras/ooxmlexport/data/TextEffects_InStyle.docx",
+      "source_blob_sha": "5be6d9c5f987da84827ec5c3dd2ea634250a9e5a",
+      "status": "unchanged",
+      "source_sha256": "ef86f0b08ad34a04c1e72de7c7bb9ff4802e1c179a49cd39e2af037db7e7a431",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 1,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "listformat.odt",
+      "source_path": "sw/qa/extras/odfexport/data/listformat.odt",
+      "source_blob_sha": "ec3992c8fde93afac4abd1511f91868fa0af0658",
+      "status": "differences",
+      "source_sha256": "4cd45c4234ee26e83d701dee3a8b9b70f0703e966b3c559e61616e67755aa70e",
+      "changes": {
+        "page_properties": [
+          {
+            "path": "/0/marginBottom",
+            "before": "56.69280242919922",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginLeft",
+            "before": "56.69280242919922",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginRight",
+            "before": "56.69280242919922",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginTop",
+            "before": "56.69280242919922",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/pageH",
+            "before": "841.8887939453125",
+            "after": "841.8900146484375"
+          },
+          {
+            "path": "/0/pageW",
+            "before": "595.3031616210938",
+            "after": "595.2999877929688"
+          }
+        ]
+      },
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 9,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": false,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "table_styles_1.odt",
+      "source_path": "sw/qa/extras/odfexport/data/table_styles_1.odt",
+      "source_blob_sha": "701fd92c2aaa42efda0c36b7ed6ba5879f06f27e",
+      "status": "differences",
+      "source_sha256": "fe9a433734d77919eb68609b5a439bfe11f5b0bfadafbba25c9bad710d045238",
+      "changes": {
+        "page_properties": [
+          {
+            "path": "/0/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/pageW",
+            "before": "595.303955078125",
+            "after": "595.2999877929688"
+          }
+        ]
+      },
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        1,
+        1
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 0,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": false,
+          "changed_pixels": 3
+        }
+      ]
+    },
+    {
+      "file": "table_styles_2.odt",
+      "source_path": "sw/qa/extras/odfexport/data/table_styles_2.odt",
+      "source_blob_sha": "735ea4431909e367ec770f544bb12a2f93789534",
+      "status": "differences",
+      "source_sha256": "b4377f31ce83ad94f846a63941d47c6e8087fae4591dad8e3f128b317a2a6405",
+      "changes": {
+        "page_properties": [
+          {
+            "path": "/0/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/pageW",
+            "before": "595.303955078125",
+            "after": "595.2999877929688"
+          }
+        ]
+      },
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        1,
+        1
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 3,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": false,
+          "changed_pixels": 62
+        }
+      ]
+    },
+    {
+      "file": "nestedTableInFooter.odt",
+      "source_path": "sw/qa/extras/odfexport/data/nestedTableInFooter.odt",
+      "source_blob_sha": "0356f04ee14ea6e6f97a62f8519523422861c0b7",
+      "status": "differences",
+      "source_sha256": "b41cb668feec9ef9433366fe04d960f3a6bcf9b32dcab0268f6c157dfe7631ab",
+      "changes": {
+        "tables": [
+          {
+            "path": "/0/grid/0",
+            "before": "240.94488525390625",
+            "after": "240.94000244140625"
+          },
+          {
+            "path": "/0/grid/1",
+            "before": "240.94488525390625",
+            "after": "240.94000244140625"
+          },
+          {
+            "path": "/0/rows/0/cells/0/width",
+            "before": "240.94488525390625",
+            "after": "240.94000244140625"
+          },
+          {
+            "path": "/0/rows/0/cells/1/width",
+            "before": "240.94488525390625",
+            "after": "240.94000244140625"
+          },
+          {
+            "path": "/1/grid/0",
+            "before": "235.38897705078125",
+            "after": "235.38999938964844"
+          },
+          {
+            "path": "/1/rows/0/cells/0/width",
+            "before": "235.38897705078125",
+            "after": "235.38999938964844"
+          }
+        ],
+        "page_properties": [
+          {
+            "path": "/0/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/pageW",
+            "before": "595.303955078125",
+            "after": "595.2999877929688"
+          }
+        ]
+      },
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        2,
+        2
+      ],
+      "part_counts": [
+        1,
+        1
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 0,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": false,
+          "changed_pixels": 59
+        }
+      ]
+    },
+    {
+      "file": "image-mimetype.odt",
+      "source_path": "sw/qa/extras/odfexport/data/image-mimetype.odt",
+      "source_blob_sha": "4c4924a1b254a99af8555720444152ca6d14d737",
+      "status": "differences",
+      "source_sha256": "edf7ffce238f0f1c3d1c5ec65e44c9d55f6ec5c855d1a71f73b3246e3434c99d",
+      "changes": {
+        "page_properties": [
+          {
+            "path": "/0/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/pageW",
+            "before": "595.303955078125",
+            "after": "595.2999877929688"
+          }
+        ]
+      },
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 0,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "ooo321_stylepagenumber.odt",
+      "source_path": "sw/qa/extras/odfexport/data/ooo321_stylepagenumber.odt",
+      "source_blob_sha": "aae70e1063c5f3b1862cb6d188fcca78ff3d2778",
+      "status": "differences",
+      "source_sha256": "96a7b04fbbe99a600a4126c1007bb5b092ac984d445869e2aad0e3ad91f94788",
+      "changes": {
+        "page_properties": [
+          {
+            "path": "/0/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/pageW",
+            "before": "595.303955078125",
+            "after": "595.2999877929688"
+          },
+          {
+            "path": "/1/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/1/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/1/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/1/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/1/pageW",
+            "before": "595.303955078125",
+            "after": "595.2999877929688"
+          },
+          {
+            "path": "/2/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/2/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/2/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/2/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/2/pageW",
+            "before": "595.303955078125",
+            "after": "595.2999877929688"
+          },
+          {
+            "path": "/3/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/3/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/3/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/3/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/3/pageW",
+            "before": "595.303955078125",
+            "after": "595.2999877929688"
+          }
+        ]
+      },
+      "pages": [
+        4,
+        4
+      ],
+      "table_counts": [
+        2,
+        2
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 0,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": false,
+          "changed_pixels": 0
+        },
+        {
+          "page": 2,
+          "before_size": [
+            596,
+            842
+          ],
+          "after_size": [
+            596,
+            842
+          ],
+          "identical": true,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "tdf133507_contextualSpacingSection.odt",
+      "source_path": "sw/qa/extras/odfexport/data/tdf133507_contextualSpacingSection.odt",
+      "source_blob_sha": "efc1c3f592c1ccdddec624dba9cbe7277c094c7e",
+      "status": "differences",
+      "source_sha256": "7793ffea5e755bb197020dc81eb48c2b01827c7a2128a268d1d9e10e74b9faf9",
+      "changes": {
+        "page_properties": [
+          {
+            "path": "/0/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/pageH",
+            "before": "297.6377868652344",
+            "after": "297.6400146484375"
+          },
+          {
+            "path": "/0/pageW",
+            "before": "419.555908203125",
+            "after": "419.55999755859375"
+          }
+        ]
+      },
+      "pages": [
+        2,
+        2
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 113,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            420,
+            298
+          ],
+          "after_size": [
+            420,
+            298
+          ],
+          "identical": false,
+          "changed_pixels": 0
+        },
+        {
+          "page": 2,
+          "before_size": [
+            420,
+            298
+          ],
+          "after_size": [
+            420,
+            298
+          ],
+          "identical": false,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "tdf135338_firstLeftPageFooter.odt",
+      "source_path": "sw/qa/extras/odfexport/data/tdf135338_firstLeftPageFooter.odt",
+      "source_blob_sha": "4f9808875812afd334de9df9252127f35fda28c0",
+      "status": "differences",
+      "source_sha256": "196c94c8498214ef2865eea8a3a3f992b71ef59c425d0ea6a7171ea4fe9a856f",
+      "changes": {
+        "page_properties": [
+          {
+            "path": "/0/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/pageH",
+            "before": "297.6377868652344",
+            "after": "297.6400146484375"
+          },
+          {
+            "path": "/0/pageW",
+            "before": "419.555908203125",
+            "after": "419.55999755859375"
+          }
+        ]
+      },
+      "pages": [
+        5,
+        5
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        7,
+        7
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 33,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            420,
+            298
+          ],
+          "after_size": [
+            420,
+            298
+          ],
+          "identical": false,
+          "changed_pixels": 0
+        },
+        {
+          "page": 2,
+          "before_size": [
+            420,
+            298
+          ],
+          "after_size": [
+            420,
+            298
+          ],
+          "identical": false,
+          "changed_pixels": 0
+        }
+      ]
+    },
+    {
+      "file": "arabic-zero-numbering.odt",
+      "source_path": "sw/qa/extras/odfexport/data/arabic-zero-numbering.odt",
+      "source_blob_sha": "2a445b22748a31e473e7704cc11cc07319e82902",
+      "status": "differences",
+      "source_sha256": "d4ead520638ad46304bda7c51fa9d607e3e9fc5c22497f2ae0ead93ac776a7f9",
+      "changes": {},
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        0,
+        0
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 1,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            612,
+            793
+          ],
+          "after_size": [
+            612,
+            792
+          ],
+          "identical": false
+        }
+      ]
+    },
+    {
+      "file": "tdf104254_noHeaderWrapping.odt",
+      "source_path": "sw/qa/extras/odfexport/data/tdf104254_noHeaderWrapping.odt",
+      "source_blob_sha": "06dde4802b431fb36e32ed92d6ddaeeb1b2f1fdd",
+      "status": "differences",
+      "source_sha256": "38f47166423262a2d07f479b1202d031e94e52e0bf3ef5e6cee3c361cf2a23c2",
+      "changes": {
+        "page_properties": [
+          {
+            "path": "/0/marginBottom",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginLeft",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginRight",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/marginTop",
+            "before": "56.69291305541992",
+            "after": "56.689998626708984"
+          },
+          {
+            "path": "/0/pageH",
+            "before": "297.6377868652344",
+            "after": "297.6400146484375"
+          },
+          {
+            "path": "/0/pageW",
+            "before": "419.555908203125",
+            "after": "419.55999755859375"
+          }
+        ]
+      },
+      "pages": [
+        1,
+        1
+      ],
+      "table_counts": [
+        0,
+        0
+      ],
+      "part_counts": [
+        1,
+        1
+      ],
+      "body_text_unchanged": true,
+      "media_counts": [
+        0,
+        0
+      ],
+      "source_tokens": 6,
+      "import_missing_tokens": {},
+      "roundtrip_missing_tokens": {},
+      "roundtrip_added_tokens": {},
+      "render": [
+        {
+          "page": 1,
+          "before_size": [
+            420,
+            298
+          ],
+          "after_size": [
+            420,
+            298
+          ],
+          "identical": false,
+          "changed_pixels": 0
+        }
+      ]
+    }
+  ]
+}

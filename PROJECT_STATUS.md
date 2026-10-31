@@ -2,17 +2,25 @@
 
 Actualizado: 31 de octubre de 2026. Punto de entrada para continuar desde otra conversación.
 
-## En curso: reparación ODT autorizada (31-10-2026)
+## Última entrega: alpha.4 — conservación ODT (31-10-2026)
 
-Parche aislado de wordcraft-formats, misma revisión upstream, mediante Cargo patch y snapshot vendor con licencias. Exporta cabeceras/pies, estilos automáticos y medios; conserva herencia y filas repetidas explícitas. Pruebas pequeñas y nueva comprobación puntual del corpus autorizadas para validar la corrección. Pendiente CI, revisión visual y paquete. No considerar todavía resuelta la advertencia de alpha.3.
+Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.4
+Fuente/etiqueta: `d5f969801fb8f069396922cb6603ff4cfa68b35c`.
+Flatpak x86_64: **10.133.160 bytes**; SHA256 `300b3e778fbfcffcbd5bc8d9a601bba7fa37a8e1b655bd3c6d969b78493e4707`.
 
-## Comprobación puntual de archivos (31-10-2026)
+Corregida la pérdida de cabeceras/pies ODT (incluye tablas anidadas, estilos automáticos y medios), conservadas partes de estilos de página no usados, y eliminada la conversión de primera fila visual a cabecera repetida. Excepción explícita al motor antes sin cambios: snapshot aislado de wordcraft-formats con Cargo patch, misma revisión upstream, licencias y diff en patches/. Los demás crates del motor/renderizador no se modifican. UPDATING_WORDCRAFT explica cómo actualizar o retirar el parche.
 
-[Informe](docs/CORPUS_AUDIT_2026-10-31.md): 24 archivos LibreOffice (14 DOCX/10 ODT), revisión fijada. Todos abren/guardan/reabren. DOCX: invariantes y páginas comprobadas sin cambios; ODT: 3 casos con pérdidas en cabeceras/pies (incluye tablas), 2 con primera fila convertida en cabecera repetida y 5 con diferencias pequeñas de redondeo/raster. Texto del cuerpo normalizado, número de páginas y bytes de medios importados conservados en los 24. Revisadas visualmente pérdidas de cabecera y tabla del pie.
+[Informe de seguimiento](docs/ODT_PRESERVATION_2026-10-31.md) y [datos permanentes](docs/audits/2026-10-31-odt-fix-results.json). Segunda ejecución de los mismos 24 archivos LibreOffice (14 DOCX/10 ODT): sin pérdidas de tokens importados, mismas firmas medidas DOCX; ODT conserva texto/formato medido/medios/objetos, tablas y partes. Quedan redondeos y diferencias menores de raster. El caso de 7 pies conserva 7; el pie anidado conserva 2 tablas. Revisión visual de cuatro PDF exportados por LibreOffice confirma texto de cabecera/pie y tablas. No es validación universal ni comparación completa contra originales en LibreOffice.
 
-**Evitar guardar ODT con cabeceras o pies en la versión actual.** Exportador de WordCraft fijado no escribe esas partes. No se ha corregido el motor ni generado una versión nueva. CI opcional 41216038237 completada; informe distingue completar auditoría de conservar documentos. Workflow manual sin ejecución automática por versión, conforme a la petición del usuario. Evidencia y límites en el informe; datos permanentes en docs/audits/2026-10-31-results.json.
+CI [41219266814](https://github.com/frandavid100/leaf/actions/runs/41219266814): job nativo **124590219910** y paquete **124593334957** correctos. Pasan cargo test --locked, 7 regresiones nuevas, compilación release GTK, regresiones gráficas e HiDPI. Flatpak supera actualización desde alpha.3, lanzador, portal, datos persistentes/reinstalación y pruebas de interfaz dentro del sandbox. Artefacto nativo 13049921141 (digest verificado af934ca273e37a417346f17ff0b0096fbe816a37fe93b407d10837c302880081); artefacto de paquete 13049433666.
 
-## Última entrega: alpha.3 — escalado HiDPI (31-10-2026)
+La auditoría anterior queda como evidencia histórica en docs/CORPUS_AUDIT_2026-10-31.md. Sus avisos aplican hasta alpha.3. Auditoría manual, no obligatoria por versión; el marcador [odt-audit] solo activa la comprobación puntual solicitada en este arreglo. Pendiente prueba manual del usuario; usar copias. Limitaciones de importación, estilos de página y columnas ODT desiguales siguen descritas. Variantes desactivadas conservan contenido en páginas maestras no usadas, sin retener su asociación de ranura inactiva.
+
+## Comprobación puntual inicial — histórico alpha.3
+
+La primera auditoría completó 24 aperturas/guardados/reaperturas y descubrió pérdidas en 3 ODT y cabeceras repetidas erróneas en otros 2. Sus datos no se sustituyen. Los fallos de conservación que motivaron la advertencia se han corregido y vuelto a comprobar en alpha.4; no extender esa conclusión a documentos arbitrarios.
+
+## Entrega anterior: alpha.3 — escalado HiDPI (31-10-2026)
 
 Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.3
 Fuente/etiqueta: `45037abc0ce0e323ea03f8f2c20218eda08c77a2`.

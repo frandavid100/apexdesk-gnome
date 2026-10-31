@@ -22,7 +22,7 @@ These are implemented features, not a claim of complete Microsoft Word or LibreO
 
 ## Try Leaf
 
-The current **x86_64 Flatpak alpha** is available on [GitHub Releases](https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.3). Download `Leaf-0.1.0-alpha.3-x86_64.flatpak` and open it with GNOME Software, or follow [installation instructions](packaging/INSTALL.md). It uses the GNOME 49 runtime from Flathub, downloaded separately if missing. Leaf itself is not currently on Flathub.
+The current **x86_64 Flatpak alpha** is available on [GitHub Releases](https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.4). Download `Leaf-0.1.0-alpha.4-x86_64.flatpak` and open it with GNOME Software, or follow [installation instructions](packaging/INSTALL.md). It uses the GNOME 49 runtime from Flathub, downloaded separately if missing. Leaf itself is not currently on Flathub.
 
 The installed package has passed automated launcher, interface, document-portal opening and persistent-data upgrade/reinstall checks on Ubuntu CI. Manual testing on GNOME OS and with your own documents is still needed. This standalone bundle has no automatic Leaf update feed.
 
@@ -55,7 +55,7 @@ Screenshots are actual captures of the last validated development build, using a
 
 ## Limits of this alpha
 
-**Known data-loss issue:** saving ODT currently drops headers and footers, including tables in those areas. Avoid saving affected ODT files. [One-off audit of 24 DOCX/ODT fixtures](docs/CORPUS_AUDIT_2026-10-31.md). The tested DOCX round-trips preserved the measured data, but this is not a general compatibility guarantee.
+Alpha.4 repairs the ODT header/footer and repeating-table-row defects found in our [one-off audit of 24 fixtures](docs/CORPUS_AUDIT_2026-10-31.md). [Follow-up results and remaining limits](docs/ODT_PRESERVATION_2026-10-31.md). Older releases still have those defects; this focused correction is not a general compatibility guarantee.
 
 Complex document fidelity, fonts, pagination and format preservation need broader testing. Images are inserted inline; floating-image positioning is not exposed. Tables do not yet have mouse resize handles or formulas. Unequal column widths are retained in DOCX but equalized by the current ODT exporter. Printing and a complete English interface remain future work. Automated checks do not establish fidelity for arbitrary documents.
 
@@ -65,4 +65,4 @@ For everyday work, keep your original and check saved copies in another editor. 
 
 The active branch is **`wordcraft-saving`**. Detailed [Spanish usage notes](docs/USER_GUIDE_ES.md) are also available. See [project status](PROJECT_STATUS.md), [roadmap](ROADMAP.md), [contributing](CONTRIBUTING.md) and [updating WordCraft](UPDATING_WORDCRAFT.md). The repository's default branch still contains an earlier prototype; follow the branch link when browsing the source.
 
-WordCraft remains pinned and unmodified; the native frontend is maintained separately. Leaf is licensed under [GPL-3.0-or-later](LICENSE). Development, tests, documentation and artwork have used AI assistance; [scope and limitations](docs/AI_ASSISTANCE.md).
+WordCraft remains pinned; Leaf carries one isolated ODT compatibility patch in wordcraft-formats, documented in [patches/](patches/README.md). Other engine crates and the renderer remain unchanged; the native frontend is maintained separately. Leaf is licensed under [GPL-3.0-or-later](LICENSE). Development, tests, documentation and artwork have used AI assistance; [scope and limitations](docs/AI_ASSISTANCE.md).

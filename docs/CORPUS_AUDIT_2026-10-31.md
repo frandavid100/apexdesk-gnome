@@ -1,5 +1,7 @@
 # One-off DOCX/ODT preservation audit — 2026-10-31
 
+**Historical baseline through alpha.3.** The identified header/footer and repeating-row defects are repaired in alpha.4. [Follow-up validation and remaining limits](ODT_PRESERVATION_2026-10-31.md). The original findings below are retained unchanged as evidence.
+
 ## Findings
 
 All **24 files opened, saved through Leaf's save adapter, and reopened without process failures**. This is a targeted sample of regression fixtures, not a representative compatibility percentage.
@@ -11,7 +13,7 @@ All **24 files opened, saved through Leaf's save adapter, and reopened without p
 | 2 ODT | First table row changes from an ordinary row to a repeating header row. |
 | 5 ODT | Only small page-dimension/margin rounding or raster differences found in these checks. |
 
-**Avoid saving ODT files containing headers or footers in the current version.** This includes tables placed in those areas. Use copies and verify any alternative output in another editor. No fix or new application release is included in this audit.
+**Avoid saving ODT files containing headers or footers in releases through alpha.3.** This includes tables placed in those areas. Use copies and verify any alternative output in another editor. No fix or new application release is included in this audit.
 
 The normalized body text and page count survived in all 24 cases. Imported media-byte fingerprints survived in all 24. That does not prove all original images imported correctly, or that body layout is identical to Word/LibreOffice.
 

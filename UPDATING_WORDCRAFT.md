@@ -1,7 +1,6 @@
 # Updating the WordCraft dependency
 
-The GNOME client consumes unmodified upstream crates at a pinned Git revision.
-There is no forked engine code, egui patch or copied renderer to merge.
+The GNOME client consumes upstream crates at a pinned Git revision. The sole compatibility exception is the vendored wordcraft-formats crate with a narrow ODT preservation patch; see [patches/README.md](patches/README.md). Other engine crates, egui and the renderer are not modified.
 
 ## Boundary
 
@@ -20,7 +19,7 @@ choose when to tick recovery or save the document; these policies are host code.
 
 ## Upgrade procedure
 
-1. Change the three WordCraft `rev` values in Cargo.toml together.
+1. Change the WordCraft `rev` values in Cargo.toml together, including the matching wordcraft-doc/geom revisions in vendor/wordcraft-formats/Cargo.toml. Recopy the upstream formats crate and reapply the recorded patch, or remove the override when upstream fixes the same cases. Do not keep a stale vendored crate across an engine update.
 2. Check upstream's Cargo.toml for its required `krilla` patch revision and Rust MSRV.
 3. Regenerate Cargo.lock, inspect its dependency diff and run `cargo test`.
 4. Run the GUI build and CI screenshots, including tabs, independent windows,
@@ -223,3 +222,10 @@ The workflow publishes only push commits on wordcraft-saving explicitly marked [
 src/gnome_hidpi.rs wraps native premultiplied MemoryTexture data in a GdkPaintable whose intrinsic size is the logical page/thumbnail size. The renderer receives zoom times GtkWidget scale-factor; pointer, layout, scrolling and caret calculations remain logical. Observe scale-factor changes and invalidate both raster caches. Keep the adapter pixel-allocation guard; oversized pages need future tiling rather than removing memory protection. Engine code is unchanged. Regression runs at GDK_SCALE=1/2 and document zoom 1/2, plus an installed sandbox run. Real fractional/Wayland monitor transitions remain manual tests.
 
 Latest successful native source is 45037abc0ce0e323ea03f8f2c20218eda08c77a2, run 41210344397. A future packaging-only reuse must explicitly configure that proven revision/run and preserve the git-diff identity guard; the workflow's older reuse baseline will correctly reject changed source.
+
+
+## ODT compatibility exception — alpha.4
+
+`vendor/wordcraft-formats` is a licensed snapshot of the formats crate from the same pinned engine revision. Cargo patches that source once, so explicit saves, autosave and recovery use the same exporter. `patches/wordcraft-formats-odt.patch` records the exporter-only diff. It writes page-part content with the existing Writer (sharing automatic style IDs and embedded media), resolves linked section parts, and retains unused imported page parts in unreferenced master pages. ODT flow conversion respects explicit repeating-row flags instead of inferring them from first-row appearance. Other format converters are unchanged. This exception is for verified file preservation defects, not UI convenience.
+
+Focused tests cover active first/even/default slots, nested tables, header images, inheritance, unused page styles, inactive mode flags, immutability and save state/history. The corpus workflow remains manual; the release workflow only runs the one-off corpus and external LibreOffice checks when explicitly marked [odt-audit]. It is not a mandatory per-release suite. See the follow-up report for results and limits. Inactive first/even variants retain their content in unused master pages, but the upstream importer does not retain their disabled-slot association. General page-style fidelity is not claimed.
