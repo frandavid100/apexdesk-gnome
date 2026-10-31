@@ -21,7 +21,7 @@ mod page_paintable {
             fn intrinsic_width(&self)->i32 {self.data.get().map_or(0,|d|d.1)}
             fn intrinsic_height(&self)->i32 {self.data.get().map_or(0,|d|d.2)}
             fn intrinsic_aspect_ratio(&self)->f64 {self.data.get().map_or(0.0,|d|d.1 as f64/d.2.max(1) as f64)}
-            fn flags(&self)->gdk::PaintableFlags {gdk::PaintableFlags::STATIC_SIZE | gdk::PaintableFlags::STATIC_CONTENTS}
+            fn flags(&self)->gdk::PaintableFlags {gdk::PaintableFlags::SIZE | gdk::PaintableFlags::CONTENTS}
         }
     }
     glib::wrapper! {pub struct PagePaintable(ObjectSubclass<imp::PagePaintable>) @implements gdk::Paintable;}
