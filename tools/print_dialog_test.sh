@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
-# Real desktop portal/backend dialog; dismiss it without printing a sheet.
+# Real desktop portal/backend dialog; activate its Cancel access key.
+# GTK portal 1.15.x reports Escape/WM-close as response 2 (failure), not cancel.
 set -euo pipefail
 LEAF_PRINT_TEST=cancel GSK_RENDERER=cairo "$@" --test-document --print-ui-test 2>print-dialog.log &
 pid=$!
@@ -14,7 +15,7 @@ done
 test -n "$dialog" || { cat print-dialog.log; exit 1; }
 scrot print-dialog.png
 xdotool windowfocus --sync "$dialog"
-xdotool key --clearmodifiers Escape
+xdotool key --clearmodifiers alt+c
 wait "$pid" || { cat print-dialog.log; exit 1; }
 grep -q 'PRINT_UI_OK Dismissed' print-dialog.log
 echo PRINT_NATIVE_DIALOG_OK

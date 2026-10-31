@@ -435,12 +435,12 @@ jobs:
           fetch-depth: 0
       - name: Verify reused native build is source-identical
         if: contains(github.event.head_commit.message, '[bundle-only]')
-        run: git diff --exit-code a13bc6c1a2221035190eb500abbdb0a8683fe30b -- src Cargo.toml Cargo.lock tests vendor patches
+        run: git diff --exit-code b1b42907f2059353518480899a3d4d56beb2996f -- src Cargo.toml Cargo.lock tests vendor patches
       - uses: actions/download-artifact@v4
         with:
           name: wordcraft-gnome-fase3d-linux
           path: native-artifact
-          run-id: ${{ contains(github.event.head_commit.message, '[bundle-only]') && '41192206555' || github.run_id }}
+          run-id: ${{ contains(github.event.head_commit.message, '[bundle-only]') && '41225574820' || github.run_id }}
           github-token: ${{ github.token }}
       - name: Install Flatpak and desktop validation tools
         run: |
