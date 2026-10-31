@@ -4,6 +4,7 @@ on:
   push:
     branches: [wordcraft-saving]
     paths: [.github/workflows/corpus-audit.yml]
+    # Temporary trigger for this requested audit; removed after the verification run.
 permissions:
   contents: read
 jobs:

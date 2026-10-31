@@ -17,7 +17,10 @@ def source_text(path):
    for n in z.namelist():
     if re.fullmatch(r"word/(document|header\d+|footer\d+|footnotes|endnotes)\.xml",n):
      root=ET.fromstring(z.read(n))
-     texts.extend(e.text or "" for e in root.iter("{"+W+"}t"))
+     def paragraph_text(e):
+      if e.tag=="{"+W+"}t":return e.text or ""
+      return "".join(paragraph_text(c) for c in e if c.tag!="{"+W+"}p")
+     texts.extend(paragraph_text(e) for e in root.iter("{"+W+"}p"))
   else:
    for n in ["content.xml","styles.xml"]:
     root=ET.fromstring(z.read(n))
@@ -92,6 +95,10 @@ for ix,fixture in enumerate(manifest["files"]):
   a,b=signature(before),signature(after)
   changes={k:diff(a[k],b[k]) for k in a if diff(a[k],b[k])}
   item["changes"]=changes;item["pages"]=[a["page_count"],b["page_count"]]
+  item["table_counts"]=[len(a["tables"]),len(b["tables"])]
+  item["part_counts"]=[len(before["parts"]),len(after["parts"])]
+  item["body_text_unchanged"]=norm(before["body_text"])==norm(after["body_text"])
+  item["media_counts"]=[len(a["media_bytes"]),len(b["media_bytes"])]
   original=source_text(source);imported=tokens(before["body_text"]+" "+" ".join(p["text"] for p in before["parts"]))
   reopened=tokens(after["body_text"]+" "+" ".join(p["text"] for p in after["parts"]))
   item["source_tokens"]=sum(original.values());item["import_missing_tokens"]=dict(original-imported)
