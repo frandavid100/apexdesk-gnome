@@ -14,11 +14,11 @@ fn lifecycle_trim() { unsafe extern "C" { fn malloc_trim(pad:usize)->i32; } unsa
 #[cfg(not(target_os="linux"))]
 fn lifecycle_trim() {}
 struct ClosedTabProbe {
-    controls:Vec<glib::WeakRef<gtk::Widget>>,ui:std::rc::Weak<Ui>,picture:glib::WeakRef<gtk::Picture>,body:std::sync::Weak<wordcraft_doc::Block>,
+    controller:glib::WeakRef<gtk::GestureClick>,controls:Vec<glib::WeakRef<gtk::Widget>>,ui:std::rc::Weak<Ui>,picture:glib::WeakRef<gtk::Picture>,body:std::sync::Weak<wordcraft_doc::Block>,
 }
 struct LifecycleAudit {
     host:RefCell<Option<Rc<Workspace>>>,app:Application,file:PathBuf,
-    tabs:RefCell<Vec<ClosedTabProbe>>,windows:RefCell<Vec<std::rc::Weak<Workspace>>>,
+    tabs:RefCell<Vec<ClosedTabProbe>>,windows:RefCell<Vec<(std::rc::Weak<Workspace>,glib::WeakRef<ApplicationWindow>)>>,
     wave:Cell<u32>,strict:bool,extra:bool,dialogs:RefCell<Vec<glib::WeakRef<adw::Window>>>,columns:RefCell<Vec<std::rc::Weak<ColumnControls>>>,
 }
 impl LifecycleAudit {
@@ -28,7 +28,7 @@ impl LifecycleAudit {
         for menu in ui.format_buttons.borrow().iter(){controls.push(menu.clone().upcast::<gtk::Widget>().downgrade());if let Some(p)=menu.popover(){controls.push(p.upcast::<gtk::Widget>().downgrade());}}
         if let Some(p)=ui.table_popover.borrow().as_ref(){controls.push(p.clone().upcast::<gtk::Widget>().downgrade());}
         if let Some(p)=ui.picture.borrow().as_ref(){controls.push(p.pop.clone().upcast::<gtk::Widget>().downgrade());}
-        self.tabs.borrow_mut().push(ClosedTabProbe{controls,ui:Rc::downgrade(ui),picture:d.pages[0].downgrade(),body:std::sync::Arc::downgrade(&d.session.doc.body[0])});
+        self.tabs.borrow_mut().push(ClosedTabProbe{controller:ui.outside_controller.borrow().as_ref().unwrap().downgrade(),controls,ui:Rc::downgrade(ui),picture:d.pages[0].downgrade(),body:std::sync::Arc::downgrade(&d.session.doc.body[0])});
     }
     fn open(self:&Rc<Self>) {
         let host=self.host.borrow().as_ref().unwrap().clone();
@@ -51,14 +51,14 @@ impl LifecycleAudit {
             let window=make_window(&self.app,false,true,false,false,false,false,false,Some((open_document(&self.file).unwrap(),"Lifecycle window".into())));
             let child=LIFE_HOSTS.with(|v|v.borrow().last().unwrap().upgrade().unwrap());
             assert_eq!(child.window,window);self.probe(&selected_ui(&child).unwrap());
-            self.windows.borrow_mut().push(Rc::downgrade(&child));
+            self.windows.borrow_mut().push((Rc::downgrade(&child),window.downgrade()));
         }
         let next=self.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(550),move||next.close());
     }
     fn close(self:&Rc<Self>) {
         let host=self.host.borrow().as_ref().unwrap().clone();
         while host.tabs.n_pages()>1 { let page=host.tabs.nth_page(host.tabs.n_pages()-1);host.tabs.close_page(&page); }
-        for weak in self.windows.borrow().iter(){if let Some(w)=weak.upgrade(){w.window.close();}}
+        for (weak,_) in self.windows.borrow().iter(){if let Some(w)=weak.upgrade(){w.window.close();}}
         let next=self.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1250),move||next.sample());
     }
     fn sample(self:&Rc<Self>) {
@@ -66,15 +66,17 @@ impl LifecycleAudit {
         let tabs=self.tabs.borrow();let ui=tabs.iter().filter(|p|p.ui.upgrade().is_some()).count();
         let documents=tabs.iter().filter(|p|p.body.upgrade().is_some()).count();
         let pictures=tabs.iter().filter(|p|p.picture.upgrade().is_some()).count();
-        let windows=self.windows.borrow().iter().filter(|p|p.upgrade().is_some()).count();
+        let windows=self.windows.borrow().iter().filter(|(p,_)|p.upgrade().is_some()).count();
+        let gtk_windows=self.windows.borrow().iter().filter(|(_,p)|p.upgrade().is_some()).count();
+        let controllers=tabs.iter().filter(|p|p.controller.upgrade().is_some()).count();
         for (i,p) in tabs.iter().enumerate(){for weak in &p.controls{if let Some(w)=weak.upgrade(){eprintln!("LIFECYCLE_RETAINED tab={} type={} name={} parent={}",i,w.type_().name(),w.widget_name(),w.parent().map(|p|p.type_().name().to_string()).unwrap_or_default());}}}
         let controls=tabs.iter().flat_map(|p|p.controls.iter()).filter(|p|p.upgrade().is_some()).count();
         let dialogs=self.dialogs.borrow().iter().filter(|p|p.upgrade().is_some()).count();
         let columns=self.columns.borrow().iter().filter(|p|p.upgrade().is_some()).count();
         if self.extra {assert!(!RICH_CLIPBOARD.with(|v|v.borrow().is_some()),"obsolete clipboard fragment retained");}
         let rss=lifecycle_rss();lifecycle_trim();let trimmed=lifecycle_rss();
-        eprintln!("LIFECYCLE_SAMPLE {}",serde_json::json!({"wave":wave,"closed_tabs":tabs.len(),"ui_alive":ui,"controls_alive":controls,"dialogs_alive":dialogs,"column_models_alive":columns,"documents_alive":documents,"pictures_alive":pictures,"workspaces_alive":windows,"rss_kib":rss,"trimmed_rss_kib":trimmed}));
-        if self.strict {assert_eq!((ui,documents,pictures,windows,controls,dialogs,columns),(0,0,0,0,0,0,0),"closed objects must be released, not just hidden");}
+        eprintln!("LIFECYCLE_SAMPLE {}",serde_json::json!({"wave":wave,"closed_tabs":tabs.len(),"ui_alive":ui,"controls_alive":controls,"dialogs_alive":dialogs,"column_models_alive":columns,"documents_alive":documents,"pictures_alive":pictures,"workspaces_alive":windows,"gtk_windows_alive":gtk_windows,"controllers_alive":controllers,"rss_kib":rss,"trimmed_rss_kib":trimmed}));
+        if self.strict {assert_eq!((ui,documents,pictures,windows,controls,dialogs,columns,gtk_windows,controllers),(0,0,0,0,0,0,0,0,0),"closed objects must be released, not just hidden");}
         drop(tabs);
         if wave<3 {self.open();return;}
         let host=self.host.borrow_mut().take().unwrap();let weak=Rc::downgrade(&host);

@@ -9,6 +9,9 @@ fn release_document(ui:&Rc<Ui>) {
     if ui.closed.replace(true){return;}
     if let Some(source)=ui.autosave_source.borrow_mut().take(){source.remove();}
     ui.printing.cancel();
+    // The bar lives inside a tab: detach its strong TabView reference before
+    // closing a whole window, where individual pages are not detached first.
+    ui.tab_bar.set_view(None::<&adw::TabView>);
     if let Some(controller)=ui.outside_controller.borrow_mut().take(){if let Some(widget)=controller.widget(){widget.remove_controller(&controller);}}
     let current=ui.current.borrow_mut().take();
     if let Some(mut doc)=current {doc.session.finish_recovery();}

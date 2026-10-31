@@ -54,6 +54,7 @@ struct Ui {
     paragraph: RefCell<Option<Rc<ParagraphPopover>>>,
     picture: RefCell<Option<Rc<PicturePopover>>>,
     table_popover: RefCell<Option<gtk::Popover>>,
+    tab_bar:adw::TabBar,
     outside_controller:RefCell<Option<gtk::GestureClick>>,
     context_popovers:RefCell<Vec<(glib::WeakRef<gtk::PopoverMenu>,Option<Rc<ContextFormatLease>>)>>,
     format_group:Rc<FormatPopoverGroup>,
@@ -1116,7 +1117,7 @@ fn build_tab(
         document_box, thumbnails_box, scroll, thumbnails_scroll,
         sidebar, sidebar_button, sidebar_pages, navigation_pages,
         outline:RefCell::new(None),host:Rc::downgrade(host),open_button:open_button.clone(),
-        search: RefCell::new(None), paragraph: RefCell::new(None), picture:RefCell::new(None),table_popover:RefCell::new(None),context_popovers:RefCell::new(Vec::new()),outside_controller:RefCell::new(None),format_group:format_group.clone(), search_highlights: Rc::new(RefCell::new(Vec::new())),
+        search: RefCell::new(None), paragraph: RefCell::new(None), picture:RefCell::new(None),table_popover:RefCell::new(None),context_popovers:RefCell::new(Vec::new()),outside_controller:RefCell::new(None),tab_bar:tab_bar.clone(),format_group:format_group.clone(), search_highlights: Rc::new(RefCell::new(Vec::new())),
         document_name:RefCell::new(String::new()),layout_pending:Cell::new(false),viewport_width:Cell::new(0),
         zoom_label, zoom_out, zoom_in, stack, title, toasts,
     });
