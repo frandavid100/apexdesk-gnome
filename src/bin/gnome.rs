@@ -1648,7 +1648,7 @@ fn build_tab(
             else{m.popup();}
         });
     }
-    if std::env::args().any(|a|a=="--columns-demo"){let u=ui.clone();let w=window.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{show_columns(&u,&w);});}
+    if std::env::args().any(|a|a=="--columns-demo"){let u=ui.clone();let m=align_menu.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{m.popup();if let Some(s)=u.paragraph.borrow().as_ref(){s.page("columns");}});}
     if std::env::args().any(|a|a=="--columns-ui-test"){let u=ui.clone();let w=window.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||columns_ui_test(&u,&w,&a));}
     if std::env::args().any(|a|a=="--paragraph-demo"||a=="--paragraph-spacing-demo") {let m=align_menu.clone();let s=paragraph_popover.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{m.popup();if std::env::args().any(|a|a=="--paragraph-spacing-demo"){s.page("spacing");}});}
     if std::env::args().any(|a|a=="--paragraph-ui-test") {let s=paragraph_popover.clone();let m=align_menu.clone();let app=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||paragraph_ui_test(&s,&m,&app));}

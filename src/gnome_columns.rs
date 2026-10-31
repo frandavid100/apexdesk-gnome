@@ -24,32 +24,31 @@ impl ColumnControls {
         self.preview.queue_draw();
     }
 }
+struct ColumnEditor {root:gtk::Box,controls:Rc<ColumnControls>,apply:gtk::Button}
 struct ColumnsDialog {window:adw::Window,controls:Rc<ColumnControls>,apply:gtk::Button}
-fn show_columns(ui:&Rc<Ui>,parent:&ApplicationWindow)->ColumnsDialog {
+fn columns_editor(ui:&Rc<Ui>,on_applied:impl Fn()+'static)->ColumnEditor {
     let (initial,text_width,can_select,can_forward)={let state=ui.current.borrow();let s=&state.as_ref().unwrap().session;
         (ColumnSetup::current(s),wordcraft_engine::cmd::page::sect(s).text_width(),wordcraft_engine::cmd::page::selection_sectionable(s),s.sel.focus.story==wordcraft_doc::StoryRef::Body&&s.sel.focus.path.depth()==0)};
     let identity=document_identity(ui);
-    let window=adw::Window::builder().title("Columnas").transient_for(parent).modal(true).default_width(480).default_height(620).build();
-    let toolbar=ToolbarView::new();let header=HeaderBar::new();header.set_show_end_title_buttons(false);header.set_show_start_title_buttons(false);
-    let cancel=gtk::Button::with_label("Cancelar");header.pack_start(&cancel);let apply=gtk::Button::with_label("Aplicar");apply.add_css_class("suggested-action");apply.set_widget_name("columns-apply");header.pack_end(&apply);toolbar.add_top_bar(&header);
-    let page=adw::PreferencesPage::new();let group=adw::PreferencesGroup::new();group.set_title("Distribución");group.set_description(Some("El texto fluye de una columna a la siguiente."));page.add(&group);
+    let page=gtk::Box::new(gtk::Orientation::Vertical,12);page.set_margin_start(4);page.set_margin_end(4);
+    let apply=gtk::Button::with_label("Aplicar");apply.add_css_class("suggested-action");apply.set_widget_name("columns-apply");
+    let group=adw::PreferencesGroup::new();group.set_title("Distribución");page.append(&group);
     let preview=gtk::DrawingArea::new();preview.set_content_width(320);preview.set_content_height(112);preview.set_halign(gtk::Align::Fill);group.add(&preview);
     let mode=adw::ComboRow::new();mode.set_title("Anchuras");mode.set_model(Some(&gtk::StringList::new(&["Iguales","Izquierda más estrecha","Derecha más estrecha","Personalizadas"])));mode.set_selected(if initial.kind==ColumnKind::Custom{3}else{0});group.add(&mode);
     let count=gtk::SpinButton::with_range(1.0,12.0,1.0);count.set_value(initial.count.clamp(1,12)as f64);count.set_valign(gtk::Align::Center);count.set_width_chars(3);count.set_widget_name("columns-count");let row=adw::ActionRow::new();row.set_title("Número de columnas");row.add_suffix(&count);group.add(&row);
     let gap=properties_number(&group,"Separación (mm)",initial.space);gap.set_range(0.0,300.0/PT_PER_MM);gap.set_widget_name("columns-gap");
     let separator=gtk::Switch::new();separator.set_active(initial.separator);separator.set_valign(gtk::Align::Center);let row=adw::ActionRow::new();row.set_title("Línea entre columnas");row.set_activatable_widget(Some(&separator));row.add_suffix(&separator);group.add(&row);
     let format_note=gtk::Label::new(Some("Las anchuras desiguales se conservan en DOCX. En ODT, el motor las guarda como columnas iguales."));format_note.set_wrap(true);format_note.set_xalign(0.0);format_note.add_css_class("dim-label");format_note.set_margin_start(12);format_note.set_margin_end(12);group.add(&format_note);
-    let custom=adw::PreferencesGroup::new();custom.set_title("Anchuras personalizadas");custom.set_description(Some("Anchura y separación posterior, en milímetros. La última columna no tiene separación posterior."));page.add(&custom);
+    let custom=adw::PreferencesGroup::new();custom.set_title("Anchuras personalizadas");custom.set_description(Some("Anchura y separación posterior, en milímetros. La última columna no tiene separación posterior."));page.append(&custom);
     let mut widths=Vec::new();let mut rows=Vec::new();
     for i in 0..12 {
         let (w,g)=initial.widths.get(i).copied().unwrap_or(((text_width-initial.space*(initial.count.saturating_sub(1))as f32)/initial.count.max(1)as f32,initial.space));
         let row=adw::ActionRow::new();row.set_title(&format!("Columna {}",i+1));let width=mm_input(w as f64/PT_PER_MM,18.0/PT_PER_MM,1584.0/PT_PER_MM);width.set_width_chars(5);width.set_tooltip_text(Some("Anchura (mm)"));width.update_property(&[gtk::accessible::Property::Label(&format!("Anchura de columna {} (mm)",i+1))]);
         let after=mm_input(g as f64/PT_PER_MM,0.0,300.0/PT_PER_MM);after.set_width_chars(5);after.set_tooltip_text(Some("Separación posterior (mm)"));after.update_property(&[gtk::accessible::Property::Label(&format!("Separación tras columna {} (mm)",i+1))]);row.add_suffix(&width);row.add_suffix(&after);custom.add(&row);rows.push(row);widths.push((width,after));
     }
-    let scopes_group=adw::PreferencesGroup::new();page.add(&scopes_group);let scope=adw::ComboRow::new();scope.set_title("Aplicar a");let mut labels=vec!["Sección actual","Todo el documento"];let mut scopes=vec![ColumnScope::Section,ColumnScope::Document];if can_select{labels.push("Texto seleccionado");scopes.push(ColumnScope::Selection);}if can_forward{labels.push("Desde aquí en adelante");scopes.push(ColumnScope::Forward);}scope.set_model(Some(&gtk::StringList::new(&labels)));if can_select{scope.set_selected(2);}scopes_group.add(&scope);
+    let scopes_group=adw::PreferencesGroup::new();page.append(&scopes_group);let scope=adw::ComboRow::new();scope.set_title("Aplicar a");let mut labels=vec!["Sección actual","Todo el documento"];let mut scopes=vec![ColumnScope::Section,ColumnScope::Document];if can_select{labels.push("Texto seleccionado");scopes.push(ColumnScope::Selection);}if can_forward{labels.push("Desde aquí en adelante");scopes.push(ColumnScope::Forward);}scope.set_model(Some(&gtk::StringList::new(&labels)));if can_select{scope.set_selected(2);}scopes_group.add(&scope);
     let hint=adw::ActionRow::new();hint.set_title("Texto seleccionado");hint.set_subtitle("Crea secciones continuas alrededor del texto, sin cambiar el resto del documento.");hint.set_visible(can_select);scopes_group.add(&hint);
-    let error=gtk::Label::new(None);error.set_wrap(true);error.add_css_class("error");error.set_visible(false);let errors=adw::PreferencesGroup::new();errors.add(&error);page.add(&errors);
-    toolbar.set_content(Some(&page));window.set_content(Some(&toolbar));
+    let error=gtk::Label::new(None);error.set_wrap(true);error.add_css_class("error");error.set_visible(false);let errors=adw::PreferencesGroup::new();errors.add(&error);page.append(&errors);
     let controls=Rc::new(ColumnControls{mode,count,gap,separator,custom,widths,rows,format_note,scope,scopes,preview,text_width,last_count:Cell::new(initial.count.clamp(1,12)),last_mode:Cell::new(if initial.kind==ColumnKind::Custom{3}else{0})});
     {let weak=Rc::downgrade(&controls);controls.mode.connect_selected_notify(move |_|{if let Some(c)=weak.upgrade(){c.refresh();}});}
     {let weak=Rc::downgrade(&controls);controls.count.connect_value_changed(move |_|{if let Some(c)=weak.upgrade(){c.refresh();}});}
@@ -63,16 +62,23 @@ fn show_columns(ui:&Rc<Ui>,parent:&ApplicationWindow)->ColumnsDialog {
             if cols.separator&&i+1<cols.count as usize{cr.move_to(x+width+g as f64*scale/2.0,y+6.0);cr.line_to(x+width+g as f64*scale/2.0,y+height-6.0);let _=cr.stroke();}x+=width+g as f64*scale;
         }
     });}
-    {let weak=window.downgrade();cancel.connect_clicked(move |_|{if let Some(w)=weak.upgrade(){w.close();}});}
-    {let c=controls.clone();window.connect_destroy(move |_|{let _=&c;});}
-    {let weak=Rc::downgrade(&controls);let ui=Rc::downgrade(ui);let window=window.downgrade();apply.connect_clicked(move |_|{
+    {let c=controls.clone();page.connect_destroy(move |_|{let _=&c;});}
+    {let weak=Rc::downgrade(&controls);let ui=Rc::downgrade(ui);apply.connect_clicked(move |_|{
         let(Some(c),Some(ui))=(weak.upgrade(),ui.upgrade())else{return;};
         if ui.closed.get()||document_identity(&ui)!=identity{error.set_text("El documento ha cambiado. Cierra y vuelve a abrir Columnas.");error.set_visible(true);return;}
         c.count.update();c.gap.update();for(w,g)in &c.widths{w.update();g.update();}
         let setup=c.setup();let scope=c.scopes[c.scope.selected()as usize];let result={let mut d=ui.current.borrow_mut();document_properties::apply_columns(&mut d.as_mut().unwrap().session,&setup,scope)};
-        match result{Ok(changed)=>{if changed{after_content_change(&ui);}if let Some(w)=window.upgrade(){w.close();}},Err(e)=>{error.set_text(&e);error.set_visible(true);}}
+        match result{Ok(changed)=>{if changed{after_content_change(&ui);}on_applied();},Err(e)=>{error.set_text(&e);error.set_visible(true);}}
     });}
-    controls.refresh();window.present();ColumnsDialog{window,controls,apply}
+    controls.refresh();ColumnEditor{root:page,controls,apply}
+}
+fn show_columns(ui:&Rc<Ui>,parent:&ApplicationWindow)->ColumnsDialog {
+ let window=adw::Window::builder().title("Columnas").transient_for(parent).modal(true).default_width(480).default_height(620).build();
+ let weak=window.downgrade();let editor=columns_editor(ui,move||{if let Some(w)=weak.upgrade(){w.close();}});
+ let toolbar=ToolbarView::new();let header=HeaderBar::new();let cancel=gtk::Button::with_label("Cancelar");header.pack_start(&cancel);header.pack_end(&editor.apply);toolbar.add_top_bar(&header);
+ let scroll=gtk::ScrolledWindow::new();scroll.set_child(Some(&editor.root));toolbar.set_content(Some(&scroll));window.set_content(Some(&toolbar));
+ let weak=window.downgrade();cancel.connect_clicked(move |_|{if let Some(w)=weak.upgrade(){w.close();}});
+ window.present();ColumnsDialog{window,controls:editor.controls,apply:editor.apply}
 }
 fn columns_ui_test(ui:&Rc<Ui>,parent:&ApplicationWindow,app:&Application){
     let session=Session::new(wordcraft_doc::Document::from_text("Antes\nTexto para distribuir entre columnas\nDespués"));opened(ui,session,"Prueba de columnas");
@@ -81,7 +87,9 @@ fn columns_ui_test(ui:&Rc<Ui>,parent:&ApplicationWindow,app:&Application){
     let dialog=show_columns(ui,parent);assert_eq!(dialog.controls.scopes[dialog.controls.scope.selected()as usize],ColumnScope::Selection);dialog.controls.count.set_value(2.0);dialog.controls.gap.set_value(7.0);dialog.controls.separator.set_active(true);assert_eq!(ui.current.borrow().as_ref().unwrap().session.rev(),rev);dialog.apply.emit_clicked();assert!(!dialog.window.is_visible());
     {let d=ui.current.borrow();let s=&d.as_ref().unwrap().session;assert_eq!(s.selected_text(),text);assert_eq!(s.undo_depth(),depth+1);let counts:Vec<_>=s.doc.sections().iter().map(|(_,p)|p.columns.count).collect();assert_eq!(counts,vec![1,2,1]);}
     apply_user_edit(ui,Edit::Undo);assert_eq!(ui.current.borrow().as_ref().unwrap().session.doc,doc);apply_user_edit(ui,Edit::Redo);
-    let rev=ui.current.borrow().as_ref().unwrap().session.rev();let dialog=show_columns(ui,parent);dialog.controls.count.set_value(3.0);dialog.window.close();assert_eq!(ui.current.borrow().as_ref().unwrap().session.rev(),rev);
+    let rev=ui.current.borrow().as_ref().unwrap().session.rev();
+    let paragraph=ui.paragraph.borrow().as_ref().unwrap().clone();paragraph.page("columns");assert!(style_widget(&paragraph.detail,"columns-count").is_some());paragraph.home();assert_eq!(ui.current.borrow().as_ref().unwrap().session.rev(),rev);
+    let dialog=show_columns(ui,parent);dialog.controls.count.set_value(3.0);dialog.window.close();assert_eq!(ui.current.borrow().as_ref().unwrap().session.rev(),rev);
     for menu in ui.format_buttons.borrow().iter(){if let Some(name)=menu.icon_name(){assert!(gtk::IconTheme::for_display(&gtk::prelude::WidgetExt::display(parent)).has_icon(&name));}}
     eprintln!("COLUMNS_UI_OK");app.quit();
 }

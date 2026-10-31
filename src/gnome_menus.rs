@@ -55,7 +55,7 @@ fn install_document_menu(button:&gtk::MenuButton){
     let history=gio::Menu::new();menu_item(&history,"Deshacer","undo",Some("<Control>z"));menu_item(&history,"Rehacer","redo",Some("<Control><Shift>z"));root.append_section(None,&history);
     let save=gio::Menu::new();menu_item(&save,"Guardar","save",Some("<Control>s"));menu_item(&save,"Guardar como…","save-as",Some("<Control><Shift>s"));root.append_section(None,&save);
     let add=gio::Menu::new();menu_item(&add,"Tabla…","insert-table",None);menu_item(&add,"Imagen…","insert-picture",None);root.append_submenu(Some("Añadir"),&add);
-    let properties=gio::Menu::new();menu_item(&properties,"Columnas…","columns",None);menu_item(&properties,"Propiedades del documento…","document-properties",None);menu_item(&properties,"Exportar a PDF…","export-pdf",None);root.append_section(None,&properties);button.set_menu_model(Some(&root));
+    let properties=gio::Menu::new();menu_item(&properties,"Propiedades del documento…","document-properties",None);menu_item(&properties,"Exportar a PDF…","export-pdf",None);root.append_section(None,&properties);button.set_menu_model(Some(&root));
 }
 fn show_editor_help(parent:&ApplicationWindow){
     let w=adw::Window::builder().transient_for(parent).title("Ayuda de Leaf").default_width(520).default_height(520).build();let toolbar=ToolbarView::new();toolbar.add_top_bar(&HeaderBar::new());

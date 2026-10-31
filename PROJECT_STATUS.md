@@ -233,3 +233,7 @@ Release con bundle, instrucciones, SHA256SUMS, runtime/commit, revisión fuente,
 No se ha publicado en Reddit ni en Flathub, ni se ha creado un manifiesto de Flathub. Es un bundle de GitHub montado con comandos básicos de Flatpak sobre el ejecutable compilado en Ubuntu. Scripts de empaquetado asistidos por IA: declaración actualizada. Para Flathub sigue haciendo falta participación humana y una construcción conforme a sus requisitos.
 
 Pendiente: instalación/prueba manual en GNOME OS del usuario, fidelidad con archivos reales, guardar/reabrir mediante los selectores nativos en el equipo del usuario, actualización entre versiones distintas, captura promocional definitiva y localización. Sin feed de actualizaciones automáticas de Leaf. No presentar pruebas de CI como confirmación manual.
+
+
+## In progress: columns and formatting icons (2026-10-31)
+Alpha.2 adds public-engine section columns (1–12, equal/asymmetric/custom, gap/separator, explicit scopes), accessed from Paragraph → Columnas. GTK symbolic icons replace custom formatting letters. Engine tests passed on initial CI; final popover integration and installed bundle validation are pending. ODT exporter retains column count/gap/separator but equalizes unequal widths; DOCX retains widths. See docs/FEATURE_PRIORITIES.md for researched prioritization and limitations. Engine revision remains unchanged.

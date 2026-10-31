@@ -92,6 +92,7 @@ impl ParagraphPopover {
         let b=self.icon_action("shading","Aplicar el último sombreado elegido","paragraph-shading",state["shading"].is_array(),"para.shading",serde_json::json!({"color":self.shade.borrow().as_str()}));self.split(&row,&b,"shading","sombreado");
         let b=self.icon_action("borders","Aplicar el último borde elegido","paragraph-borders",state["borders"].is_object(),"para.borders",self.border.borrow().clone());self.split(&row,&b,"borders","bordes");self.main.append(&row);
         self.main.append(&gtk::Separator::new(gtk::Orientation::Horizontal));
+        let columns=style_menu_button("Columnas…");columns.set_widget_name("paragraph-columns");self.main.append(&columns);let weak=Rc::downgrade(self);columns.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.page("columns");}});
         let more=style_menu_button("Más opciones de párrafo…");more.set_widget_name("paragraph-more-options");self.main.append(&more);let weak=Rc::downgrade(self);more.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.page("options");}});
         self.stack.set_visible_child_name("main");
     }
@@ -105,6 +106,12 @@ impl ParagraphPopover {
         clear_box(&self.detail);self.message.set_visible(false);
         let Some(ui)=self.ui.upgrade()else{return;};let state=selection_paragraph(&ui);
         match page{
+            "columns"=>{
+                self.title("Columnas");
+                let weak=Rc::downgrade(self);
+                let editor=columns_editor(&ui,move||{if let Some(s)=weak.upgrade(){s.home();if let Some(pop)=s.popover.upgrade(){close_format_popover(&pop);}}});
+                self.detail.append(&editor.root);self.detail.append(&editor.apply);
+            },
             "bullets"|"numbering"=>{
                 self.title(if page=="bullets"{"Viñetas"}else{"Numeración"});
                 let (command,choices):(&'static str,Vec<(&str,&str)>)=if page=="bullets"{("para.bullets",vec![("• Punto","•"),("○ Círculo","○"),("▪ Cuadrado","▪"),("– Guion","–")])}else{("para.numbering",vec![("1. 2. 3.","numbered"),("1) 2) 3)","numberedParen"),("A. B. C.","upperLetter"),("a. b. c.","lowerLetter"),("i. ii. iii.","lowerRoman")])};
