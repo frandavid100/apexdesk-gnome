@@ -46,7 +46,9 @@ flatpak run --command=sh "$app_id" -c '
 '
 # Also exercise the host fallback used when a runtime does not define XDG_STATE_HOME.
 flatpak run --command=sh "$app_id" -c 'unset XDG_STATE_HOME; exec /app/bin/leaf --package-storage-test' | grep PACKAGE_STORAGE_OK
-flatpak --user install -y --noninteractive --reinstall dist/Leaf-0.1.0-alpha.1-x86_64.flatpak
+flatpak --user uninstall -y --noninteractive "$app_id"
+# Intentionally do not pass --delete-data: verify normal reinstall preserves app data.
+flatpak --user install -y --noninteractive dist/Leaf-0.1.0-alpha.1-x86_64.flatpak
 flatpak run --command=sh "$app_id" -c '
   grep -q "autosave.*0" "$XDG_CONFIG_HOME/wordcraft-gnome/preferences.json"
   leaf_state_root="${XDG_STATE_HOME:-$XDG_DATA_HOME/state}/wordcraft-gnome/recovery"
