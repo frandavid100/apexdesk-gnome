@@ -202,3 +202,12 @@ Nombre elegido por el usuario: **Leaf**. Descripción: «Crea y edita documentos
 Iconos originales en `data/icons/hicolor/scalable/apps/leaf.svg` (128 × 128) y `data/icons/hicolor/symbolic/apps/leaf-symbolic.svg` (16 × 16). SVG editable: hoja escrita, pliegue verde, paleta GNOME y perfil inferior de 4 px alineado en y=116; sin sombra exterior. XML validado y renders revisados a 16/32/64/128/512 px, sobre fondos claros/oscuros. No se ha recompilado ni sustituido el ejecutable: esta entrega añade únicamente identidad y documentación. Integración con lanzador/instalador pendiente.
 
 Repositorio renombrado manualmente por el usuario a `frandavid100/leaf` y verificado mediante GitHub (mismo ID de repositorio: 1432905461). Enlaces de continuidad y CI actualizados. La rama de desarrollo sigue siendo `wordcraft-saving`; `main` permanece como rama predeterminada. No se ha recompilado ni regenerado el ZIP por este cambio de documentación.
+
+
+## Preparación de pruebas públicas — 31 de octubre de 2026
+
+Preparados README público en inglés, guía de pruebas de 15 minutos, registro vacío de resultados reales, guía de contribución, formularios de fallo/compatibilidad (inglés o español), declaración del alcance de IA, lista de requisitos para la primera release y borradores de notas/Reddit. La guía española previa se conserva en docs/USER_GUIDE_ES.md. Capturas reales sin retoques de CI 41144295677, con revisión visual y procedencia/digest registrados en docs/screenshots/README.md. No se inventan resultados manuales ni descarga de una release inexistente.
+
+La portada de main se actualizará para dirigir al código y documentos de wordcraft-saving, sin sustituir su código antiguo; las plantillas se instalan también en main para que GitHub pueda ofrecerlas. No cambia la rama predeterminada ni se publica en Reddit. No se ha creado una release, un paquete Flatpak ni un manifiesto. El instalable requiere integrar marca/lanzador/metadatos, empaquetar y validar en GNOME OS antes de anunciarlo. docs/RELEASE_CHECKLIST.md recoge el trabajo pendiente y la necesidad de colaboración humana para un manifiesto destinado a Flathub conforme a su política actual.
+
+Esta entrega es documental y de capturas: no cambia el ejecutable ni exige recompilarlo. Pendiente antes de difusión: completar y probar el instalable, registrar resultados manuales, actualizar capturas con la marca Leaf, publicar prerelease y revisar el borrador con su enlace real.

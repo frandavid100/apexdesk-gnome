@@ -1,0 +1,62 @@
+name: Document compatibility / Compatibilidad de documentos
+description: Report opening or save/reopen results for a DOCX or ODT, including successful tests.
+title: "[Compatibility]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Test copies only. English and Spanish welcome. A small file with invented text is preferable to a personal document.
+        Prueba copias. Indica por separado lo que ocurre al abrir y al guardar/reabrir.
+  - type: input
+    id: build
+    attributes:
+      label: Leaf version or source commit / Versión o commit
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment and installation / Entorno e instalación
+      description: Distribution, GNOME, architecture, display scaling and installation method.
+    validations:
+      required: true
+  - type: dropdown
+    id: format
+    attributes:
+      label: File format / Formato
+      options:
+        - DOCX
+        - ODT
+    validations:
+      required: true
+  - type: input
+    id: creator
+    attributes:
+      label: Originating editor / Editor de origen
+      description: Application and version, if known. State unknown if you cannot tell.
+    validations:
+      required: true
+  - type: dropdown
+    id: outcome
+    attributes:
+      label: Outcome / Resultado
+      options:
+        - Opens incorrectly / Se abre con errores
+        - Editing problem / Fallo al editar
+        - Save or reopen problem / Fallo al guardar o reabrir
+        - PDF export problem / Fallo al exportar PDF
+        - Successful test / Prueba satisfactoria
+    validations:
+      required: true
+  - type: textarea
+    id: checks
+    attributes:
+      label: Steps and comparison / Pasos y comparación
+      description: Describe initial appearance, exact edits, saved format and reopening in Leaf and the original editor. Include expected and actual results; for success, list checks performed.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Optional minimal original and saved copy / Archivos opcionales
+      description: Use invented content and inspect metadata and screenshots. If you cannot share the file, describe its structure instead.
