@@ -163,3 +163,5 @@ fn document_tools_ui_test(ui:&Rc<Ui>,panel:&Rc<PicturePopover>,menu:&gtk::MenuBu
     });
 }
 
+
+include!("gnome_columns.rs");

@@ -7,7 +7,9 @@ export XDG_DATA_DIRS="$HOME/.local/share/flatpak/exports/share:${XDG_DATA_DIRS:-
 dbus-update-activation-environment DISPLAY XDG_CURRENT_DESKTOP XDG_DATA_DIRS
 mkdir -p "$HOME/.config/xdg-desktop-portal"
 printf '[preferred]\ndefault=gtk\n' > "$HOME/.config/xdg-desktop-portal/portals.conf"
-flatpak run "$app_id" --version | grep -F 'Leaf 0.1.0-alpha.1'
+flatpak run "$app_id" --version | grep -F 'Leaf 0.1.0-alpha.2'
+flatpak run --socket=x11 --nosocket=wayland "$app_id" --columns-ui-test 2>dist/flatpak-columns.log
+grep -q COLUMNS_UI_OK dist/flatpak-columns.log
 flatpak run --socket=x11 --nosocket=wayland "$app_id" --chrome-ui-test 2>dist/flatpak-chrome.log
 grep -q DOCUMENT_CHROME_OK dist/flatpak-chrome.log
 flatpak run --socket=x11 --nosocket=wayland "$app_id" --styles-ui-test 2>dist/flatpak-styles.log
@@ -48,7 +50,7 @@ flatpak run --command=sh "$app_id" -c '
 flatpak run --command=sh "$app_id" -c 'unset XDG_STATE_HOME; exec /app/bin/leaf --package-storage-test' | grep PACKAGE_STORAGE_OK
 flatpak --user uninstall -y --noninteractive "$app_id"
 # Intentionally do not pass --delete-data: verify normal reinstall preserves app data.
-flatpak --user install -y --noninteractive dist/Leaf-0.1.0-alpha.1-x86_64.flatpak
+flatpak --user install -y --noninteractive dist/Leaf-0.1.0-alpha.2-x86_64.flatpak
 flatpak run --command=sh "$app_id" -c '
   grep -q "autosave.*0" "$XDG_CONFIG_HOME/wordcraft-gnome/preferences.json"
   leaf_state_root="${XDG_STATE_HOME:-$XDG_DATA_HOME/state}/wordcraft-gnome/recovery"

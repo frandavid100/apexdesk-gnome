@@ -3,7 +3,7 @@
 set -euo pipefail
 app_id=io.github.frandavid100.leaf
 runtime_version=49
-version=0.1.0-alpha.1
+version=0.1.0-alpha.2
 binary=${1:?Usage: build-bundle.sh TESTED_BINARY}
 work=flatpak-build
 repo=flatpak-repo
@@ -24,7 +24,15 @@ install -Dm0644 docs/AI_ASSISTANCE.md "$work/files/share/doc/leaf/AI_ASSISTANCE.
 flatpak build-finish --command=leaf --share=ipc --socket=wayland --socket=fallback-x11 --device=dri "$work"
 flatpak build-export "$repo" "$work" alpha
 flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo "$repo" "$out/Leaf-$version-x86_64.flatpak" "$app_id" alpha
+if test -f prior-release/Leaf-0.1.0-alpha.1-x86_64.flatpak; then
+  flatpak --user install -y --noninteractive prior-release/Leaf-0.1.0-alpha.1-x86_64.flatpak
+  flatpak run --command=sh "$app_id" -c 'mkdir -p "$XDG_DATA_HOME"; printf retained > "$XDG_DATA_HOME/upgrade-test"'
+fi
 flatpak --user install -y --noninteractive "$out/Leaf-$version-x86_64.flatpak"
+if test -f prior-release/Leaf-0.1.0-alpha.1-x86_64.flatpak; then
+  flatpak run --command=sh "$app_id" -c 'grep -q retained "$XDG_DATA_HOME/upgrade-test"'
+  echo FLATPAK_UPGRADE_OK
+fi
 flatpak --user info --show-metadata "$app_id" > "$out/flatpak-metadata.txt"
 flatpak --user info --show-runtime "$app_id" > "$out/runtime.txt"
 flatpak --user remote-info --show-commit flathub "org.gnome.Platform//$runtime_version" > "$out/runtime-commit.txt"

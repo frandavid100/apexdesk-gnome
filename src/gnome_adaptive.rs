@@ -17,9 +17,9 @@ impl AdaptiveTools {
 }
 fn history_icon(redo:bool)->gtk::DrawingArea{let a=gtk::DrawingArea::new();a.set_content_width(18);a.set_content_height(18);a.set_draw_func(move|w,c,_,_|{let f=w.color();c.set_source_rgba(f.red()as f64,f.green()as f64,f.blue()as f64,f.alpha()as f64);if redo{c.translate(18.0,0.0);c.scale(-1.0,1.0);}c.set_line_width(1.6);c.set_line_cap(gtk::cairo::LineCap::Round);c.set_line_join(gtk::cairo::LineJoin::Round);c.move_to(6.0,3.0);c.line_to(2.0,7.0);c.line_to(6.0,11.0);c.move_to(2.0,7.0);c.line_to(11.0,7.0);c.curve_to(17.0,7.0,17.0,15.0,11.0,15.0);let _=c.stroke();});a}
 fn format_icon_button(menu:&gtk::MenuButton,label:&str,kind:&str){
-    let icon=gtk::DrawingArea::new();icon.set_content_width(18);icon.set_content_height(18);let kind=kind.to_string();
-    icon.set_draw_func(move|w,c,_,_|{let f=w.color();c.set_source_rgba(f.red()as f64,f.green()as f64,f.blue()as f64,f.alpha()as f64);c.set_font_size(17.0);c.move_to(2.0,15.0);let _=c.show_text(match kind.as_str(){"style"=>"T","paragraph"=>"¶",_=>"A"});c.set_line_width(1.3);if kind=="style"{for y in[4.0,8.0,12.0]{c.move_to(12.0,y);c.line_to(17.0,y);}}else if kind=="text"{c.move_to(2.0,17.0);c.line_to(15.0,17.0);}let _=c.stroke();});
-    menu.set_child(Some(&icon));menu.add_css_class("flat");menu.add_css_class("image-button");menu.set_tooltip_text(Some(label));menu.update_property(&[gtk::accessible::Property::Label(label)]);
+    let name=match kind {"style"=>"format-text-rich-symbolic","paragraph"=>"format-justify-left-symbolic",_=>"font-select-symbolic"};
+    menu.set_icon_name(name);
+    menu.add_css_class("flat");menu.add_css_class("image-button");menu.set_tooltip_text(Some(label));menu.update_property(&[gtk::accessible::Property::Label(label)]);
 }
 fn format_button(ui:&Ui,name:&str)->Option<gtk::MenuButton>{ui.format_buttons.borrow().iter().find(|m|m.widget_name()==name).cloned()}
 

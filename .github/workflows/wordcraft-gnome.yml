@@ -51,7 +51,7 @@ jobs:
       - name: Identificar versión de prueba
         run: |
           ./target/release/wordcraft-gnome --version | tee version.txt
-          grep -q "Leaf 0.1.0-alpha.1" version.txt
+          grep -q "Leaf 0.1.0-alpha.2" version.txt
       - name: Probar escritorio ancho, ventana estrecha, panel y tema oscuro
         run: |
           python -m pip install --disable-pip-version-check pillow==11.3.0
@@ -197,6 +197,9 @@ jobs:
             run_case vista-imagen.png --picture-demo
             run_case vista-imagen-estrecha.png --picture-demo --narrow
             run_case vista-propiedades-documento.png --document-properties-demo
+            run_case vista-columnas.png --columns-demo
+            GSK_RENDERER=cairo ./target/release/wordcraft-gnome --columns-ui-test 2> columns-ui.log
+            grep -q COLUMNS_UI_OK columns-ui.log
             run_case vista-parrafo.png --paragraph-demo
             run_case vista-interlineado.png --paragraph-spacing-demo
             run_case vista-parrafo-estrecha.png --paragraph-demo --narrow
@@ -322,6 +325,8 @@ jobs:
             vista-imagen.png
             vista-imagen-estrecha.png
             vista-propiedades-documento.png
+            vista-columnas.png
+            columns-ui.log
             split-states.log
             vista-dividido-reposo.png
             vista-dividido-cuerpo.png
@@ -390,6 +395,10 @@ jobs:
         run: |
           desktop-file-validate data/io.github.frandavid100.leaf.desktop
           appstreamcli validate --no-net data/io.github.frandavid100.leaf.metainfo.xml
+      - name: Download previous alpha for upgrade verification
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release download v0.1.0-alpha.1 --pattern 'Leaf-0.1.0-alpha.1-x86_64.flatpak' --dir prior-release
       - name: Build and install the bundle
         run: bash packaging/build-bundle.sh native-artifact/wordcraft-gnome
       - name: Exercise the installed sandbox and desktop launcher
@@ -409,4 +418,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v0.1.0-alpha.1 dist/Leaf-0.1.0-alpha.1-x86_64.flatpak dist/SHA256SUMS dist/INSTALL.md dist/source-commit.txt dist/runtime.txt dist/runtime-commit.txt dist/flatpak-metadata.txt dist/leaf-installed.png dist/flatpak-smoke.log --target "$GITHUB_SHA" --title 'Leaf 0.1.0-alpha.1' --prerelease --notes-file packaging/RELEASE_NOTES.md
+          gh release create v0.1.0-alpha.2 dist/Leaf-0.1.0-alpha.2-x86_64.flatpak dist/SHA256SUMS dist/INSTALL.md dist/source-commit.txt dist/runtime.txt dist/runtime-commit.txt dist/flatpak-metadata.txt dist/leaf-installed.png dist/flatpak-smoke.log --target "$GITHUB_SHA" --title 'Leaf 0.1.0-alpha.2' --prerelease --notes-file packaging/RELEASE_NOTES.md

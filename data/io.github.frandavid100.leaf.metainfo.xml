@@ -17,7 +17,7 @@
   <url type="bugtracker">https://github.com/frandavid100/leaf/issues</url>
   <url type="help">https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/TESTING.md</url>
   <content_rating type="oars-1.1"/>
-  <releases>
+  <releases>\n    <release version="0.1.0-alpha.2" date="2026-10-31" type="development">\n      <description><p>Column layout controls and native symbolic formatting icons.</p></description>\n    </release>
     <release version="0.1.0-alpha.1" date="2026-10-31" type="development">
       <description><p>First GitHub Flatpak alpha for testing document editing on Linux.</p></description>
     </release>

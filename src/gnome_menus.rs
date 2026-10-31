@@ -26,13 +26,14 @@ fn setup_main_actions(host:&Rc<Workspace>,app:&Application){
     window_action(host,"save-as",|h|{if let Some(ui)=selected_ui(h){save_document(&ui,&h.window,true,Box::new(||{}));}});
     window_action(host,"insert-table",|h|{if let Some(ui)=selected_ui(h){show_insert_table(&ui,&h.window);}});
     window_action(host,"insert-picture",|h|{if let Some(ui)=selected_ui(h){choose_picture(&ui,&h.window,false);}});
+    window_action(host,"columns",|h|{if let Some(ui)=selected_ui(h){show_columns(&ui,&h.window);}});
     window_action(host,"document-properties",|h|{if let Some(ui)=selected_ui(h){show_document_properties(&ui,&h.window);}});
     window_action(host,"export-pdf",|h|{if let Some(ui)=selected_ui(h){export_pdf_dialog(&ui,&h.window);}});
     window_action(host,"preferences",|h|show_preferences(&h.window));
     window_action(host,"shortcuts",|h|show_keyboard_shortcuts(&h.window));
     window_action(host,"help",|h|show_editor_help(&h.window));
     window_action(host,"about",|h|{
-        let w=adw::AboutWindow::new();w.set_transient_for(Some(&h.window));w.set_application_name("Leaf");w.set_application_icon(APP_ID);w.set_version("0.1.0-alpha.1");w.set_developer_name("Proyecto Leaf");w.set_license_type(gtk::License::Gpl30);
+        let w=adw::AboutWindow::new();w.set_transient_for(Some(&h.window));w.set_application_name("Leaf");w.set_application_icon(APP_ID);w.set_version("0.1.0-alpha.2");w.set_developer_name("Proyecto Leaf");w.set_license_type(gtk::License::Gpl30);
         w.set_website("https://github.com/frandavid100/leaf");w.set_issue_url("https://github.com/frandavid100/leaf/issues");w.set_comments("Editor de documentos para GNOME basado en el motor WordCraft.");w.present();
     });
     for(name,keys)in[("new-tab",vec!["<Control>n","<Control>t"]),("new-window",vec!["<Control><Shift>n"]),("tab-overview",vec!["<Control><Shift>o"]),("open",vec!["<Control>o"]),("preferences",vec!["<Control>comma"]),("shortcuts",vec!["<Control>question"]),("help",vec!["F1"]) ]{app.set_accels_for_action(&format!("win.{name}"),&keys);}
@@ -54,7 +55,7 @@ fn install_document_menu(button:&gtk::MenuButton){
     let history=gio::Menu::new();menu_item(&history,"Deshacer","undo",Some("<Control>z"));menu_item(&history,"Rehacer","redo",Some("<Control><Shift>z"));root.append_section(None,&history);
     let save=gio::Menu::new();menu_item(&save,"Guardar","save",Some("<Control>s"));menu_item(&save,"Guardar como…","save-as",Some("<Control><Shift>s"));root.append_section(None,&save);
     let add=gio::Menu::new();menu_item(&add,"Tabla…","insert-table",None);menu_item(&add,"Imagen…","insert-picture",None);root.append_submenu(Some("Añadir"),&add);
-    let properties=gio::Menu::new();menu_item(&properties,"Propiedades del documento…","document-properties",None);menu_item(&properties,"Exportar a PDF…","export-pdf",None);root.append_section(None,&properties);button.set_menu_model(Some(&root));
+    let properties=gio::Menu::new();menu_item(&properties,"Columnas…","columns",None);menu_item(&properties,"Propiedades del documento…","document-properties",None);menu_item(&properties,"Exportar a PDF…","export-pdf",None);root.append_section(None,&properties);button.set_menu_model(Some(&root));
 }
 fn show_editor_help(parent:&ApplicationWindow){
     let w=adw::Window::builder().transient_for(parent).title("Ayuda de Leaf").default_width(520).default_height(520).build();let toolbar=ToolbarView::new();toolbar.add_top_bar(&HeaderBar::new());
