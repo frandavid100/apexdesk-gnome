@@ -821,6 +821,7 @@ fn install_css() {
 }
 
 include!("../gnome_host.rs");
+include!("../gnome_lifecycle.rs");
 include!("../gnome_document_tools.rs");
 include!("../gnome_format_panels.rs");
 include!("../gnome_tables.rs");

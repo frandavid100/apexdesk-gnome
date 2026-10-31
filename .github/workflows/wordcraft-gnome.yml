@@ -10,7 +10,7 @@ permissions:
 
 jobs:
   test:
-    if: ${{ !contains(github.event.head_commit.message, '[bundle-only]') }}
+    if: ${{ !contains(github.event.head_commit.message, '[bundle-only]') && !contains(github.event.head_commit.message, '[lifecycle-baseline]') }}
     runs-on: ubuntu-24.04
     timeout-minutes: 45
     steps:
@@ -485,3 +485,26 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           gh release create v0.1.0-alpha.5 dist/Leaf-0.1.0-alpha.5-x86_64.flatpak dist/SHA256SUMS dist/INSTALL.md dist/source-commit.txt dist/runtime.txt dist/runtime-commit.txt dist/flatpak-metadata.txt dist/leaf-installed.png dist/flatpak-smoke.log --target "$GITHUB_SHA" --title 'Leaf 0.1.0-alpha.5' --prerelease --notes-file packaging/RELEASE_NOTES.md
+
+  lifecycle-baseline:
+    if: contains(github.event.head_commit.message, '[lifecycle-baseline]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - run: sudo apt-get update && sudo apt-get install -y --no-install-recommends pkg-config libgtk-4-dev libadwaita-1-dev xvfb xauth
+      - run: cargo build --release --locked --features gui --bin wordcraft-gnome
+      - name: Measure original ownership and RSS without publishing
+        run: |
+          set -o pipefail
+          XDG_CONFIG_HOME=$(mktemp -d) XDG_STATE_HOME=$(mktemp -d) GSK_RENDERER=cairo xvfb-run -a timeout 150s ./target/release/wordcraft-gnome --lifecycle-audit 2>&1 | tee lifecycle-baseline.log
+          grep -q LIFECYCLE_BASELINE_OK lifecycle-baseline.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: lifecycle-baseline
+          path: lifecycle-baseline.log

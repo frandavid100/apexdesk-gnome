@@ -45,6 +45,7 @@ fn make_window(app: &Application, sample: bool, sidebar: bool, narrow: bool, dar
     let overview=adw::TabOverview::new();overview.set_view(Some(&tabs));overview.set_child(Some(&tabs));overview.set_enable_new_tab(false);
     window.set_content(Some(&overview));
     let host = Rc::new(Workspace {window:window.clone(),tabs,overview,docs:RefCell::new(Vec::new()),allow_close:Cell::new(false)});
+    lifecycle_track(&host);
     setup_main_actions(&host,app);
     {
         let host2 = host.clone();
@@ -90,6 +91,7 @@ fn make_window(app: &Application, sample: bool, sidebar: bool, narrow: bool, dar
             eprintln!("TABS_OK");app.quit();
         });
     }
+    lifecycle_start(&host,app);
     window
 }
 
