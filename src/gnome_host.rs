@@ -36,7 +36,7 @@ fn close_workspace(host: &Rc<Workspace>) {
 fn make_window(app: &Application, sample: bool, sidebar: bool, narrow: bool, dark: bool,
     select_demo: bool, edit_demo: bool, format_demo: bool,
     initial: Option<(Session,String)>) -> ApplicationWindow {
-    let window = ApplicationWindow::builder().application(app).title("WordCraft GNOME")
+    let window = ApplicationWindow::builder().application(app).title("Leaf")
         .default_width(if narrow {640} else {1140}).default_height(if narrow {600} else {840}).build();
     let tabs = adw::TabView::new();
     // Preserve the editor's Ctrl+Home/End and Ctrl+PageUp/Down behavior.

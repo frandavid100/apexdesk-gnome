@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop-application">
+  <id>io.github.frandavid100.leaf</id>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-or-later</project_license>
+  <name>Leaf</name>
+  <developer id="io.github.frandavid100"><name>Leaf contributors</name></developer>
+  <summary>Create and edit documents</summary>
+  <summary xml:lang="es">Crea y edita documentos</summary>
+  <description>
+    <p>Leaf is an experimental GTK4 and libadwaita document editor powered by WordCraft.</p>
+    <p>Edit DOCX and ODT files, use text and paragraph styles, work with tables and inline images, and export PDFs. Browse page thumbnails or headings, search and replace text, and open multiple documents.</p>
+    <p>This alpha is primarily available in Spanish. Test copies of your documents: complex file fidelity is still being evaluated. Development, documentation and artwork have used substantial AI assistance.</p>
+  </description>
+  <launchable type="desktop-id">io.github.frandavid100.leaf.desktop</launchable>
+  <url type="homepage">https://github.com/frandavid100/leaf</url>
+  <url type="bugtracker">https://github.com/frandavid100/leaf/issues</url>
+  <url type="help">https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/TESTING.md</url>
+  <content_rating type="oars-1.1"/>
+  <releases>
+    <release version="0.1.0-alpha.1" date="2026-10-31" type="development">
+      <description><p>First GitHub Flatpak alpha for testing document editing on Linux.</p></description>
+    </release>
+  </releases>
+</component>

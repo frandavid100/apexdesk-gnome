@@ -1,0 +1,15 @@
+[Desktop Entry]
+Type=Application
+Name=Leaf
+GenericName=Document Editor
+GenericName[es]=Editor de documentos
+Comment=Create and edit documents
+Comment[es]=Crea y edita documentos
+Exec=leaf %U
+Icon=io.github.frandavid100.leaf
+Terminal=false
+Categories=Office;WordProcessor;GTK;
+MimeType=application/vnd.openxmlformats-officedocument.wordprocessingml.document;application/vnd.oasis.opendocument.text;
+Keywords=document;word;docx;odt;write;
+Keywords[es]=documento;texto;docx;odt;escribir;
+StartupNotify=true

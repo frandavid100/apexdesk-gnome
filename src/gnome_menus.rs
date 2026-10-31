@@ -32,8 +32,8 @@ fn setup_main_actions(host:&Rc<Workspace>,app:&Application){
     window_action(host,"shortcuts",|h|show_keyboard_shortcuts(&h.window));
     window_action(host,"help",|h|show_editor_help(&h.window));
     window_action(host,"about",|h|{
-        let w=adw::AboutWindow::new();w.set_transient_for(Some(&h.window));w.set_application_name("WordCraft GNOME");w.set_version("0.1");w.set_developer_name("Proyecto WordCraft GNOME");w.set_license_type(gtk::License::Gpl30);
-        w.set_website("https://github.com/frandavid100/apexdesk-gnome");w.set_issue_url("https://github.com/frandavid100/apexdesk-gnome/issues");w.set_comments("Editor de documentos para GNOME basado en el motor WordCraft.");w.present();
+        let w=adw::AboutWindow::new();w.set_transient_for(Some(&h.window));w.set_application_name("Leaf");w.set_application_icon(APP_ID);w.set_version("0.1.0-alpha.1");w.set_developer_name("Proyecto Leaf");w.set_license_type(gtk::License::Gpl30);
+        w.set_website("https://github.com/frandavid100/leaf");w.set_issue_url("https://github.com/frandavid100/leaf/issues");w.set_comments("Editor de documentos para GNOME basado en el motor WordCraft.");w.present();
     });
     for(name,keys)in[("new-tab",vec!["<Control>n","<Control>t"]),("new-window",vec!["<Control><Shift>n"]),("tab-overview",vec!["<Control><Shift>o"]),("open",vec!["<Control>o"]),("preferences",vec!["<Control>comma"]),("shortcuts",vec!["<Control>question"]),("help",vec!["F1"]) ]{app.set_accels_for_action(&format!("win.{name}"),&keys);}
     let weak=Rc::downgrade(host);host.tabs.connect_selected_page_notify(move |_|{if let Some(h)=weak.upgrade(){refresh_main_actions(&h);}});
@@ -47,7 +47,7 @@ fn install_main_menu(button:&gtk::MenuButton){
     let root=gio::Menu::new();let files=gio::Menu::new();
     menu_item(&files,"Ventana nueva","new-window",Some("<Control><Shift>n"));menu_item(&files,"Pestaña nueva","new-tab",Some("<Control>n"));menu_item(&files,"Mostrar todas las pestañas","tab-overview",Some("<Control><Shift>o"));menu_item(&files,"Abrir…","open",Some("<Control>o"));
     menu_item(&files,"Recuperar documentos…","recover",None);root.append_section(None,&files);
-    let help=gio::Menu::new();menu_item(&help,"Preferencias","preferences",Some("<Control>comma"));menu_item(&help,"Atajos del teclado","shortcuts",Some("<Control>question"));menu_item(&help,"Ayuda","help",Some("F1"));menu_item(&help,"Acerca de WordCraft GNOME","about",None);root.append_section(None,&help);button.set_menu_model(Some(&root));
+    let help=gio::Menu::new();menu_item(&help,"Preferencias","preferences",Some("<Control>comma"));menu_item(&help,"Atajos del teclado","shortcuts",Some("<Control>question"));menu_item(&help,"Ayuda","help",Some("F1"));menu_item(&help,"Acerca de Leaf","about",None);root.append_section(None,&help);button.set_menu_model(Some(&root));
 }
 fn install_document_menu(button:&gtk::MenuButton){
     let root=gio::Menu::new();
@@ -57,14 +57,14 @@ fn install_document_menu(button:&gtk::MenuButton){
     let properties=gio::Menu::new();menu_item(&properties,"Propiedades del documento…","document-properties",None);menu_item(&properties,"Exportar a PDF…","export-pdf",None);root.append_section(None,&properties);button.set_menu_model(Some(&root));
 }
 fn show_editor_help(parent:&ApplicationWindow){
-    let w=adw::Window::builder().transient_for(parent).title("Ayuda de WordCraft GNOME").default_width(520).default_height(520).build();let toolbar=ToolbarView::new();toolbar.add_top_bar(&HeaderBar::new());
+    let w=adw::Window::builder().transient_for(parent).title("Ayuda de Leaf").default_width(520).default_height(520).build();let toolbar=ToolbarView::new();toolbar.add_top_bar(&HeaderBar::new());
     let text="DOCUMENTOS\nPestaña nueva en el menú principal crea un documento vacío. El menú principal permite abrir documentos DOCX/ODT, ventanas nuevas y mostrar todas las pestañas. Guardar: Ctrl+S; Guardar como: Ctrl+Mayús+S.\n\nNAVEGACIÓN\nLos botones inferiores del panel izquierdo alternan Páginas y Títulos. Pulsa una miniatura o un título para ir a esa parte del documento. La lupa abre la búsqueda; Escape vuelve a la vista anterior.\n\nBUSCAR Y REEMPLAZAR\nCtrl+F abre la búsqueda. Sus tres puntos permiten distinguir mayúsculas y activar Reemplazar. El botón junto al segundo campo reemplaza todas las coincidencias en un solo paso de deshacer; cada resultado conserva su reemplazo individual.\n\nEDICIÓN\nEstilo, Párrafo y Texto están como iconos a la derecha de la cabecera, con Deshacer/Rehacer a la izquierda. En ventanas estrechas los cinco pasan a la barra inferior. El clic derecho ofrece sus propias páginas de formato dentro del mismo menú. Añadir en el menú del documento permite insertar tablas e imágenes; el clic derecho permite editarlas. Las flechas abren subopciones. Ctrl+Z deshace y Ctrl+Mayús+Z rehace.\n\nAUTOGUARDADO\nPreferencias permite desactivar el autoguardado, usar un archivo de recuperación o guardar en el propio archivo. Recuperar documentos está en el menú principal.";
     let l=gtk::Label::new(Some(text));l.set_wrap(true);l.set_selectable(true);l.set_xalign(0.0);l.set_margin_start(24);l.set_margin_end(24);l.set_margin_top(18);l.set_margin_bottom(24);
     let scroll=gtk::ScrolledWindow::new();scroll.set_child(Some(&l));toolbar.set_content(Some(&scroll));w.set_content(Some(&toolbar));w.present();
 }
 fn show_keyboard_shortcuts(parent:&ApplicationWindow){
     let groups=[("Documentos",vec![("Pestaña nueva","<Control>n"),("Ventana nueva","<Control><Shift>n"),("Mostrar todas las pestañas","<Control><Shift>o"),("Abrir","<Control>o"),("Guardar","<Control>s"),("Guardar como","<Control><Shift>s"),("Cerrar pestaña","<Control>w")]),("Edición y búsqueda",vec![("Deshacer","<Control>z"),("Rehacer","<Control><Shift>z"),("Buscar","<Control>f"),("Reemplazar","<Control>h"),("Negrita","<Control>b"),("Cursiva","<Control>i"),("Subrayado","<Control>u")]),("Interfaz",vec![("Mostrar u ocultar el panel lateral","F9"),("Preferencias","<Control>comma"),("Ayuda","F1")])];
-    let mut xml=String::from("<interface><object class=\"GtkShortcutsWindow\" id=\"shortcuts\"><child><object class=\"GtkShortcutsSection\"><property name=\"section-name\">editor</property><property name=\"title\">WordCraft GNOME</property>");
+    let mut xml=String::from("<interface><object class=\"GtkShortcutsWindow\" id=\"shortcuts\"><child><object class=\"GtkShortcutsSection\"><property name=\"section-name\">editor</property><property name=\"title\">Leaf</property>");
     for(title,shortcuts)in groups{xml.push_str(&format!("<child><object class=\"GtkShortcutsGroup\"><property name=\"title\">{}</property>",glib::markup_escape_text(title)));for(title,key)in shortcuts{xml.push_str(&format!("<child><object class=\"GtkShortcutsShortcut\"><property name=\"title\">{}</property><property name=\"accelerator\">{}</property></object></child>",glib::markup_escape_text(title),glib::markup_escape_text(key)));}xml.push_str("</object></child>");}
     xml.push_str("</object></child></object></interface>");let builder=gtk::Builder::from_string(&xml);let w=builder.object::<gtk::ShortcutsWindow>("shortcuts").unwrap();w.set_transient_for(Some(parent));w.present();
 }

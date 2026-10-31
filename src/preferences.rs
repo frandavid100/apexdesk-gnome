@@ -7,6 +7,7 @@ pub fn config_root() -> PathBuf {
 }
 pub fn recovery_root() -> PathBuf {
     std::env::var_os("XDG_STATE_HOME").map(PathBuf::from)
+        .or_else(|| std::env::var_os("FLATPAK_ID").and_then(|_| std::env::var_os("XDG_DATA_HOME")).map(|p|PathBuf::from(p).join("state")))
         .unwrap_or_else(|| PathBuf::from(std::env::var_os("HOME").unwrap_or_default()).join(".local/state"))
         .join("wordcraft-gnome/recovery")
 }
