@@ -42,3 +42,7 @@ opt-level = 3
 lto = "thin"
 codegen-units = 1
 strip = "symbols"
+
+# Small, auditable compatibility patch; see patches/README.md.
+[patch."https://github.com/storytold/wordcraft"]
+wordcraft-formats = { path = "vendor/wordcraft-formats" }

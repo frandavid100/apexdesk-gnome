@@ -1,0 +1,105 @@
+--- a/src/odt/package.rs
++++ b/src/odt/package.rs
+@@ -9,7 +9,7 @@
+ 
+ /// One master page per entry of `pages` (name, setup), each with its own page layout `pm1`, `pm2`…
+ /// (§16.5, §16.9); the first is the default one, "Standard".
+-fn styles_xml(pages: &[(String, wordcraft_doc::SectionProps)], body_font: &str) -> String {
++fn styles_xml(pages: &[(String, wordcraft_doc::SectionProps)], body_font: &str, master_content: &[String], automatic: &str) -> String {
+     let mut s = format!("<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<office:document-styles {NS}><office:styles>");
+     s.push_str(&format!(
+         "<style:default-style style:family=\"paragraph\"><style:paragraph-properties fo:margin-bottom=\"8pt\"/><style:text-properties fo:font-family=\"'{}'\" fo:font-size=\"12pt\"/></style:default-style>",
+@@ -28,7 +28,8 @@
+     s.push_str("<style:style style:name=\"Title\" style:family=\"paragraph\" style:parent-style-name=\"Standard\" style:class=\"chapter\"><style:text-properties fo:font-size=\"28pt\"/></style:style>");
+     s.push_str("<style:style style:name=\"Quotations\" style:family=\"paragraph\" style:parent-style-name=\"Standard\" style:class=\"html\"><style:paragraph-properties fo:margin-left=\"36pt\" fo:margin-right=\"36pt\"/><style:text-properties fo:font-style=\"italic\" fo:color=\"#404040\"/></style:style>");
+     s.push_str(&format!("<style:style style:name=\"Preformatted_20_Text\" style:display-name=\"Preformatted Text\" style:family=\"paragraph\" style:parent-style-name=\"Standard\" style:class=\"html\"><style:paragraph-properties fo:margin-top=\"0pt\" fo:margin-bottom=\"0pt\"/><style:text-properties fo:font-family=\"'{}'\" style:font-family-generic=\"modern\" style:font-pitch=\"fixed\" fo:font-size=\"10pt\"/></style:style>", model::MONO_FONT));
+-    s.push_str("</office:styles><office:automatic-styles>");
++    s.push_str("</office:styles>");
++    s.push_str(automatic.strip_suffix("</office:automatic-styles>").unwrap_or(automatic));
+     for (i, (_, sec)) in pages.iter().enumerate() {
+         // A page of several columns carries them in its layout.
+         let cols = if sec.columns.count > 1 { columns_xml(&sec.columns) } else { String::new() };
+@@ -46,7 +47,7 @@
+     }
+     s.push_str("</office:automatic-styles><office:master-styles>");
+     for (i, (name, _)) in pages.iter().enumerate() {
+-        s.push_str(&format!("<style:master-page style:name=\"{}\" style:page-layout-name=\"pm{}\"/>", x(name), i + 1));
++        s.push_str(&format!("<style:master-page style:name=\"{}\" style:page-layout-name=\"pm{}\">{}</style:master-page>", x(name), i + 1, master_content.get(i).map(String::as_str).unwrap_or("")));
+     }
+     s.push_str("</office:master-styles></office:document-styles>\n");
+     s
+@@ -97,9 +98,28 @@
+     out
+ }
+ 
++// ODF table-header-rows means repetition, not first-row styling. Keep the shared
++// flow conversion unchanged for HTML/Markdown; disable its styling heuristic only
++// on this shallow-cloned ODT export view, including nested tables in page parts.
++fn odt_flow(doc: &Document, blocks: &wordcraft_doc::Blocks) -> model::Flow {
++    fn explicit_headers(blocks: &mut wordcraft_doc::Blocks, depth: usize) {
++        if depth > wordcraft_doc::table::MAX_TABLE_DEPTH { return; }
++        for block in blocks {
++            if !matches!(&**block, wordcraft_doc::Block::Table(_)) { continue; }
++            if let wordcraft_doc::Block::Table(table) = std::sync::Arc::make_mut(block) {
++                table.props.look.header_row = false;
++                for row in &mut table.rows { for cell in &mut row.cells { explicit_headers(&mut cell.blocks, depth + 1); } }
++            }
++        }
++    }
++    let mut export = doc.clone(); export.body = blocks.clone();
++    explicit_headers(&mut export.body, 0);
++    model::from_doc_tracked(&export)
++}
++
+ /// Write an `.odt` package.
+ pub fn export(doc: &Document) -> Result<Vec<u8>, String> {
+-    let flow = model::from_doc_tracked(doc);
++    let flow = odt_flow(doc, &doc.body);
+     let mut w = Writer::default();
+     let mut body = String::new();
+     let sections = flow_sections(&flow.blocks, &doc.last_section);
+@@ -107,7 +127,10 @@
+     let mut pages: Vec<(String, SectionProps)> = Vec::new();
+     // The columns of the page in force: a continuous section with others is a `text:section`.
+     let mut page_cols = Columns::default();
+-    for (k, (sec, range)) in sections.iter().enumerate() {
++    let mut previous = SectionProps::default();
++    for (k, (raw_sec, range)) in sections.iter().enumerate() {
++        let mut effective = raw_sec.clone(); effective.absorb(&previous); previous = effective.clone();
++        let sec = &effective;
+         let new_page = k == 0 || sec.start != SectionStart::Continuous;
+         if new_page {
+             let name = if k == 0 { "Standard".to_string() } else { format!("Page{}", pages.len() + 1) };
+@@ -145,6 +168,23 @@
+         }
+     }
+     w.close_ins(&mut body);
++    let mut master_content = Vec::new();
++    for (_, sec) in &pages {
++        let mut content = String::new();
++        for (set, prefix, kind) in [(sec.headers, "header", wordcraft_doc::PartKind::Header), (sec.footers, "footer", wordcraft_doc::PartKind::Footer)] {
++            for (slot, id) in [("", set.default), ("-left", set.even), ("-first", set.first)] {
++                if let Some(part) = id.and_then(|id| doc.parts.get(&id)).filter(|part| part.kind == kind) {
++                    w.pending_start = None; w.continue_list = false;
++                    content.push_str(&format!("<style:{prefix}{slot}>"));
++                    let header_flow = odt_flow(doc, &part.blocks);
++                    w.blocks(&header_flow.blocks, &mut content, 0);
++                    w.close_ins(&mut content);
++                    content.push_str(&format!("</style:{prefix}{slot}>"));
++                }
++            }
++        }
++        master_content.push(content);
++    }
+     let tracked = if w.regions.is_empty() && !doc.settings.track_changes {
+         String::new()
+     } else {
+@@ -155,7 +195,7 @@
+         w.automatic_styles()
+     );
+     let body_font = doc.styles.default_chr.font.clone().unwrap_or_else(|| wordcraft_doc::styles::BODY_FONT.to_string());
+-    let styles = styles_xml(&pages, &body_font);
++    let styles = styles_xml(&pages, &body_font, &master_content, &w.automatic_styles());
+     let meta = meta_xml(&flow.meta);
+     let mut manifest = String::from(
+         "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n<manifest:manifest xmlns:manifest=\"urn:oasis:names:tc:opendocument:xmlns:manifest:1.0\" manifest:version=\"1.3\">\n<manifest:file-entry manifest:full-path=\"/\" manifest:version=\"1.3\" manifest:media-type=\"application/vnd.oasis.opendocument.text\"/>\n<manifest:file-entry manifest:full-path=\"content.xml\" manifest:media-type=\"text/xml\"/>\n<manifest:file-entry manifest:full-path=\"styles.xml\" manifest:media-type=\"text/xml\"/>\n<manifest:file-entry manifest:full-path=\"meta.xml\" manifest:media-type=\"text/xml\"/>\n",

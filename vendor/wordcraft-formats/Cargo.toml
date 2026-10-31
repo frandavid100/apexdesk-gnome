@@ -1,0 +1,23 @@
+[package]
+name = "wordcraft-formats"
+version = "0.12.0"
+edition = "2024"
+license = "MIT OR Apache-2.0"
+description = "Pinned WordCraft formats with Leaf ODT preservation patch"
+
+[dependencies]
+wordcraft-doc = { git = "https://github.com/storytold/wordcraft", rev = "165d5725dc25b4a7887d8025c3b1fe506ccc3dcc" }
+wordcraft-geom = { git = "https://github.com/storytold/wordcraft", rev = "165d5725dc25b4a7887d8025c3b1fe506ccc3dcc", features = ["image"] }
+image = { version = "0.25", default-features = false, features = ["png", "jpeg", "webp", "gif", "bmp", "tiff"] }
+quick-xml = "0.41"
+zip = { version = "3", default-features = false, features = ["deflate"] }
+cfb = "0.15"
+encoding_rs = "0.8"
+chardetng = "1"
+log = "0.4"
+chrono = { version = "0.4.45", default-features = false, features = ["std"] }
+[target.'cfg(all(target_arch = "wasm32", target_os = "unknown"))'.dependencies]
+js-sys = "0.3"
+[dev-dependencies]
+wordcraft-doc = { git = "https://github.com/storytold/wordcraft", rev = "165d5725dc25b4a7887d8025c3b1fe506ccc3dcc", features = ["test-support"] }
+proptest = "1"

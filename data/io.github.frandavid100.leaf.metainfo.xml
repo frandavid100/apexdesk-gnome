@@ -18,6 +18,7 @@
   <url type="help">https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/TESTING.md</url>
   <content_rating type="oars-1.1"/>
   <releases>
+    <release version="0.1.0-alpha.4" date="2026-10-31" type="development"><description><p>Preserve ODT headers, footers and their tables and images; retain explicit repeating table rows.</p></description></release>
     <release version="0.1.0-alpha.3" date="2026-10-31" type="development"><description><p>Correct document and thumbnail rendering density on HiDPI displays.</p></description></release>
     <release version="0.1.0-alpha.2" date="2026-10-31" type="development">
       <description><p>Column layout controls and native symbolic formatting icons.</p></description>

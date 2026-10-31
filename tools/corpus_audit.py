@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """One-off/manual audit. Downloads fixtures at a pinned revision, never edits originals."""
-import base64,collections,hashlib,json,re,subprocess,sys,urllib.request,zipfile
+import os,base64,collections,hashlib,json,re,subprocess,sys,urllib.request,zipfile
 from pathlib import Path
 import xml.etree.ElementTree as ET
 from PIL import Image,ImageChops
@@ -116,7 +116,7 @@ for ix,fixture in enumerate(manifest["files"]):
    item["render"].append(entry)
   item["status"]="unchanged" if not changes and all(p["identical"] for p in item["render"]) else "differences"
   # Keep evidence and provenance, but do not redistribute imported/exported fixture documents or their full model.
-  for n in ["before.json","after.json",f"saved{source.suffix}"]:(folder/n).unlink(missing_ok=True)
+  for n in ["before.json","after.json"]+([] if os.environ.get("AUDIT_KEEP_SAVED") else [f"saved{source.suffix}"]):(folder/n).unlink(missing_ok=True)
  except Exception as e:item["error"]=str(e)
  results.append(item);print(name,item["status"],flush=True)
 (ROOT/"results.json").write_text(json.dumps({"manifest":manifest,"results":results},ensure_ascii=False,indent=2))

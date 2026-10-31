@@ -1,7 +1,7 @@
-Leaf 0.1.0-alpha.3 fixes document and thumbnail raster resolution on HiDPI screens.
+Leaf 0.1.0-alpha.4 repairs ODT header/footer preservation and unintended repeating table rows.
 
-Page rendering now accounts for GTK display density as well as document zoom. A logical-size paintable keeps page geometry, scrolling and hit testing independent of texture resolution. Cached pages and thumbnails are invalidated when the widget scale factor changes. The old 2 pixels-per-point cap is removed; the existing 12-million-pixel page allocation guard remains.
+ODT output now writes page-part content, automatic styles and media into its master pages. Default, first-page and even-page slots and linked section headers are covered by focused regressions. First-row styling no longer implies a repeating header in ODT.
 
-Automated checks cover 100% and 200% display scaling, 100% and 200% document zoom, texture dimensions, logical page geometry and unchanged document revision. Real multi-monitor Wayland/fractional-scale testing remains pending. This fixes a concrete integration defect; confirmation from the original Reddit reporter is still needed.
+The fix is an isolated Cargo override of wordcraft-formats from the same pinned upstream revision; patches/ records provenance and the source diff. Other engine crates remain pinned and unchanged. New tests and targeted corpus checks run before publication. Broader document fidelity still needs testing; this is not complete Word/LibreOffice compatibility.
 
-Download Leaf-0.1.0-alpha.3-x86_64.flatpak and install over alpha.2. GNOME 49 runtime required. No automatic Leaf update feed. AI-assisted development. Experimental DOCX/ODT fidelity; test copies. Unequal column widths remain DOCX-only on round-trip.
+Install Leaf-0.1.0-alpha.4-x86_64.flatpak over alpha.3. GNOME 49 runtime; no automatic Leaf update feed. AI-assisted development. Use document copies. Unequal column widths still round-trip only in DOCX on this engine.

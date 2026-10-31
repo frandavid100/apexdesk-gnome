@@ -1753,7 +1753,7 @@ fn build_tab(
 
 fn main() {
     if std::env::args().any(|arg| arg == "--version") {
-        println!("Leaf 0.1.0-alpha.3");
+        println!("Leaf 0.1.0-alpha.4");
         return;
     }
     if std::env::args().any(|a|a=="--package-storage-test") {

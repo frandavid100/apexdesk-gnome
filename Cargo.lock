@@ -2024,7 +2024,6 @@ dependencies = [
 [[package]]
 name = "wordcraft-formats"
 version = "0.12.0"
-source = "git+https://github.com/storytold/wordcraft?rev=165d5725dc25b4a7887d8025c3b1fe506ccc3dcc#165d5725dc25b4a7887d8025c3b1fe506ccc3dcc"
 dependencies = [
  "cfb",
  "chardetng",

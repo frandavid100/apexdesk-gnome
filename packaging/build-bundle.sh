@@ -3,7 +3,7 @@
 set -euo pipefail
 app_id=io.github.frandavid100.leaf
 runtime_version=49
-version=0.1.0-alpha.3
+version=0.1.0-alpha.4
 binary=${1:?Usage: build-bundle.sh TESTED_BINARY}
 work=flatpak-build
 repo=flatpak-repo
@@ -20,18 +20,20 @@ install -Dm0644 data/icons/hicolor/scalable/apps/leaf.svg "$work/files/share/ico
 install -Dm0644 data/icons/hicolor/symbolic/apps/leaf-symbolic.svg "$work/files/share/icons/hicolor/symbolic/apps/$app_id-symbolic.svg"
 install -Dm0644 LICENSE "$work/files/share/licenses/$app_id/LICENSE"
 install -Dm0644 docs/AI_ASSISTANCE.md "$work/files/share/doc/leaf/AI_ASSISTANCE.md"
+install -Dm0644 vendor/wordcraft-formats/LICENSE-MIT "$work/files/share/licenses/wordcraft-formats/LICENSE-MIT"
+install -Dm0644 vendor/wordcraft-formats/LICENSE-APACHE "$work/files/share/licenses/wordcraft-formats/LICENSE-APACHE"
 # Portals grant individual documents; no home/host filesystem or network access.
 flatpak build-finish --command=leaf --share=ipc --socket=wayland --socket=fallback-x11 --device=dri "$work"
 flatpak build-export "$repo" "$work" alpha
 flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo "$repo" "$out/Leaf-$version-x86_64.flatpak" "$app_id" alpha
-if test -f prior-release/Leaf-0.1.0-alpha.2-x86_64.flatpak; then
-  flatpak --user install -y --noninteractive prior-release/Leaf-0.1.0-alpha.2-x86_64.flatpak
+if test -f prior-release/Leaf-0.1.0-alpha.3-x86_64.flatpak; then
+  flatpak --user install -y --noninteractive prior-release/Leaf-0.1.0-alpha.3-x86_64.flatpak
   # Seed persistent data without starting a document portal outside the smoke-test bus.
   mkdir -p "$HOME/.var/app/$app_id/data"
   printf retained > "$HOME/.var/app/$app_id/data/upgrade-test"
 fi
 flatpak --user install -y --noninteractive "$out/Leaf-$version-x86_64.flatpak"
-if test -f prior-release/Leaf-0.1.0-alpha.2-x86_64.flatpak; then
+if test -f prior-release/Leaf-0.1.0-alpha.3-x86_64.flatpak; then
   grep -q retained "$HOME/.var/app/$app_id/data/upgrade-test"
   echo FLATPAK_UPGRADE_OK
 fi
