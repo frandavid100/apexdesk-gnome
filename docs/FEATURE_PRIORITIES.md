@@ -8,6 +8,12 @@ Source: https://jensenharris.com/blog/no-distaste-for-paste-why-the-ui-part-7
 The Document Foundation's 2017 survey received 10,449 submissions, with roughly a third empty. It investigated selected uncommon/legacy features, not the full Writer command set. Its discussion warns about expert self-selection and ambiguous interpretation. It cannot establish a general most-used-functions ranking.
 Source: https://design.blog.documentfoundation.org/2017/06/28/results-survey-libreoffice-features/
 
+A CHIIR 2018 study analyzed a month of 2017 Office command-search sessions. Word searches included proofing and printing, but this measures search behavior, not overall feature invocation; suggested queries also affected search volume. It supports investigating discoverability and spelling as task needs, not ranking them above copy/paste.
+Source: https://www.microsoft.com/en-us/research/wp-content/uploads/2018/01/search_in_office__chiir2018.pdf
+
+A Writer templates survey conducted in December 2024 and published in January 2025 had 241 respondents. Reported friction included repeated adjustments of margins, fonts and styles; academic documents, resumes, business letters and invoices featured prominently. This concerns a self-selected templates survey, not representative command telemetry. It suggests testing complete document workflows and considering templates later.
+Source: https://design.blog.documentfoundation.org/2025/01/13/results-from-a-survey-about-writer-templates/
+
 ## Decision for Leaf (inference)
 Protect the common editing core first: dependable copy/paste, save/reopen, undo and basic formatting. Measure reliability as well as frequency: recovery is valuable even when rarely invoked.
 

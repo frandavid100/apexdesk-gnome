@@ -26,11 +26,13 @@ flatpak build-export "$repo" "$work" alpha
 flatpak build-bundle --runtime-repo=https://dl.flathub.org/repo/flathub.flatpakrepo "$repo" "$out/Leaf-$version-x86_64.flatpak" "$app_id" alpha
 if test -f prior-release/Leaf-0.1.0-alpha.1-x86_64.flatpak; then
   flatpak --user install -y --noninteractive prior-release/Leaf-0.1.0-alpha.1-x86_64.flatpak
-  flatpak run --command=sh "$app_id" -c 'mkdir -p "$XDG_DATA_HOME"; printf retained > "$XDG_DATA_HOME/upgrade-test"'
+  # Seed persistent data without starting a document portal outside the smoke-test bus.
+  mkdir -p "$HOME/.var/app/$app_id/data"
+  printf retained > "$HOME/.var/app/$app_id/data/upgrade-test"
 fi
 flatpak --user install -y --noninteractive "$out/Leaf-$version-x86_64.flatpak"
 if test -f prior-release/Leaf-0.1.0-alpha.1-x86_64.flatpak; then
-  flatpak run --command=sh "$app_id" -c 'grep -q retained "$XDG_DATA_HOME/upgrade-test"'
+  grep -q retained "$HOME/.var/app/$app_id/data/upgrade-test"
   echo FLATPAK_UPGRADE_OK
 fi
 flatpak --user info --show-metadata "$app_id" > "$out/flatpak-metadata.txt"

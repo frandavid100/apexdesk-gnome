@@ -7,6 +7,8 @@ export XDG_DATA_DIRS="$HOME/.local/share/flatpak/exports/share:${XDG_DATA_DIRS:-
 dbus-update-activation-environment DISPLAY XDG_CURRENT_DESKTOP XDG_DATA_DIRS
 mkdir -p "$HOME/.config/xdg-desktop-portal"
 printf '[preferred]\ndefault=gtk\n' > "$HOME/.config/xdg-desktop-portal/portals.conf"
+flatpak run --command=sh "$app_id" -c 'grep -q retained "$XDG_DATA_HOME/upgrade-test"'
+echo FLATPAK_UPGRADE_SANDBOX_OK
 flatpak run "$app_id" --version | grep -F 'Leaf 0.1.0-alpha.2'
 flatpak run --socket=x11 --nosocket=wayland "$app_id" --columns-ui-test 2>dist/flatpak-columns.log
 grep -q COLUMNS_UI_OK dist/flatpak-columns.log
