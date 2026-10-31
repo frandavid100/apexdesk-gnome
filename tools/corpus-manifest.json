@@ -1,0 +1,126 @@
+{
+  "repository": "LibreOffice/core",
+  "revision": "6e0b39149b549bd05065d451006c4d060589891d",
+  "files": [
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/defaultStyle.docx",
+      "blob_sha": "8e3faa70da8cf56f93494de17a82479c4202c986",
+      "size": 5126
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/2_table_doc.docx",
+      "blob_sha": "21513ec2cc72d86c9ca1d28d3dec6e64ba6ab2d9",
+      "size": 10090
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/Table_cell_auto_width_fdo69656.docx",
+      "blob_sha": "10b8f9de21d8ea05674cb7bde0d19186f564db85",
+      "size": 18939
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/floating-table-position.docx",
+      "blob_sha": "de7a467aac1bf6acd01bb9e44aedcbf2a4de7099",
+      "size": 13236
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/2col-header.docx",
+      "blob_sha": "3e8f2c459d5b213fd35f4df52358f3577310e00c",
+      "size": 17060
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/multi-column-separator-with-line.docx",
+      "blob_sha": "c19ed697b55cb7694925de5c5bef2a3923fcc6bd",
+      "size": 11618
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/ImageCrop.docx",
+      "blob_sha": "120ce78eb7de094d235a7dbef3412000912e4bfd",
+      "size": 71650
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/image_data.docx",
+      "blob_sha": "08d0eb84164309c162afd79fc00c9b2e3f044ac5",
+      "size": 41168
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/footnote.docx",
+      "blob_sha": "f5c94bd2700410502294670764e7f53dc9f56e96",
+      "size": 15779
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/firstheadernofooter.docx",
+      "blob_sha": "40e5cae3d385162378ef003983c5474cba323be3",
+      "size": 15621
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/footer-margin-lost.docx",
+      "blob_sha": "d6a9d7bd8df9341e892cd290a2c623e88bcc539d",
+      "size": 21058
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/margins_from_style.docx",
+      "blob_sha": "721982458e4f3a22183534eacf3ab67e6ab559f0",
+      "size": 13878
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/NumberedList.docx",
+      "blob_sha": "53f4490d4077326f5e9f9a9d83321951702cdd8a",
+      "size": 55519
+    },
+    {
+      "path": "sw/qa/extras/ooxmlexport/data/TextEffects_InStyle.docx",
+      "blob_sha": "5be6d9c5f987da84827ec5c3dd2ea634250a9e5a",
+      "size": 13028
+    },
+    {
+      "path": "sw/qa/extras/odfexport/data/listformat.odt",
+      "blob_sha": "ec3992c8fde93afac4abd1511f91868fa0af0658",
+      "size": 9221
+    },
+    {
+      "path": "sw/qa/extras/odfexport/data/table_styles_1.odt",
+      "blob_sha": "701fd92c2aaa42efda0c36b7ed6ba5879f06f27e",
+      "size": 9874
+    },
+    {
+      "path": "sw/qa/extras/odfexport/data/table_styles_2.odt",
+      "blob_sha": "735ea4431909e367ec770f544bb12a2f93789534",
+      "size": 10727
+    },
+    {
+      "path": "sw/qa/extras/odfexport/data/nestedTableInFooter.odt",
+      "blob_sha": "0356f04ee14ea6e6f97a62f8519523422861c0b7",
+      "size": 8611
+    },
+    {
+      "path": "sw/qa/extras/odfexport/data/image-mimetype.odt",
+      "blob_sha": "4c4924a1b254a99af8555720444152ca6d14d737",
+      "size": 88597
+    },
+    {
+      "path": "sw/qa/extras/odfexport/data/ooo321_stylepagenumber.odt",
+      "blob_sha": "aae70e1063c5f3b1862cb6d188fcca78ff3d2778",
+      "size": 8558
+    },
+    {
+      "path": "sw/qa/extras/odfexport/data/tdf133507_contextualSpacingSection.odt",
+      "blob_sha": "efc1c3f592c1ccdddec624dba9cbe7277c094c7e",
+      "size": 40288
+    },
+    {
+      "path": "sw/qa/extras/odfexport/data/tdf135338_firstLeftPageFooter.odt",
+      "blob_sha": "4f9808875812afd334de9df9252127f35fda28c0",
+      "size": 10687
+    },
+    {
+      "path": "sw/qa/extras/odfexport/data/arabic-zero-numbering.odt",
+      "blob_sha": "2a445b22748a31e473e7704cc11cc07319e82902",
+      "size": 8730
+    },
+    {
+      "path": "sw/qa/extras/odfexport/data/tdf104254_noHeaderWrapping.odt",
+      "blob_sha": "06dde4802b431fb36e32ed92d6ddaeeb1b2f1fdd",
+      "size": 63167
+    }
+  ]
+}

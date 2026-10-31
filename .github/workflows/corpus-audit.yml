@@ -1,0 +1,35 @@
+name: Optional one-off document corpus audit
+on:
+  workflow_dispatch:
+  push:
+    branches: [wordcraft-saving]
+    paths: [.github/workflows/corpus-audit.yml]
+permissions:
+  contents: read
+jobs:
+  corpus:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.head_commit.message, '[corpus-audit]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install pillow==11.3.0
+      - name: Build optional headless audit worker
+        run: cargo build --release --locked --example corpus_audit
+      - name: Run pinned corpus once
+        run: python tools/corpus_audit.py
+      - name: Attach summary
+        if: always()
+        run: cat audit-results/REPORT.md >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: leaf-corpus-audit
+          path: audit-results/
