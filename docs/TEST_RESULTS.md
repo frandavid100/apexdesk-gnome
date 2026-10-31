@@ -1,6 +1,6 @@
 # Real-document test results
 
-No public alpha testing campaign has started. This table intentionally contains no fabricated test results. Existing automated validation is described in PROJECT_STATUS.md and TESTING.md.
+Public GitHub alphas have been shared for testing, including on Reddit. No structured external real-document results have yet been entered in this table; this does not imply that nobody has tried the app. This table intentionally contains no fabricated test results. Existing automated validation is described in PROJECT_STATUS.md and TESTING.md.
 
 | Build / commit | Environment | Format and originating editor | Checks performed | Outcome / issue | Tested by / date |
 | --- | --- | --- | --- | --- | --- |

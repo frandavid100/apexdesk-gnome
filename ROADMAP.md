@@ -3,9 +3,11 @@
 Actualizada: 31 de octubre de 2026. Estado técnico en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Las fases siguientes son propuestas; no implican autorización para implementarlas todas.
 
-## En curso: auditoría GTK antes de ampliar funciones
+## Completado: auditoría GTK y alpha.6
 
-Autorizado revisar y corregir ciclos de referencias, señales, temporizadores y liberación de documentos/ventanas; medir repetidamente apertura y cierre. Medición inicial confirma Ui/Workspace retenidos. Corregir, comprobar liberación exacta y documentar memoria distinguiendo cachés de fugas. No se añade funcionalidad al editor.
+Corregidos ciclos de referencias y liberación de documentos/ventanas, menús, controladores y temporizadores. Tres tandas de apertura/cierre: cero objetos comprobados retenidos, también en Flatpak; medición nativa antes/después y límites en [el informe](docs/GTK_LIFECYCLE_AUDIT_2026-10-31.md). Alpha.6 publicada, CI completa y artefactos descargados/verificados. Motor y dependencias sin cambios. No se ha repetido el corpus completo de compatibilidad.
+
+Pendiente: prueba manual en GNOME OS y sesiones reales largas, incluida revisión humana de GObject y posibles casos no cubiertos. No interpretar las sondas de objetos y RSS como una auditoría exhaustiva de toda la memoria. Mantener la regresión breve de ciclo de vida; no convertir el corpus de 24 archivos en requisito por versión.
 
 ## Ahora: validar impresión y accesibilidad con usuarios
 

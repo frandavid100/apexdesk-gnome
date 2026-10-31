@@ -2,11 +2,23 @@
 
 Actualizado: 31 de octubre de 2026. Punto de entrada para continuar desde otra conversación.
 
-## En curso: auditoría GTK de propiedad y memoria autorizada
+## Última entrega: alpha.6 — propiedad GTK y memoria (31-10-2026)
 
-Medición inicial en b7b5b7f792856fc5ca02f1f3b7769ad96320bd3a, CI 41234617745: tras cerrar 15 documentos, 15 Ui y 6 Workspace permanecen vivos; cuerpos de documento e imágenes de página sí se liberan. RSS tras malloc_trim: 188684 → 212208 → 235676 KiB en tres tandas. Corrección en curso: propietarios explícitos de ventanas, referencias débiles en señales, temporizadores detenidos al cerrar, CSS registrado una vez y liberación de portapapeles obsoleto. Pendientes prueba estricta posterior, comparación y paquete; no presentar mejora medida hasta validar.
+Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.6
+Tag, fuentes nativas y paquete: `d988fec5e350ab6388e597fe891919f12f3bcda1`.
+Flatpak x86_64: **10.178.880 bytes**, SHA256 `11b146713f469a8dec062192e990852c6e12c0f2bb98f268d8b1aadbaf1baaac`.
 
-## Última entrega: alpha.5 — teclado, controles accesibles e impresión (31-10-2026)
+Auditoría autorizada completada. Se corrigen ciclos Ui/Workspace/señales; propietarios explícitos de ventanas, capturas débiles, temporizador de autoguardado y controlador de clic retirados al cerrar, devolución/desmontaje de menús contextuales y paneles, desconexión de TabBar/TabView, CSS registrado una vez y liberación del fragmento enriquecido obsoleto del portapapeles. Se finalizan las animaciones de la barra antes de liberar sus registros; no desactivar las animaciones globales. Motor, dependencias y edición sin cambios.
+
+Medición inicial reproducida sobre alpha.5 con instrumentación: tras cerrar 15 documentos quedaban vivos 15 Ui y 6 Workspace, aunque cuerpos e imágenes ya se liberaban. Después: cero estados, ventanas GTK, controles y controladores comprobados; raíz también liberada. RSS final 271924 → 231028 KiB; tras malloc_trim de diagnóstico, 235676 → 171560 KiB. Son tres tandas de un mismo documento sintético, no una garantía general de RAM/velocidad ni de ausencia de todas las fugas. El documento de 60 párrafos se abre mediante la ruta normal DOCX. No repetir por defecto el corpus completo.
+
+[Informe, método, intentos fallidos y límites](docs/GTK_LIFECYCLE_AUDIT_2026-10-31.md), [mediciones JSON](docs/audits/2026-10-31-lifecycle-results.json). CI [41238438224](https://github.com/frandavid100/leaf/actions/runs/41238438224) completada correctamente: job nativo **124647025276**, paquete **124649600736**. Cargo test --locked, release GTK, ambos ciclos de vida, menús/portapapeles/diálogos, teclado/impresión, capturas e HiDPI superados. Dentro del Flatpak: ciclo de vida estricto, actualización desde alpha.5, lanzador, portal de documentos, impresión simulada y conservación de datos/reinstalación. No se ha reejecutado el corpus de 24 archivos.
+
+Artefacto nativo **13057140097**, SHA256 del ZIP `47ef113b794572e71a5e7e8e5c8d573bfa27ad749dae674ebe99798cfe68b598`; paquete **13056876901**, SHA256 del ZIP `1e1e7a4fcf902ff970d2987db812945247f416b8131784ed838c71744202ba30`. Ambos descargados y verificados independientemente; SHA256SUMS del paquete completo correcto. Capturas ancha/estrecha, contexto Estilo/Texto, tema oscuro, vista general de pestañas y lanzador instalado revisadas. No equivale a prueba manual en GNOME OS, Wayland, impresora física u Orca.
+
+Los intentos previos detectaron controles retenidos y un fallo de orden de destrucción durante una animación en libadwaita 1.5; no se publicaron. Se mantuvieron las aserciones estrictas. Persisten los límites de impresión y accesibilidad de alpha.5 descritos abajo. Siguiente trabajo propuesto: recoger reproducciones pequeñas de usuarios y revisión humana de mantenimiento; ampliar accesibilidad del lienzo exige trabajo específico, no está completada.
+
+## Entrega anterior: alpha.5 — teclado, controles accesibles e impresión (31-10-2026)
 
 Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.5
 Etiqueta/paquete: `3bb562d04129d668261b6aafb25833628d801480`. Código nativo validado: `b1b42907f2059353518480899a3d4d56beb2996f`; igualdad de src/Cargo/tests/vendor/patches comprobada antes de reutilizar su artefacto.

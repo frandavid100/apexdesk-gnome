@@ -1,0 +1,249 @@
+{
+  "date": "2026-10-31",
+  "environment": {
+    "os": "Ubuntu 24.04 x86_64 CI",
+    "gtk": "4.14.5",
+    "libadwaita": "1.5.0",
+    "rust": "1.99.1",
+    "profile": "release",
+    "renderer": "cairo",
+    "display": "Xvfb"
+  },
+  "units": "KiB",
+  "baseline": {
+    "source": "b7b5b7f792856fc5ca02f1f3b7769ad96320bd3a",
+    "run": 41234617745,
+    "job": 124635662105,
+    "initial_rss_kib": 156944,
+    "samples": [
+      {
+        "closed_tabs": 5,
+        "documents_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 225192,
+        "trimmed_rss_kib": 188684,
+        "ui_alive": 5,
+        "wave": 1,
+        "workspaces_alive": 2
+      },
+      {
+        "closed_tabs": 10,
+        "documents_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 255588,
+        "trimmed_rss_kib": 212208,
+        "ui_alive": 10,
+        "wave": 2,
+        "workspaces_alive": 4
+      },
+      {
+        "closed_tabs": 15,
+        "documents_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 271924,
+        "trimmed_rss_kib": 235676,
+        "ui_alive": 15,
+        "wave": 3,
+        "workspaces_alive": 6
+      }
+    ],
+    "root_alive": {
+      "workspace": true,
+      "ui": true,
+      "gtk_window": true
+    }
+  },
+  "fixed": {
+    "source": "d988fec5e350ab6388e597fe891919f12f3bcda1",
+    "run": 41238438224,
+    "job": 124647025276,
+    "initial_rss_kib": 157556,
+    "samples": [
+      {
+        "closed_tabs": 5,
+        "column_models_alive": 0,
+        "controllers_alive": 0,
+        "controls_alive": 0,
+        "dialogs_alive": 0,
+        "documents_alive": 0,
+        "gtk_windows_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 229212,
+        "trimmed_rss_kib": 168028,
+        "ui_alive": 0,
+        "wave": 1,
+        "workspaces_alive": 0
+      },
+      {
+        "closed_tabs": 10,
+        "column_models_alive": 0,
+        "controllers_alive": 0,
+        "controls_alive": 0,
+        "dialogs_alive": 0,
+        "documents_alive": 0,
+        "gtk_windows_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 231040,
+        "trimmed_rss_kib": 169988,
+        "ui_alive": 0,
+        "wave": 2,
+        "workspaces_alive": 0
+      },
+      {
+        "closed_tabs": 15,
+        "column_models_alive": 0,
+        "controllers_alive": 0,
+        "controls_alive": 0,
+        "dialogs_alive": 0,
+        "documents_alive": 0,
+        "gtk_windows_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 231028,
+        "trimmed_rss_kib": 171560,
+        "ui_alive": 0,
+        "wave": 3,
+        "workspaces_alive": 0
+      }
+    ],
+    "root_alive": {
+      "workspace": false,
+      "ui": false,
+      "gtk_window": false
+    }
+  },
+  "extra_dialog_clipboard_workload": {
+    "initial_rss_kib": 149120,
+    "samples": [
+      {
+        "closed_tabs": 5,
+        "column_models_alive": 0,
+        "controllers_alive": 0,
+        "controls_alive": 0,
+        "dialogs_alive": 0,
+        "documents_alive": 0,
+        "gtk_windows_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 219488,
+        "trimmed_rss_kib": 161396,
+        "ui_alive": 0,
+        "wave": 1,
+        "workspaces_alive": 0
+      },
+      {
+        "closed_tabs": 10,
+        "column_models_alive": 0,
+        "controllers_alive": 0,
+        "controls_alive": 0,
+        "dialogs_alive": 0,
+        "documents_alive": 0,
+        "gtk_windows_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 222064,
+        "trimmed_rss_kib": 163396,
+        "ui_alive": 0,
+        "wave": 2,
+        "workspaces_alive": 0
+      },
+      {
+        "closed_tabs": 15,
+        "column_models_alive": 0,
+        "controllers_alive": 0,
+        "controls_alive": 0,
+        "dialogs_alive": 0,
+        "documents_alive": 0,
+        "gtk_windows_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 218640,
+        "trimmed_rss_kib": 164856,
+        "ui_alive": 0,
+        "wave": 3,
+        "workspaces_alive": 0
+      }
+    ],
+    "root_alive": {
+      "workspace": false,
+      "ui": false,
+      "gtk_window": false
+    }
+  },
+  "native_artifact": {
+    "id": 13057140097,
+    "size_bytes": 24616786,
+    "sha256": "47ef113b794572e71a5e7e8e5c8d573bfa27ad749dae674ebe99798cfe68b598",
+    "independently_downloaded_and_verified": true
+  },
+  "notes": [
+    "Baseline is instrumentation-only alpha.5 host code, never published.",
+    "The extra dialog workload is not directly comparable to the baseline RSS.",
+    "malloc_trim(0) is diagnostic-only, never normal editing behavior.",
+    "Weak probes observe selected objects, not every heap allocation.",
+    "24-file document corpus was not rerun."
+  ],
+  "flatpak": {
+    "release": "https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.6",
+    "source": "d988fec5e350ab6388e597fe891919f12f3bcda1",
+    "run": 41238438224,
+    "job": 124649600736,
+    "artifact_id": 13056876901,
+    "artifact_zip_bytes": 10361386,
+    "artifact_zip_sha256": "1e1e7a4fcf902ff970d2987db812945247f416b8131784ed838c71744202ba30",
+    "bundle_bytes": 10178880,
+    "bundle_sha256": "11b146713f469a8dec062192e990852c6e12c0f2bb98f268d8b1aadbaf1baaac",
+    "runtime": "org.gnome.Platform/x86_64/49",
+    "runtime_commit": "2bb946ea4ebb050f6a32f90e979feb975b08280d1ff1aac881dec3d1361ad84d",
+    "samples": [
+      {
+        "closed_tabs": 5,
+        "column_models_alive": 0,
+        "controllers_alive": 0,
+        "controls_alive": 0,
+        "dialogs_alive": 0,
+        "documents_alive": 0,
+        "gtk_windows_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 248376,
+        "trimmed_rss_kib": 183984,
+        "ui_alive": 0,
+        "wave": 1,
+        "workspaces_alive": 0
+      },
+      {
+        "closed_tabs": 10,
+        "column_models_alive": 0,
+        "controllers_alive": 0,
+        "controls_alive": 0,
+        "dialogs_alive": 0,
+        "documents_alive": 0,
+        "gtk_windows_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 251036,
+        "trimmed_rss_kib": 187792,
+        "ui_alive": 0,
+        "wave": 2,
+        "workspaces_alive": 0
+      },
+      {
+        "closed_tabs": 15,
+        "column_models_alive": 0,
+        "controllers_alive": 0,
+        "controls_alive": 0,
+        "dialogs_alive": 0,
+        "documents_alive": 0,
+        "gtk_windows_alive": 0,
+        "pictures_alive": 0,
+        "rss_kib": 251412,
+        "trimmed_rss_kib": 189044,
+        "ui_alive": 0,
+        "wave": 3,
+        "workspaces_alive": 0
+      }
+    ],
+    "root_alive": {
+      "workspace": false,
+      "ui": false,
+      "gtk_window": false
+    },
+    "independently_downloaded_and_checksums_verified": true,
+    "installed_launcher_screenshot_inspected": true
+  }
+}

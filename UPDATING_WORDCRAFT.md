@@ -238,3 +238,9 @@ Source GTK minimum is now 4.14 for GtkPrintDialog (GNOME 49 runtime already sati
 src/gnome_accessibility.rs supplies F6/Shift+F6 pane navigation and F10 main-menu access, with capture restricted to those keys. Existing entry shortcuts, context keys, tab switching and table Tab behavior remain. Numeric control helpers and custom icon controls have explicit accessible labels. The custom canvas still lacks a complete GtkAccessibleText interface; do not describe this as full Orca support. See docs/KEYBOARD_PRINTING.md for evidence and remaining manual tests.
 
 The hermetic print portal is test-only, never installed. Run it only on a private D-Bus session. It verifies PDF file-descriptor handoff, text, duplicate suppression, success/dismissal/error and cleanup. The installed sandbox also opens and cancels the real system dialog. Tests do not verify a physical printer.
+
+## GTK ownership boundary
+
+The alpha.6 lifecycle changes are host-only: explicit Workspace owners, weak signal captures, removable timers/controllers, popover teardown and embedded TabBar disconnection. They require no engine changes. Do not change weak callbacks back to strong captures without checking the ownership graph. Stop/unmap the embedded tab bar before detaching its view so animation callbacks finish while their tab records remain valid.
+
+`src/gnome_lifecycle.rs` adds focused diagnostic workloads (`--lifecycle-ui-test`, `--lifecycle-dialog-test`) exercised natively and, for the main workload, inside the installed Flatpak. See [the audit](docs/GTK_LIFECYCLE_AUDIT_2026-10-31.md) and its JSON evidence. These are brief object-lifetime regressions; the full compatibility corpus remains manual.
