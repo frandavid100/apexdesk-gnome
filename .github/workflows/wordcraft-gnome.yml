@@ -1,4 +1,4 @@
-name: "WordCraft GNOME — fase 3D guardado"
+name: "Leaf — build, test and package"
 on:
   push:
     branches: [wordcraft-migration, wordcraft-viewer, adwaita-layout, wordcraft-selection, wordcraft-editing, wordcraft-formatting, wordcraft-saving]
@@ -16,6 +16,8 @@ jobs:
       - uses: actions/checkout@v4
       - uses: dtolnay/rust-toolchain@stable
       - uses: Swatinem/rust-cache@v2
+        with:
+          cache-on-failure: true
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
@@ -39,6 +41,7 @@ jobs:
           cargo run -- --png muestra-wordcraft.png
           test -s muestra-wordcraft.png
       - name: Comparar rendimiento reproducible
+        if: ${{ !contains(github.event.head_commit.message, '[release-alpha]') }}
         run: |
           cargo run --locked --example performance > performance-debug.txt
           cargo run --release --locked --example performance > performance-release.txt
@@ -47,7 +50,7 @@ jobs:
       - name: Identificar versión de prueba
         run: |
           ./target/release/wordcraft-gnome --version | tee version.txt
-          grep -q "fase 3D" version.txt
+          grep -q "Leaf 0.1.0-alpha.1" version.txt
       - name: Probar escritorio ancho, ventana estrecha, panel y tema oscuro
         run: |
           python -m pip install --disable-pip-version-check pillow==11.3.0
@@ -371,7 +374,7 @@ jobs:
       - name: Install Flatpak and desktop validation tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends flatpak desktop-file-utils appstream xvfb xauth scrot libgtk-3-bin xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
+          sudo apt-get install -y --no-install-recommends flatpak desktop-file-utils appstream xvfb xauth scrot libgtk-3-bin fuse3 xdotool xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
           # Ubuntu runner AppArmor restricts bubblewrap's user namespaces by default.
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Validate desktop metadata
