@@ -18,7 +18,7 @@ fn show_insert_table(ui:&Rc<Ui>,parent:&ApplicationWindow) {
     let grid=gtk::Grid::new();grid.set_row_spacing(3);grid.set_column_spacing(3);grid.set_halign(gtk::Align::Center);
     let label=gtk::Label::new(Some("Elige columnas × filas"));g.add(&label);
     for row in 1..=5 {for col in 1..=6 {
-        let b=gtk::Button::with_label("□");b.set_tooltip_text(Some(&format!("{col} columnas × {row} filas")));
+        let b=gtk::Button::with_label("□");b.set_tooltip_text(Some(&format!("{col} columnas × {row} filas")));accessible_name(&b,&format!("Insertar tabla de {col} columnas y {row} filas"));
         b.set_size_request(30,28);grid.attach(&b,col-1,row-1,1,1);
         let motion=gtk::EventControllerMotion::new();let l=label.clone();motion.connect_enter(move|_,_,_|l.set_text(&format!("{col} columnas × {row} filas")));b.add_controller(motion);
         let ui=ui.clone();let win=w.clone();b.connect_clicked(move|_|{
@@ -47,7 +47,7 @@ fn table_property_toggle(g:&adw::PreferencesGroup,label:&str,on:bool,key:&'stati
 fn table_measurement(g:&adw::PreferencesGroup,label:&str,value:f64,min:f64,ui:&Rc<Ui>,w:&adw::PreferencesWindow,command:&'static str,key:&'static str,extra:serde_json::Value) {
     let row=adw::ActionRow::new();row.set_title(label);
     let n=gtk::SpinButton::with_range(min,1584.0,0.5);n.set_digits(1);n.set_value(value);n.set_valign(gtk::Align::Center);
-    let b=gtk::Button::with_label("Aplicar");b.set_valign(gtk::Align::Center);row.add_suffix(&n);row.add_suffix(&b);g.add(&row);
+    let b=gtk::Button::with_label("Aplicar");b.set_valign(gtk::Align::Center);accessible_name(&n,label);accessible_name(&b,&format!("Aplicar {label}"));row.set_activatable_widget(Some(&n));row.add_suffix(&n);row.add_suffix(&b);g.add(&row);
     let ui=ui.clone();let w=w.clone();b.connect_clicked(move|_|{n.update();let mut args=extra.clone();args[key]=serde_json::json!(n.value());
         if let Err(e)=format_execute(&ui,command,args){w.add_toast(Toast::new(&e));}
     });

@@ -19,7 +19,7 @@ fn panel_group(p:&adw::PreferencesPage,title:&str)->adw::PreferencesGroup{
     let g=adw::PreferencesGroup::new();g.set_title(title);p.add(&g);g
 }
 fn panel_action(g:&adw::PreferencesGroup,label:&str,ui:&Rc<Ui>,w:&adw::PreferencesWindow,command:&'static str,args:serde_json::Value){
-    let row=adw::ActionRow::new();row.set_title(label);let b=gtk::Button::with_label("Aplicar");b.set_valign(gtk::Align::Center);row.add_suffix(&b);g.add(&row);
+    let row=adw::ActionRow::new();row.set_title(label);let b=gtk::Button::with_label("Aplicar");b.set_valign(gtk::Align::Center);accessible_name(&b,&format!("Aplicar {label}"));row.add_suffix(&b);g.add(&row);
     let ui=ui.clone();let w=w.clone();b.connect_clicked(move |_|{if let Err(e)=format_execute(&ui,command,args.clone()){w.add_toast(Toast::new(&e));}});
 }
 fn panel_toggle(g:&adw::PreferencesGroup,label:&str,active:bool,ui:&Rc<Ui>,w:&adw::PreferencesWindow,command:&'static str){
@@ -29,10 +29,10 @@ fn panel_toggle(g:&adw::PreferencesGroup,label:&str,active:bool,ui:&Rc<Ui>,w:&ad
     });
 }
 fn panel_number(g:&adw::PreferencesGroup,label:&str,value:f64,min:f64,max:f64)->gtk::SpinButton{
-    let row=adw::ActionRow::new();row.set_title(label);let n=gtk::SpinButton::with_range(min,max,0.5);n.set_digits(1);n.set_value(value);n.set_valign(gtk::Align::Center);row.add_suffix(&n);g.add(&row);n
+    let row=adw::ActionRow::new();row.set_title(label);let n=gtk::SpinButton::with_range(min,max,0.5);n.set_digits(1);n.set_value(value);n.set_valign(gtk::Align::Center);accessible_name(&n,label);row.set_activatable_widget(Some(&n));row.add_suffix(&n);g.add(&row);n
 }
 fn panel_entry(g:&adw::PreferencesGroup,label:&str,text:&str)->gtk::Entry{
-    let row=adw::ActionRow::new();row.set_title(label);let e=gtk::Entry::new();e.set_text(text);e.set_valign(gtk::Align::Center);row.add_suffix(&e);g.add(&row);e
+    let row=adw::ActionRow::new();row.set_title(label);let e=gtk::Entry::new();e.set_text(text);e.set_valign(gtk::Align::Center);accessible_name(&e,label);row.set_activatable_widget(Some(&e));row.add_suffix(&e);g.add(&row);e
 }
 fn panel_choice(g:&adw::PreferencesGroup,label:&str,options:&[(&str,&str)],ui:&Rc<Ui>,w:&adw::PreferencesWindow,command:&'static str,key:&'static str){
     let row=adw::ComboRow::new();row.set_title(label);
@@ -43,7 +43,7 @@ fn panel_choice(g:&adw::PreferencesGroup,label:&str,options:&[(&str,&str)],ui:&R
     }});
 }
 fn panel_color(g:&adw::PreferencesGroup,label:&str,ui:&Rc<Ui>,w:&adw::PreferencesWindow,command:&'static str){
-    let row=adw::ActionRow::new();row.set_title(label);let b=gtk::Button::with_label("Elegir…");b.set_valign(gtk::Align::Center);row.add_suffix(&b);g.add(&row);
+    let row=adw::ActionRow::new();row.set_title(label);let b=gtk::Button::with_label("Elegir…");b.set_valign(gtk::Align::Center);accessible_name(&b,&format!("Aplicar {label}"));row.add_suffix(&b);g.add(&row);
     let ui=ui.clone();let w=w.clone();b.connect_clicked(move|_|{
         let dialog=gtk::ColorDialog::new();dialog.set_title("Elegir color");dialog.set_with_alpha(false);
         let ui=ui.clone();let w2=w.clone();

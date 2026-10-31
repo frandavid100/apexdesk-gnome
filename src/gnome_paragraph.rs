@@ -50,7 +50,7 @@ impl ParagraphPopover {
         b.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.execute(command,args.clone());}});b
     }
     fn icon_action(self:&Rc<Self>,icon:&str,label:&str,name:&str,active:bool,command:&'static str,args:serde_json::Value)->gtk::ToggleButton{
-        let b=gtk::ToggleButton::new();b.set_child(Some(&paragraph_icon(icon)));b.set_tooltip_text(Some(label));b.set_widget_name(name);b.set_active(active);b.set_hexpand(true);b.add_css_class("flat");
+        let b=gtk::ToggleButton::new();b.set_child(Some(&paragraph_icon(icon)));b.set_tooltip_text(Some(label));accessible_name(&b,label);b.set_widget_name(name);b.set_active(active);b.set_hexpand(true);b.add_css_class("flat");
         let weak=Rc::downgrade(self);b.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.execute(command,args.clone());}});b
     }
     fn split(self:&Rc<Self>,row:&gtk::Box,button:&gtk::ToggleButton,page:&'static str,label:&str){
@@ -61,11 +61,11 @@ impl ParagraphPopover {
         // The documented CSS hierarchy exposes the two GTK controls. Route the
         // dropdown's lazy popup callback to our existing stack, not another popup.
         let main=split.first_child().unwrap().downcast::<gtk::Button>().unwrap();
-        main.set_widget_name(&button.widget_name());main.add_css_class("split-action");
+        accessible_name(&main,button.tooltip_text().as_deref().unwrap_or(label));main.set_widget_name(&button.widget_name());main.add_css_class("split-action");
         if button.is_active(){main.set_state_flags(gtk::StateFlags::CHECKED,false);}
         let action=button.clone();split.connect_clicked(move |_|action.emit_clicked());
         let more=main.next_sibling().unwrap().next_sibling().unwrap().downcast::<gtk::MenuButton>().unwrap();
-        more.first_child().unwrap().set_widget_name(&format!("paragraph-more-{page}"));
+        accessible_name(&more,&format!("Opciones de {label}"));more.first_child().unwrap().set_widget_name(&format!("paragraph-more-{page}"));
         let weak=Rc::downgrade(self);more.set_create_popup_func(move|m|{
             m.popdown();if let Some(s)=weak.upgrade(){s.page(page);if std::env::args().any(|a|a=="--split-states-demo"){eprintln!("SPLIT_SUBPAGE_OK");}}
         });
@@ -99,7 +99,7 @@ impl ParagraphPopover {
     fn title(&self,label:&str){let l=gtk::Label::new(Some(label));l.set_xalign(0.0);l.add_css_class("heading");l.set_margin_top(8);self.detail.append(&l);}
     fn number(&self,label:&str,value:f64,min:f64,max:f64)->gtk::SpinButton{
         let row=gtk::Box::new(gtk::Orientation::Horizontal,8);let l=gtk::Label::new(Some(label));l.set_xalign(0.0);l.set_hexpand(true);l.set_wrap(true);row.append(&l);
-        let n=gtk::SpinButton::with_range(min,max,0.5);n.set_digits(1);n.set_width_chars(6);n.set_value(value);row.append(&n);self.detail.append(&row);n
+        let n=gtk::SpinButton::with_range(min,max,0.5);n.set_digits(1);n.set_width_chars(6);n.set_value(value);accessible_name(&n,label);row.append(&n);self.detail.append(&row);n
     }
     fn button(self:&Rc<Self>,label:&str,name:&str,command:&'static str,args:serde_json::Value){self.detail.append(&self.action(label,name,command,args));}
     fn page(self:&Rc<Self>,page:&str){let weak=Rc::downgrade(self);self.header.back("Párrafo",move||{if let Some(s)=weak.upgrade(){s.home();}});
@@ -133,7 +133,7 @@ impl ParagraphPopover {
             },
             "shading"=>{
                 self.title("Sombreado");let grid=gtk::Grid::new();grid.set_column_spacing(6);grid.set_row_spacing(6);
-                for(i,(label,color))in[("Amarillo suave","FFF2CC"),("Azul suave","DDEBF7"),("Verde suave","E2F0D9"),("Rosa suave","FCE4D6"),("Gris claro","E7E6E6"),("Gris oscuro","808080"),("Azul","4472C4"),("Negro","000000")].into_iter().enumerate(){let b=gtk::Button::new();let l=gtk::Label::new(None);l.set_markup(&format!("<span background=\"#{color}\">     </span>"));b.set_child(Some(&l));b.set_tooltip_text(Some(label));b.set_widget_name(&format!("paragraph-shade-{color}"));grid.attach(&b,(i%4)as i32,(i/4)as i32,1,1);let weak=Rc::downgrade(self);b.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.shade.replace(color.into());s.execute("para.shading",serde_json::json!({"color":color}));}});}
+                for(i,(label,color))in[("Amarillo suave","FFF2CC"),("Azul suave","DDEBF7"),("Verde suave","E2F0D9"),("Rosa suave","FCE4D6"),("Gris claro","E7E6E6"),("Gris oscuro","808080"),("Azul","4472C4"),("Negro","000000")].into_iter().enumerate(){let b=gtk::Button::new();let l=gtk::Label::new(None);l.set_markup(&format!("<span background=\"#{color}\">     </span>"));b.set_child(Some(&l));b.set_tooltip_text(Some(label));accessible_name(&b,label);b.set_widget_name(&format!("paragraph-shade-{color}"));grid.attach(&b,(i%4)as i32,(i/4)as i32,1,1);let weak=Rc::downgrade(self);b.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.shade.replace(color.into());s.execute("para.shading",serde_json::json!({"color":color}));}});}
                 self.detail.append(&grid);self.color_entry("Aplicar color RGB",false);self.button("Sin sombreado","paragraph-shade-none","para.shading",serde_json::json!({"color":null}));
             },
             "borders"=>{

@@ -38,8 +38,8 @@ impl StylePopover {
             let content=gtk::Box::new(gtk::Orientation::Horizontal,8);content.append(&label);
             let kind=gtk::Label::new(Some(if st.kind==wordcraft_doc::styles::StyleKind::Paragraph{"¶"}else{"a"}));kind.add_css_class("dim-label");kind.set_tooltip_text(Some(if st.kind==wordcraft_doc::styles::StyleKind::Paragraph{"Estilo de párrafo"}else{"Estilo de carácter"}));content.append(&kind);
             if current.as_deref()==Some(st.id.as_str()){apply.set_tooltip_text(Some("Estilo actual"));}
-            apply.set_child(Some(&content));row.append(&apply);
-            let manage=gtk::Button::with_label("›");manage.add_css_class("flat");manage.set_tooltip_text(Some(&format!("Gestionar «{}»",st.name)));manage.set_widget_name(&format!("style-manage-{}",st.id));row.append(&manage);
+            accessible_name(&apply,&format!("Aplicar estilo {}",st.name));apply.set_child(Some(&content));row.append(&apply);
+            let manage=gtk::Button::with_label("›");manage.add_css_class("flat");manage.set_tooltip_text(Some(&format!("Gestionar «{}»",st.name)));manage.set_widget_name(&format!("style-manage-{}",st.id));accessible_name(&manage,&format!("Gestionar {}",st.name));row.append(&manage);
             let weak=Rc::downgrade(self);let id=st.id.clone();apply.connect_clicked(move|_|{if let Some(s)=weak.upgrade(){
                 match s.run(wordcraft_gnome::styles::Edit::Apply(id.clone())){Ok(_)=>{s.refresh_list();if let Some(p)=s.popover.upgrade(){close_format_popover(&p);}if let Some(ui)=s.ui.upgrade(){ui.document_box.grab_focus();caret_ensure_visible(&ui);}},Err(e)=>s.report(&e)}
             }});
