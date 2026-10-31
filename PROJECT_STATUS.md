@@ -2,6 +2,12 @@
 
 Actualizado: 31 de octubre de 2026. Punto de entrada para continuar desde otra conversación.
 
+## Comprobación puntual de archivos (31-10-2026)
+
+[Informe](docs/CORPUS_AUDIT_2026-10-31.md): 24 archivos LibreOffice (14 DOCX/10 ODT), revisión fijada. Todos abren/guardan/reabren. DOCX: invariantes y páginas comprobadas sin cambios; ODT: 3 casos con pérdidas en cabeceras/pies (incluye tablas), 2 con primera fila convertida en cabecera repetida y 5 con diferencias pequeñas de redondeo/raster. Texto del cuerpo normalizado, número de páginas y bytes de medios importados conservados en los 24. Revisadas visualmente pérdidas de cabecera y tabla del pie.
+
+**Evitar guardar ODT con cabeceras o pies en la versión actual.** Exportador de WordCraft fijado no escribe esas partes. No se ha corregido el motor ni generado una versión nueva. CI opcional 41216038237 completada; informe distingue completar auditoría de conservar documentos. Workflow manual sin ejecución automática por versión, conforme a la petición del usuario. Evidencia y límites en el informe; datos permanentes en docs/audits/2026-10-31-results.json.
+
 ## Última entrega: alpha.3 — escalado HiDPI (31-10-2026)
 
 Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.3

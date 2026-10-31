@@ -3,7 +3,11 @@
 Actualizada: 31 de octubre de 2026. Estado técnico en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Las fases siguientes son propuestas; no implican autorización para implementarlas todas.
 
-## Ahora: validar HiDPI, columnas y recoger tareas bloqueadas
+## Ahora: conservación de ODT y validación con usuarios
+
+La auditoría puntual ha confirmado pérdida de cabeceras/pies ODT, incluidas tablas, y cambios de cabecera repetida de tabla. [Resultados y reproducción](docs/CORPUS_AUDIT_2026-10-31.md). Prioridad propuesta: corregir esos casos con regresiones pequeñas antes de más funciones; la corrección todavía no está implementada ni autorizada por esta petición de comprobación. Auditoría manual, sin requisito automático por versión.
+
+## Validar HiDPI, columnas y recoger tareas bloqueadas
 
 Alpha.3 publicada: resolución de páginas/miniaturas corregida para pantalla HiDPI, sin cambiar tamaño lógico. CI nativa y Flatpak superadas con pantalla 100%/200% y zoom 100%/200%. Pendiente confirmación del informante y prueba real Wayland/multimonitor/fraccionaria. Detalles en PROJECT_STATUS.md.
 

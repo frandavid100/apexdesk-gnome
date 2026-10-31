@@ -55,6 +55,8 @@ Screenshots are actual captures of the last validated development build, using a
 
 ## Limits of this alpha
 
+**Known data-loss issue:** saving ODT currently drops headers and footers, including tables in those areas. Avoid saving affected ODT files. [One-off audit of 24 DOCX/ODT fixtures](docs/CORPUS_AUDIT_2026-10-31.md). The tested DOCX round-trips preserved the measured data, but this is not a general compatibility guarantee.
+
 Complex document fidelity, fonts, pagination and format preservation need broader testing. Images are inserted inline; floating-image positioning is not exposed. Tables do not yet have mouse resize handles or formulas. Unequal column widths are retained in DOCX but equalized by the current ODT exporter. Printing and a complete English interface remain future work. Automated checks do not establish fidelity for arbitrary documents.
 
 For everyday work, keep your original and check saved copies in another editor. Autosave to the original file is an explicit preference; use recovery mode while testing.
