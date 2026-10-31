@@ -94,3 +94,12 @@ Entrega correctiva validada automáticamente en CI 41137708372, código 7cd6deba
 ## Ajuste autorizado: barra adaptable y submenús contenidos
 
 Implementados y validados: controles con iconos en cabecera cuando hay espacio; mismos controles abajo en estrecho. Estilo/Párrafo/Texto se gestionan también dentro del contexto, con vuelta atrás y chincheta, compartiendo widgets y acciones. Transición nativa de deslizamiento y tamaño en los tres. Texto avanzado pasa a subpáginas. Validación completa en CI 41144295677, código c744dac3f553b0304e631dd80dde7fbe3669e1cd, con capturas revisadas. Pendiente de prueba manual del usuario.
+
+
+## Leaf: identidad visual — 31 de octubre de 2026
+
+Nombre elegido por el usuario: **Leaf**. Descripción: «Crea y edita documentos» / «Create and edit documents». WordCraft continúa siendo el motor sin modificaciones.
+
+Iconos originales en `data/icons/hicolor/scalable/apps/leaf.svg` (128 × 128) y `data/icons/hicolor/symbolic/apps/leaf-symbolic.svg` (16 × 16). SVG editable: hoja escrita, pliegue verde, paleta GNOME y perfil inferior de 4 px alineado en y=116; sin sombra exterior. XML validado y renders revisados a 16/32/64/128/512 px, sobre fondos claros/oscuros. No se ha recompilado ni sustituido el ejecutable: esta entrega añade únicamente identidad y documentación. Integración con lanzador/instalador pendiente.
+
+Cambio solicitado del repositorio: `frandavid100/apexdesk-gnome` → `frandavid100/leaf`. Todavía **pendiente**: el conector GitHub no expone la operación de renombrado. Se requiere utilizar la web como alternativa, con autorización del usuario para ese cambio de herramienta. No dar por realizado el cambio ni actualizar enlaces a un destino inexistente. Tras renombrar, revisar enlaces y remotos; conservar historial, ramas y revisiones fijadas. No se ha modificado la rama predeterminada.

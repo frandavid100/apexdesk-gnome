@@ -193,3 +193,12 @@ Las pruebas ADAPTIVE_UI_OK y CONTEXT_UI_OK ya pasaron en la revisión 3c22505802
 
 
 Validación final: cargo test --locked y compilación release superados; CI 41144295677 sobre c744dac3f553b0304e631dd80dde7fbe3669e1cd. ADAPTIVE_NARROW_OK / ADAPTIVE_WIDE_OK / ADAPTIVE_UI_OK verifican controles únicos, cambio de barra, panel fijado realmente mapeado y subpágina conservada, selección/revisión sin cambios, préstamo/restauración de widgets, cambio del contexto a otro panel y movimiento reducido. CONTEXT_UI_OK comprueba clic real en Copiar, foco en el menú al abrirlo y en el editor al cerrarlo, filas nativas de portapapeles y los tres submenús contenidos. VIEW_POINTER_OK, DOCUMENT_CHROME_OK, POPOVER_PIN_OK y DOCUMENT_TOOLS_OK también pasan. Revisadas capturas ancha/estrecha, los tres contextos con cabecera única y Texto avanzado. Pendiente de prueba manual del usuario en GNOME OS; no interpretar estas pruebas como confirmación manual.
+
+
+## Leaf: identidad visual — 31 de octubre de 2026
+
+Nombre elegido por el usuario: **Leaf**. Descripción: «Crea y edita documentos» / «Create and edit documents». WordCraft continúa siendo el motor sin modificaciones.
+
+Iconos originales en `data/icons/hicolor/scalable/apps/leaf.svg` (128 × 128) y `data/icons/hicolor/symbolic/apps/leaf-symbolic.svg` (16 × 16). SVG editable: hoja escrita, pliegue verde, paleta GNOME y perfil inferior de 4 px alineado en y=116; sin sombra exterior. XML validado y renders revisados a 16/32/64/128/512 px, sobre fondos claros/oscuros. No se ha recompilado ni sustituido el ejecutable: esta entrega añade únicamente identidad y documentación. Integración con lanzador/instalador pendiente.
+
+Cambio solicitado del repositorio: `frandavid100/apexdesk-gnome` → `frandavid100/leaf`. Todavía **pendiente**: el conector GitHub no expone la operación de renombrado. Se requiere utilizar la web como alternativa, con autorización del usuario para ese cambio de herramienta. No dar por realizado el cambio ni actualizar enlaces a un destino inexistente. Tras renombrar, revisar enlaces y remotos; conservar historial, ramas y revisiones fijadas. No se ha modificado la rama predeterminada.

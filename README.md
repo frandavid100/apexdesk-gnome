@@ -1,4 +1,10 @@
-# WordCraft GNOME — fase 3D
+# Leaf
+
+![Leaf](data/icons/hicolor/scalable/apps/leaf.svg)
+
+Crea y edita documentos. Cliente nativo GTK4/libadwaita basado en WordCraft.
+Nombre anterior de desarrollo: WordCraft GNOME — fase 3D.
+Icono y versión simbólica: [fuentes SVG](data/icons/README.md). Integración del nombre e icono en el ejecutable y el instalador pendiente.
 
 Para retomar el desarrollo: [estado actual](PROJECT_STATUS.md),
 [hoja de ruta](ROADMAP.md) e [instrucciones para agentes](AGENTS.md).
