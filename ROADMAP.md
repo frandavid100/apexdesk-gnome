@@ -3,7 +3,9 @@
 Actualizada: 31 de octubre de 2026. Estado técnico en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Las fases siguientes son propuestas; no implican autorización para implementarlas todas.
 
-## Ahora: validar columnas y recoger tareas bloqueadas
+## Ahora: validar HiDPI, columnas y recoger tareas bloqueadas
+
+Alpha.3 publicada: resolución de páginas/miniaturas corregida para pantalla HiDPI, sin cambiar tamaño lógico. CI nativa y Flatpak superadas con pantalla 100%/200% y zoom 100%/200%. Pendiente confirmación del informante y prueba real Wayland/multimonitor/fraccionaria. Detalles en PROJECT_STATUS.md.
 
 Alpha.2 publicada con Columnas en Párrafo e iconos simbólicos GTK. Pruebas nativas y Flatpak superadas; detalles y revisión en PROJECT_STATUS.md. Pendiente de prueba manual. Probar selección y sección, deshacer, guardar/reabrir DOCX y ODT, y comparar anchuras desiguales (ODT las iguala por limitación del motor).
 

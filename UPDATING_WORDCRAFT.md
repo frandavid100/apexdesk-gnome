@@ -216,3 +216,10 @@ Application ID: `io.github.frandavid100.leaf`. Internal Cargo target remains `wo
 packaging/smoke-test.sh validates the installed application, desktop launcher, document-portal forwarding and persistent application data across reinstall. XDG_STATE_HOME is respected; when absent inside Flatpak, the host uses XDG_DATA_HOME/state for recovery. Existing non-Flatpak settings paths are preserved. Reinstall testing preserves data and does not yet verify updating between two distinct version bundles.
 
 The workflow publishes only push commits on wordcraft-saving explicitly marked [release-alpha]. It never overwrites an existing release. The one-off [bundle-only] path reuses native artifact run 41186663675 only after git diff proves src/Cargo/tests identical to 497cd6c5aad7a71f4b580e933f4c3e505b9126c5. Future code changes require full native validation; do not bypass that guard. Bump application/version strings, package filenames and release notes together for the next alpha. Packaging scripts and documentation have used AI assistance; do not present them as human-authored Flathub manifests.
+
+
+## HiDPI raster presentation
+
+src/gnome_hidpi.rs wraps native premultiplied MemoryTexture data in a GdkPaintable whose intrinsic size is the logical page/thumbnail size. The renderer receives zoom times GtkWidget scale-factor; pointer, layout, scrolling and caret calculations remain logical. Observe scale-factor changes and invalidate both raster caches. Keep the adapter pixel-allocation guard; oversized pages need future tiling rather than removing memory protection. Engine code is unchanged. Regression runs at GDK_SCALE=1/2 and document zoom 1/2, plus an installed sandbox run. Real fractional/Wayland monitor transitions remain manual tests.
+
+Latest successful native source is 45037abc0ce0e323ea03f8f2c20218eda08c77a2, run 41210344397. A future packaging-only reuse must explicitly configure that proven revision/run and preserve the git-diff identity guard; the workflow's older reuse baseline will correctly reject changed source.

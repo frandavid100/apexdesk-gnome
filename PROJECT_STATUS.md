@@ -2,10 +2,19 @@
 
 Actualizado: 31 de octubre de 2026. Punto de entrada para continuar desde otra conversación.
 
-## En curso: HiDPI (31-10-2026)
-Corregido en el host: resolución zoom × escala GTK, paintable con tamaño lógico independiente, invalidación por cambios de escala y retirada del límite de 2 píxeles/punto conservando el tope de asignación de 12 millones de píxeles/página. Pruebas nuevas 1×/2× pantalla y zoom 1×/2×. Pendiente CI y confirmación manual; motor sin cambios.
+## Última entrega: alpha.3 — escalado HiDPI (31-10-2026)
 
-## Última entrega: alpha.2 — columnas e iconos (31-10-2026)
+Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.3
+Fuente/etiqueta: `45037abc0ce0e323ea03f8f2c20218eda08c77a2`.
+Flatpak x86_64: 10120440 bytes; SHA256 `1ed5b96ba13a43c71e5b6f1101b106fced359a537305c5d52eb3aa6b82863268`.
+
+La resolución de páginas y miniaturas combina zoom y escala GTK. Un GdkPaintable con dimensiones lógicas independientes evita que la textura HiDPI agrande páginas, miniaturas o coordenadas. El cambio de scale-factor invalida ambas cachés mediante un callback idle con referencia débil. Se retira el límite de 2 píxeles/punto del adaptador, conservando el límite de asignación de 12 millones de píxeles/página. Páginas excepcionalmente grandes o densidades extremas pueden superar ese límite; no se ha implementado renderizado por teselas. Motor y dependencias sin modificaciones.
+
+CI 41210344397: job nativo 124563840489 y paquete 124565963986 correctos. Cargo test --locked, release, regresiones GTK anteriores y HIDPI_UI_OK a GDK_SCALE=1 y 2 con zoom 1 y 2; se verifican dimensiones de textura, geometría lógica e identidad del documento tras invalidación. Capturas vista-hidpi-1/2.png; detalle al 200% revisado visualmente, texto nítido. Flatpak: prueba HiDPI al 200%, actualización desde alpha.2, lanzador, archivo externo por portal y persistencia/reinstalación. El primer intento de compilación falló por nombres de constantes de gtk-rs 0.11; ajustados a la versión fijada 0.10 antes de distribuir.
+
+Pendiente: confirmación del usuario de Reddit, pruebas reales Wayland multimonitor y escala fraccionaria. La invalidación se ha probado forzando una caché obsoleta; no se ha simulado un traslado real entre monitores.
+
+## Entrega anterior: alpha.2 — columnas e iconos (31-10-2026)
 
 - Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.2
 - Flatpak x86_64: 10,113,936 bytes; SHA256 `6a90c8fc6e371586f786193cc8662009254157be39bb5d1d996215b3179dedd2`.
