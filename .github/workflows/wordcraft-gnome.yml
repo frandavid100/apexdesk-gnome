@@ -47,7 +47,9 @@ jobs:
             pdftotext "$folder/libreoffice/saved.pdf" "$folder/libreoffice/text.txt"
           done
           grep -q 'Some text, all on one line' audit-results/24-tdf104254_noHeaderWrapping/libreoffice/text.txt
-          grep -q 'Footer' audit-results/22-tdf135338_firstLeftPageFooter/libreoffice/text.txt
+          grep -q 'First (Left page only)' audit-results/22-tdf135338_firstLeftPageFooter/libreoffice/text.txt
+          grep -q 'EVEN/LEFT (Left page only)' audit-results/22-tdf135338_firstLeftPageFooter/libreoffice/text.txt
+          grep -q 'odd/right (Left page only)' audit-results/22-tdf135338_firstLeftPageFooter/libreoffice/text.txt
           echo LIBREOFFICE_ODT_READ_OK
       - name: Validar árbol sin egui/eframe
         run: |

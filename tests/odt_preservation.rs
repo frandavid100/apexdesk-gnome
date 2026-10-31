@@ -83,3 +83,12 @@ fn dormant_variants_do_not_enable_first_or_even_page_modes(){
  let out=roundtrip(&d);assert!(!out.last_section.title_page);assert!(!out.settings.even_odd_headers);
  assert_eq!(id_text(&out,out.last_section.headers.default),"Default");
 }
+
+#[test]
+fn unused_page_style_parts_survive_without_becoming_visible(){
+ let mut d=Document::from_text("Body");
+ d.parts.insert(42,Part{kind:PartKind::Footer,blocks:vec![paragraph("Unused footer")],body:Default::default()});
+ let out=roundtrip(&d);
+ assert!(out.parts.keys().any(|id|out.plain_text(StoryRef::Part(*id))=="Unused footer"));
+ assert!(out.last_section.footers.default.map(|id|out.plain_text(StoryRef::Part(id)).is_empty()).unwrap_or(true));
+}

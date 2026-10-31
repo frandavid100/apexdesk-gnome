@@ -168,6 +168,24 @@ pub fn export(doc: &Document) -> Result<Vec<u8>, String> {
         }
     }
     w.close_ins(&mut body);
+    // Imported page styles may own parts even when no body section uses them.
+    // Preserve those in unused master pages, without activating them in the body.
+    let used: std::collections::HashSet<u32> = pages.iter().flat_map(|(_, sec)| {
+        [sec.headers.default, sec.footers.default,
+         if sec.title_page { sec.headers.first } else { None },
+         if sec.title_page { sec.footers.first } else { None },
+         if doc.settings.even_odd_headers { sec.headers.even } else { None },
+         if doc.settings.even_odd_headers { sec.footers.even } else { None }].into_iter().flatten()
+    }).collect();
+    let mut unused: Vec<_> = doc.parts.iter().filter(|(id, part)| !used.contains(id)
+        && matches!(part.kind, wordcraft_doc::PartKind::Header | wordcraft_doc::PartKind::Footer)).collect();
+    unused.sort_by_key(|(id, _)| **id);
+    for (id, part) in unused {
+        let mut sec = SectionProps::default();
+        if part.kind == wordcraft_doc::PartKind::Header { sec.headers.default = Some(*id); }
+        else { sec.footers.default = Some(*id); }
+        pages.push((format!("UnusedPart{id}"), sec));
+    }
     let mut master_content = Vec::new();
     for (_, sec) in &pages {
         let mut content = String::new();
