@@ -2,6 +2,10 @@
 
 Actualizado: 31 de octubre de 2026. Punto de entrada para continuar desde otra conversación.
 
+## En curso: teclado, accesibilidad e impresión autorizados
+
+Implementación de Imprimir/Ctrl+P con GtkPrintDialog (GTK 4.14+, portal nativo), PDF temporal privado generado en segundo plano desde una copia; sin guardar ni modificar el documento vivo. F6/Mayús+F6 para zonas, F10 para menú principal, etiquetas accesibles de controles y versión Acerca de unificada. Pruebas nuevas de entrega PDF al portal, cancelación/error, limpieza e inmutabilidad, y teclas reales. Validación y alpha.5 pendientes; no anunciar como publicada hasta CI y revisión.
+
 ## Última entrega: alpha.4 — conservación ODT (31-10-2026)
 
 Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.4

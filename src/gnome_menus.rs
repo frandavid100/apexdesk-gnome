@@ -5,7 +5,7 @@ fn selected_ui(host:&Workspace)->Option<Rc<Ui>>{
 }
 fn refresh_main_actions(host:&Workspace){
     let ui=selected_ui(host);let (undo,redo)=ui.as_ref().and_then(|u|u.current.borrow().as_ref().map(|d|(d.session.can_undo(),d.session.can_redo()))).unwrap_or((false,false));
-    for(name,on)in[("undo",undo),("redo",redo),("tab-overview",host.tabs.n_pages()>0)]{
+    for(name,on)in[("undo",undo),("redo",redo),("tab-overview",host.tabs.n_pages()>0),("print",ui.as_ref().is_some_and(|u|u.current.borrow().is_some() && u.printing.pending.borrow().is_none()))]{
         if let Some(a)=host.window.lookup_action(name).and_then(|a|a.downcast::<gio::SimpleAction>().ok()){a.set_enabled(on);}
     }
 }
@@ -28,15 +28,16 @@ fn setup_main_actions(host:&Rc<Workspace>,app:&Application){
     window_action(host,"insert-picture",|h|{if let Some(ui)=selected_ui(h){choose_picture(&ui,&h.window,false);}});
     window_action(host,"columns",|h|{if let Some(ui)=selected_ui(h){show_columns(&ui,&h.window);}});
     window_action(host,"document-properties",|h|{if let Some(ui)=selected_ui(h){show_document_properties(&ui,&h.window);}});
+    window_action(host,"print",|h|{if let Some(ui)=selected_ui(h){print_document(&ui,&h.window);}});
     window_action(host,"export-pdf",|h|{if let Some(ui)=selected_ui(h){export_pdf_dialog(&ui,&h.window);}});
     window_action(host,"preferences",|h|show_preferences(&h.window));
     window_action(host,"shortcuts",|h|show_keyboard_shortcuts(&h.window));
     window_action(host,"help",|h|show_editor_help(&h.window));
     window_action(host,"about",|h|{
-        let w=adw::AboutWindow::new();w.set_transient_for(Some(&h.window));w.set_application_name("Leaf");w.set_application_icon(APP_ID);w.set_version("0.1.0-alpha.2");w.set_developer_name("Proyecto Leaf");w.set_license_type(gtk::License::Gpl30);
+        let w=adw::AboutWindow::new();w.set_transient_for(Some(&h.window));w.set_application_name("Leaf");w.set_application_icon(APP_ID);w.set_version(APP_VERSION);w.set_developer_name("Proyecto Leaf");w.set_license_type(gtk::License::Gpl30);
         w.set_website("https://github.com/frandavid100/leaf");w.set_issue_url("https://github.com/frandavid100/leaf/issues");w.set_comments("Editor de documentos para GNOME basado en el motor WordCraft.");w.present();
     });
-    for(name,keys)in[("new-tab",vec!["<Control>n","<Control>t"]),("new-window",vec!["<Control><Shift>n"]),("tab-overview",vec!["<Control><Shift>o"]),("open",vec!["<Control>o"]),("preferences",vec!["<Control>comma"]),("shortcuts",vec!["<Control>question"]),("help",vec!["F1"]) ]{app.set_accels_for_action(&format!("win.{name}"),&keys);}
+    for(name,keys)in[("new-tab",vec!["<Control>n","<Control>t"]),("new-window",vec!["<Control><Shift>n"]),("tab-overview",vec!["<Control><Shift>o"]),("open",vec!["<Control>o"]),("preferences",vec!["<Control>comma"]),("shortcuts",vec!["<Control>question"]),("help",vec!["F1"]),("print",vec!["<Control>p"]) ]{app.set_accels_for_action(&format!("win.{name}"),&keys);}
     let weak=Rc::downgrade(host);host.tabs.connect_selected_page_notify(move |_|{if let Some(h)=weak.upgrade(){refresh_main_actions(&h);}});
 }
 fn menu_item(menu:&gio::Menu,label:&str,action:&str,accel:Option<&str>){
@@ -55,7 +56,7 @@ fn install_document_menu(button:&gtk::MenuButton){
     let history=gio::Menu::new();menu_item(&history,"Deshacer","undo",Some("<Control>z"));menu_item(&history,"Rehacer","redo",Some("<Control><Shift>z"));root.append_section(None,&history);
     let save=gio::Menu::new();menu_item(&save,"Guardar","save",Some("<Control>s"));menu_item(&save,"Guardar como…","save-as",Some("<Control><Shift>s"));root.append_section(None,&save);
     let add=gio::Menu::new();menu_item(&add,"Tabla…","insert-table",None);menu_item(&add,"Imagen…","insert-picture",None);root.append_submenu(Some("Añadir"),&add);
-    let properties=gio::Menu::new();menu_item(&properties,"Propiedades del documento…","document-properties",None);menu_item(&properties,"Exportar a PDF…","export-pdf",None);root.append_section(None,&properties);button.set_menu_model(Some(&root));
+    let properties=gio::Menu::new();menu_item(&properties,"Propiedades del documento…","document-properties",None);menu_item(&properties,"Exportar a PDF…","export-pdf",None);menu_item(&properties,"Imprimir…","print",Some("<Control>p"));root.append_section(None,&properties);button.set_menu_model(Some(&root));
 }
 fn show_editor_help(parent:&ApplicationWindow){
     let w=adw::Window::builder().transient_for(parent).title("Ayuda de Leaf").default_width(520).default_height(520).build();let toolbar=ToolbarView::new();toolbar.add_top_bar(&HeaderBar::new());
@@ -64,7 +65,7 @@ fn show_editor_help(parent:&ApplicationWindow){
     let scroll=gtk::ScrolledWindow::new();scroll.set_child(Some(&l));toolbar.set_content(Some(&scroll));w.set_content(Some(&toolbar));w.present();
 }
 fn show_keyboard_shortcuts(parent:&ApplicationWindow){
-    let groups=[("Documentos",vec![("Pestaña nueva","<Control>n"),("Ventana nueva","<Control><Shift>n"),("Mostrar todas las pestañas","<Control><Shift>o"),("Abrir","<Control>o"),("Guardar","<Control>s"),("Guardar como","<Control><Shift>s"),("Cerrar pestaña","<Control>w")]),("Edición y búsqueda",vec![("Deshacer","<Control>z"),("Rehacer","<Control><Shift>z"),("Buscar","<Control>f"),("Reemplazar","<Control>h"),("Negrita","<Control>b"),("Cursiva","<Control>i"),("Subrayado","<Control>u")]),("Interfaz",vec![("Mostrar u ocultar el panel lateral","F9"),("Preferencias","<Control>comma"),("Ayuda","F1")])];
+    let groups=[("Documentos",vec![("Pestaña nueva","<Control>n"),("Ventana nueva","<Control><Shift>n"),("Mostrar todas las pestañas","<Control><Shift>o"),("Abrir","<Control>o"),("Guardar","<Control>s"),("Guardar como","<Control><Shift>s"),("Cerrar pestaña","<Control>w"),("Imprimir","<Control>p")]),("Edición y búsqueda",vec![("Deshacer","<Control>z"),("Rehacer","<Control><Shift>z"),("Buscar","<Control>f"),("Reemplazar","<Control>h"),("Negrita","<Control>b"),("Cursiva","<Control>i"),("Subrayado","<Control>u")]),("Interfaz",vec![("Mostrar u ocultar el panel lateral","F9"),("Preferencias","<Control>comma"),("Cambiar de zona","F6"),("Menú principal","F10"),("Ayuda","F1")])];
     let mut xml=String::from("<interface><object class=\"GtkShortcutsWindow\" id=\"shortcuts\"><child><object class=\"GtkShortcutsSection\"><property name=\"section-name\">editor</property><property name=\"title\">Leaf</property>");
     for(title,shortcuts)in groups{xml.push_str(&format!("<child><object class=\"GtkShortcutsGroup\"><property name=\"title\">{}</property>",glib::markup_escape_text(title)));for(title,key)in shortcuts{xml.push_str(&format!("<child><object class=\"GtkShortcutsShortcut\"><property name=\"title\">{}</property><property name=\"accelerator\">{}</property></object></child>",glib::markup_escape_text(title),glib::markup_escape_text(key)));}xml.push_str("</object></child>");}
     xml.push_str("</object></child></object></interface>");let builder=gtk::Builder::from_string(&xml);let w=builder.object::<gtk::ShortcutsWindow>("shortcuts").unwrap();w.set_transient_for(Some(parent));w.present();

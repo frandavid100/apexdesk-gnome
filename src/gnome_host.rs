@@ -1,5 +1,6 @@
 fn release_document(ui:&Rc<Ui>) {
     ui.closed.set(true);
+    ui.printing.cancel();
     let current=ui.current.borrow_mut().take();
     if let Some(mut doc)=current {doc.session.finish_recovery();}
     clear_canvas(&ui.document_box);clear_box(&ui.thumbnails_box);

@@ -3,6 +3,10 @@
 Actualizada: 31 de octubre de 2026. Estado técnico en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Las fases siguientes son propuestas; no implican autorización para implementarlas todas.
 
+## En curso: revisión de teclado/accesibilidad e impresión
+
+Autorizadas por el usuario. Implementación y pruebas en curso; completar validación, documentación y paquete antes de marcar como entrega. La accesibilidad del lienzo personalizado para lectores de pantalla seguirá siendo un límite explícito; mejorar etiquetas de controles no equivale a exponer todo el texto a Orca.
+
 ## Ahora: conservación de ODT y validación con usuarios
 
 Alpha.4 publicada: corregidos los fallos de conservación de cabeceras/pies ODT y filas repetidas descubiertos en la auditoría inicial. [Seguimiento, segunda ejecución de 24 archivos y límites](docs/ODT_PRESERVATION_2026-10-31.md). Siete regresiones pequeñas, comprobación independiente con LibreOffice, CI GTK y Flatpak superadas. Parche aislado de wordcraft-formats con procedencia y actualización documentadas; resto del motor sin cambios. Pendiente prueba manual con documentos reales. La auditoría sigue siendo manual, sin requisito automático por versión. Prioridad siguiente: recoger fallos concretos de usuarios y ampliar reproducciones pequeñas; no implica autorización para nuevas funciones.

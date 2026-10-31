@@ -48,7 +48,7 @@ impl SearchPanel {
             snippet.set_markup(&format!("{}<b>{}</b>{}",escaped(&before),escaped(&hit.matched),escaped(&hit.after)));
             snippet.set_tooltip_text(Some(&format!("{}{}{}",hit.before,hit.matched,hit.after)));content.append(&snippet);
             let page=gtk::Label::new(Some(&hit.page.map(|p|(p+1).to_string()).unwrap_or_else(||"—".into())));page.add_css_class("dim-label");page.set_tooltip_text(Some("Página"));content.append(&page);
-            if self.replace_mode.is_active(){let b=gtk::Button::new();b.set_child(Some(&paragraph_icon("replace")));b.add_css_class("flat");b.add_css_class("search-replace");b.set_tooltip_text(Some("Reemplazar esta coincidencia"));b.set_widget_name(&format!("search-replace-{index}"));content.append(&b);
+            if self.replace_mode.is_active(){let b=gtk::Button::new();b.set_child(Some(&paragraph_icon("replace")));b.add_css_class("flat");b.add_css_class("search-replace");b.set_tooltip_text(Some("Reemplazar esta coincidencia"));b.set_widget_name(&format!("search-replace-{index}"));accessible_name(&b,"Reemplazar esta coincidencia");content.append(&b);
                 let weak=Rc::downgrade(self);b.connect_clicked(move |_|{if let Some(s)=weak.upgrade(){s.replace_hit(index);}});
             }
             row.set_child(Some(&content));self.list.append(&row);
@@ -80,14 +80,14 @@ impl SearchPanel {
 }
 fn install_search_panel(ui:&Rc<Ui>,toggle:&gtk::ToggleButton,compact:&gtk::Button)->Rc<SearchPanel>{
     let root=gtk::Box::new(gtk::Orientation::Vertical,6);root.set_margin_top(6);
-    let query=gtk::SearchEntry::new();query.set_placeholder_text(Some("Buscar en el documento"));query.set_hexpand(true);query.set_width_chars(1);query.set_widget_name("document-search");
+    let query=gtk::SearchEntry::new();query.set_placeholder_text(Some("Buscar en el documento"));query.set_hexpand(true);query.set_width_chars(1);query.set_widget_name("document-search");accessible_name(&query,"Buscar en el documento");
     let line=gtk::Box::new(gtk::Orientation::Horizontal,4);line.set_margin_start(6);line.set_margin_end(6);line.append(&query);
-    let options=gtk::MenuButton::new();options.set_icon_name("view-more-symbolic");options.add_css_class("flat");options.add_css_class("search-options");options.set_tooltip_text(Some("Opciones de búsqueda"));line.append(&options);root.append(&line);
+    let options=gtk::MenuButton::new();options.set_icon_name("view-more-symbolic");accessible_name(&options,"Opciones de búsqueda");options.add_css_class("flat");options.add_css_class("search-options");options.set_tooltip_text(Some("Opciones de búsqueda"));line.append(&options);root.append(&line);
     let pop=gtk::Popover::new();let choices=gtk::Box::new(gtk::Orientation::Vertical,8);choices.set_margin_top(8);choices.set_margin_bottom(8);choices.set_margin_start(8);choices.set_margin_end(8);
     let case=gtk::CheckButton::with_label("Distinguir mayúsculas");let replace=gtk::CheckButton::with_label("Reemplazar");choices.append(&case);choices.append(&replace);pop.set_child(Some(&choices));options.set_popover(Some(&pop));
-    let replacement=gtk::Entry::new();replacement.set_placeholder_text(Some("Reemplazar por"));replacement.set_hexpand(true);replacement.set_width_chars(1);
+    let replacement=gtk::Entry::new();replacement.set_placeholder_text(Some("Reemplazar por"));replacement.set_hexpand(true);replacement.set_width_chars(1);accessible_name(&replacement,"Reemplazar por");
     let replacement_row=gtk::Box::new(gtk::Orientation::Horizontal,4);replacement_row.set_margin_start(6);replacement_row.set_margin_end(6);replacement_row.append(&replacement);
-    let replace_all=gtk::Button::new();replace_all.set_child(Some(&paragraph_icon("replace")));replace_all.add_css_class("flat");replace_all.set_tooltip_text(Some("Reemplazar todos los resultados"));replace_all.set_widget_name("search-replace-all");replacement_row.append(&replace_all);replacement_row.set_visible(false);root.append(&replacement_row);
+    let replace_all=gtk::Button::new();accessible_name(&replace_all,"Reemplazar todos los resultados");replace_all.set_child(Some(&paragraph_icon("replace")));replace_all.add_css_class("flat");replace_all.set_tooltip_text(Some("Reemplazar todos los resultados"));replace_all.set_widget_name("search-replace-all");replacement_row.append(&replace_all);replacement_row.set_visible(false);root.append(&replacement_row);
     let actions_width=gtk::SizeGroup::new(gtk::SizeGroupMode::Horizontal);actions_width.add_widget(&options);actions_width.add_widget(&replace_all);
     let status=gtk::Label::new(Some("Escribe para buscar"));status.add_css_class("dim-label");status.set_wrap(true);root.append(&status);
     let list=gtk::ListBox::new();list.set_activate_on_single_click(true);list.add_css_class("navigation-sidebar");

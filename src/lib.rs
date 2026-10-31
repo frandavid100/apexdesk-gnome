@@ -94,3 +94,5 @@ pub mod navigation;
 pub mod pictures;
 pub mod document_properties;
 pub mod pdf_export;
+
+pub mod printing;

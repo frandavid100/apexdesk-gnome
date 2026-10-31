@@ -83,7 +83,7 @@ fn install_picture_controls(ui:&Rc<Ui>,parent:&ApplicationWindow,bar:&gtk::Box)-
 
 struct DocumentProperties {window:adw::Window,width:gtk::SpinButton,height:gtk::SpinButton,top:gtk::SpinButton,bottom:gtk::SpinButton,left:gtk::SpinButton,right:gtk::SpinButton,apply:gtk::Button}
 fn properties_number(group:&adw::PreferencesGroup,label:&str,value:f32)->gtk::SpinButton{
-    let row=adw::ActionRow::new();row.set_title(label);let n=mm_input(value as f64/PT_PER_MM,0.0,1584.0/PT_PER_MM);row.add_suffix(&n);group.add(&row);n
+    let row=adw::ActionRow::new();row.set_title(label);let n=mm_input(value as f64/PT_PER_MM,0.0,1584.0/PT_PER_MM);row.add_suffix(&n);row.set_activatable_widget(Some(&n));accessible_name(&n,label);group.add(&row);n
 }
 fn show_document_properties(ui:&Rc<Ui>,parent:&ApplicationWindow)->DocumentProperties {
     let state={let value=ui.current.borrow();PageSetup::current(&value.as_ref().unwrap().session)};let identity=document_identity(ui);

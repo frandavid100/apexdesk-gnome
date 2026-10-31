@@ -60,6 +60,11 @@ jobs:
           fi
       - name: Compilar lector GNOME
         run: cargo build --release --locked --features gui --bin wordcraft-gnome
+      - name: Keyboard navigation and native print portal handoff
+        run: |
+          sudo apt-get install -y --no-install-recommends python3-gi dbus-x11
+          xvfb-run -a bash tools/keyboard_test.sh ./target/release/wordcraft-gnome
+          xvfb-run -a dbus-run-session -- bash tools/print_test.sh ./target/release/wordcraft-gnome
       - name: Vista del motor sin interfaz
         run: |
           cargo run -- --png muestra-wordcraft.png
@@ -74,7 +79,7 @@ jobs:
       - name: Identificar versión de prueba
         run: |
           ./target/release/wordcraft-gnome --version | tee version.txt
-          grep -q "Leaf 0.1.0-alpha.4" version.txt
+          grep -q "Leaf 0.1.0-alpha.5" version.txt
       - name: Probar escritorio ancho, ventana estrecha, panel y tema oscuro
         run: |
           python -m pip install --disable-pip-version-check pillow==11.3.0
@@ -323,6 +328,10 @@ jobs:
         with:
           name: wordcraft-gnome-fase3d-linux
           path: |
+            keyboard-ui.log
+            print-*.log
+            print-*.pdf
+            print-*.txt
             audit-results/
             wordcraft-gnome
             muestra-wordcraft.png
@@ -430,7 +439,7 @@ jobs:
       - name: Install Flatpak and desktop validation tools
         run: |
           sudo apt-get update
-          sudo apt-get install -y --no-install-recommends flatpak desktop-file-utils appstream xvfb xauth scrot libgtk-3-bin librsvg2-common fuse3 xdotool xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
+          sudo apt-get install -y --no-install-recommends flatpak desktop-file-utils appstream xvfb xauth scrot libgtk-3-bin librsvg2-common fuse3 python3-gi xdotool xdg-desktop-portal xdg-desktop-portal-gtk dbus-x11
           # Ubuntu runner AppArmor restricts bubblewrap's user namespaces by default.
           sudo sysctl -w kernel.apparmor_restrict_unprivileged_userns=0
       - name: Validate desktop metadata
@@ -440,13 +449,22 @@ jobs:
       - name: Download previous alpha for upgrade verification
         env:
           GH_TOKEN: ${{ github.token }}
-        run: gh release download v0.1.0-alpha.3 --pattern 'Leaf-0.1.0-alpha.3-x86_64.flatpak' --dir prior-release
+        run: gh release download v0.1.0-alpha.4 --pattern 'Leaf-0.1.0-alpha.4-x86_64.flatpak' --dir prior-release
       - name: Build and install the bundle
         run: bash packaging/build-bundle.sh native-artifact/wordcraft-gnome
       - name: Exercise the installed sandbox and desktop launcher
         run: |
           set -o pipefail
           xvfb-run -a -s '-screen 0 1280x900x24' dbus-run-session -- bash packaging/smoke-test.sh 2>&1 | tee dist/flatpak-smoke.log
+      - name: Verify installed Flatpak print portal handoff
+        run: |
+          cat > print-sandbox-runner <<'SH'
+          #!/usr/bin/env bash
+          exec bash tools/flatpak_print_run.sh "$@"
+          SH
+          chmod +x print-sandbox-runner
+          xvfb-run -a dbus-run-session -- bash tools/print_test.sh "$PWD/print-sandbox-runner"
+          cp print-ui-*.log print-portal-*.log dist/
       - name: Checksums
         working-directory: dist
         run: sha256sum Leaf-*.flatpak INSTALL.md source-commit.txt runtime.txt runtime-commit.txt flatpak-metadata.txt leaf-installed.png flatpak-smoke.log > SHA256SUMS
@@ -460,4 +478,4 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create v0.1.0-alpha.4 dist/Leaf-0.1.0-alpha.4-x86_64.flatpak dist/SHA256SUMS dist/INSTALL.md dist/source-commit.txt dist/runtime.txt dist/runtime-commit.txt dist/flatpak-metadata.txt dist/leaf-installed.png dist/flatpak-smoke.log --target "$GITHUB_SHA" --title 'Leaf 0.1.0-alpha.4' --prerelease --notes-file packaging/RELEASE_NOTES.md
+          gh release create v0.1.0-alpha.5 dist/Leaf-0.1.0-alpha.5-x86_64.flatpak dist/SHA256SUMS dist/INSTALL.md dist/source-commit.txt dist/runtime.txt dist/runtime-commit.txt dist/flatpak-metadata.txt dist/leaf-installed.png dist/flatpak-smoke.log --target "$GITHUB_SHA" --title 'Leaf 0.1.0-alpha.5' --prerelease --notes-file packaging/RELEASE_NOTES.md

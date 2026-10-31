@@ -14,6 +14,7 @@ use wordcraft_engine::Session;
 use wordcraft_gnome::{open_document, render_page_premultiplied as render_page, sample_session};
 use wordcraft_gnome::viewer_layout::{self, THUMB_SCALE};
 
+const APP_VERSION: &str = "0.1.0-alpha.5";
 const APP_ID: &str = "io.github.frandavid100.leaf";
 const STEPS: &[f32] = &[0.5, 0.67, 0.75, 0.85, 1.0, 1.25, 1.5, 1.75, 2.0];
 
@@ -37,6 +38,7 @@ struct Current {
 
 struct Ui {
     current: RefCell<Option<Current>>,
+    printing: PrintState,
     document_box: gtk::Fixed,
     thumbnails_box: gtk::Box,
     scroll: gtk::ScrolledWindow,
@@ -829,6 +831,8 @@ include!("../gnome_popover_pin.rs");
 include!("../gnome_search.rs");
 include!("../gnome_navigation.rs");
 include!("../gnome_menus.rs");
+include!("../gnome_printing.rs");
+include!("../gnome_accessibility.rs");
 include!("../gnome_paragraph.rs");
 include!("../gnome_view_tests.rs");
 include!("../gnome_hidpi.rs");
@@ -857,7 +861,7 @@ fn build_tab(
     let side_title = gtk::Label::new(Some("Editor de documentos"));
     side_title.add_css_class("heading");side_title.set_ellipsize(gtk::pango::EllipsizeMode::End);side_title.set_max_width_chars(16);
     side_header.set_title_widget(Some(&side_title));
-    let search_toggle=gtk::ToggleButton::new();search_toggle.set_icon_name("edit-find-symbolic");search_toggle.set_tooltip_text(Some("Buscar en el documento (Ctrl+F)"));side_header.pack_start(&search_toggle);
+    let search_toggle=gtk::ToggleButton::new();accessible_name(&search_toggle,"Buscar en el documento");search_toggle.set_icon_name("edit-find-symbolic");search_toggle.set_tooltip_text(Some("Buscar en el documento (Ctrl+F)"));side_header.pack_start(&search_toggle);
 
     let open_button=gtk::Button::with_label("Abrir…");
     let app_menu=gtk::MenuButton::new();app_menu.set_icon_name("open-menu-symbolic");app_menu.set_tooltip_text(Some("Menú principal"));side_header.pack_end(&app_menu);
@@ -869,7 +873,7 @@ fn build_tab(
     sidebar_button.set_icon_name("sidebar-show-symbolic");
     sidebar_button.set_tooltip_text(Some("Mostrar u ocultar miniaturas (F9)"));
     header.pack_start(&sidebar_button);
-    let compact_search=gtk::Button::from_icon_name("edit-find-symbolic");compact_search.set_tooltip_text(Some("Buscar (Ctrl+F)"));header.pack_start(&compact_search);
+    let compact_search=gtk::Button::from_icon_name("edit-find-symbolic");accessible_name(&compact_search,"Buscar en el documento");compact_search.set_tooltip_text(Some("Buscar (Ctrl+F)"));header.pack_start(&compact_search);
     let zoom_out = gtk::Button::with_label("−");
     zoom_out.set_tooltip_text(Some("Reducir zoom (Ctrl+-)"));
     let zoom_in = gtk::Button::with_label("+");
@@ -884,7 +888,7 @@ fn build_tab(
 
     let menu_button = gtk::MenuButton::new();
     menu_button.set_icon_name("view-more-symbolic");
-    menu_button.set_tooltip_text(Some("Opciones del documento"));
+    menu_button.set_tooltip_text(Some("Opciones del documento"));accessible_name(&menu_button,"Opciones del documento");
     install_document_menu(&menu_button);
     header.pack_end(&menu_button);
     let top_history=gtk::Box::new(gtk::Orientation::Horizontal,0);header.pack_start(&top_history);
@@ -927,8 +931,8 @@ fn build_tab(
     let navigation_pages=gtk::Stack::new();navigation_pages.set_vexpand(true);navigation_pages.add_named(&thumbnails_scroll,Some("thumbnails"));
     let navigation=ToolbarView::new();navigation.set_content(Some(&navigation_pages));navigation.set_bottom_bar_style(adw::ToolbarStyle::Flat);
     let selector=gtk::Box::new(gtk::Orientation::Horizontal,6);selector.add_css_class("sidebar-selector");selector.set_margin_start(6);selector.set_margin_end(6);selector.set_margin_top(5);selector.set_margin_bottom(5);
-    let pages_toggle=gtk::ToggleButton::new();pages_toggle.set_child(Some(&sidebar_icon("pages")));pages_toggle.set_tooltip_text(Some("Páginas"));pages_toggle.set_hexpand(true);pages_toggle.add_css_class("flat");pages_toggle.set_widget_name("sidebar-pages");
-    let titles_toggle=gtk::ToggleButton::new();titles_toggle.set_child(Some(&sidebar_icon("outline")));titles_toggle.set_tooltip_text(Some("Títulos"));titles_toggle.set_hexpand(true);titles_toggle.add_css_class("flat");titles_toggle.set_widget_name("sidebar-outline");titles_toggle.set_group(Some(&pages_toggle));pages_toggle.set_active(true);
+    let pages_toggle=gtk::ToggleButton::new();accessible_name(&pages_toggle,"Páginas");pages_toggle.set_child(Some(&sidebar_icon("pages")));pages_toggle.set_tooltip_text(Some("Páginas"));pages_toggle.set_hexpand(true);pages_toggle.add_css_class("flat");pages_toggle.set_widget_name("sidebar-pages");
+    let titles_toggle=gtk::ToggleButton::new();accessible_name(&titles_toggle,"Títulos");titles_toggle.set_child(Some(&sidebar_icon("outline")));titles_toggle.set_tooltip_text(Some("Títulos"));titles_toggle.set_hexpand(true);titles_toggle.add_css_class("flat");titles_toggle.set_widget_name("sidebar-outline");titles_toggle.set_group(Some(&pages_toggle));pages_toggle.set_active(true);
     selector.append(&pages_toggle);selector.append(&titles_toggle);
     let selector_bar=gtk::Box::new(gtk::Orientation::Vertical,0);selector_bar.add_css_class("toolbar");selector_bar.append(&selector);navigation.add_bottom_bar(&selector_bar);sidebar_pages.add_named(&navigation,Some("navigation"));sidebar_toolbar.set_content(Some(&sidebar_pages));
 
@@ -1079,6 +1083,7 @@ fn build_tab(
 
     let ui = Rc::new(Ui {
         current: RefCell::new(None),
+        printing: PrintState::default(),
         selection_data: Rc::new(RefCell::new(SelectionGeometry::default())),
         selection_zoom: Rc::new(Cell::new(1.0)),
         caret_motion: Rc::new(RefCell::new(Default::default())),
@@ -1107,6 +1112,7 @@ fn build_tab(
     });
 
 
+    install_accessibility(&ui,&app_menu,&compact_app_menu);
     let text_tools=install_text_pages(&ui,&text_popover,&text_options,&inline_buttons,&text_header,&more_text);ui.text_tools.replace(Some(text_tools));
     let paragraph_popover=install_paragraph_popover(&ui,&align_menu);ui.paragraph.replace(Some(paragraph_popover.clone()));
     if std::env::args().any(|a| a == "--motion-ui-test") {
@@ -1657,6 +1663,8 @@ fn build_tab(
         });
     }
     if std::env::args().any(|a|a=="--columns-demo"){let u=ui.clone();let m=align_menu.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{m.popup();if let Some(s)=u.paragraph.borrow().as_ref(){s.page("columns");}});}
+    if std::env::args().any(|a|a=="--print-ui-test"){let u=ui.clone();let w=window.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(900),move||print_ui_test(&u,&w,&a));}
+    if std::env::args().any(|a|a=="--keyboard-ui-test"){let u=ui.clone();let w=window.clone();let m=app_menu.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(900),move||keyboard_ui_test(&u,&w,&m,&a));}
     if std::env::args().any(|a|a=="--hidpi-ui-test"){let u=ui.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1300),move||hidpi_ui_test(&u,&a));}
     if std::env::args().any(|a|a=="--columns-ui-test"){let u=ui.clone();let w=window.clone();let a=app.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||columns_ui_test(&u,&w,&a));}
     if std::env::args().any(|a|a=="--paragraph-demo"||a=="--paragraph-spacing-demo") {let m=align_menu.clone();let s=paragraph_popover.clone();glib::timeout_add_local_once(std::time::Duration::from_millis(1100),move||{m.popup();if std::env::args().any(|a|a=="--paragraph-spacing-demo"){s.page("spacing");}});}
@@ -1753,7 +1761,7 @@ fn build_tab(
 
 fn main() {
     if std::env::args().any(|arg| arg == "--version") {
-        println!("Leaf 0.1.0-alpha.4");
+        println!("Leaf {APP_VERSION}");
         return;
     }
     if std::env::args().any(|a|a=="--package-storage-test") {
