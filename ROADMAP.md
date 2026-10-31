@@ -3,7 +3,13 @@
 Actualizada: 31 de octubre de 2026. Estado técnico en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Las fases siguientes son propuestas; no implican autorización para implementarlas todas.
 
-## Ahora: imágenes, propiedades de documento y exportación PDF
+## Ahora: validar columnas y recoger tareas bloqueadas
+
+Alpha.2 publicada con Columnas en Párrafo e iconos simbólicos GTK. Pruebas nativas y Flatpak superadas; detalles y revisión en PROJECT_STATUS.md. Pendiente de prueba manual. Probar selección y sección, deshacer, guardar/reabrir DOCX y ODT, y comparar anchuras desiguales (ODT las iguala por limitación del motor).
+
+[Investigación sobre frecuencia de funciones](docs/FEATURE_PRIORITIES.md): preservar edición/guardado/portapapeles; investigar con probadores impresión, ortografía/idiomas y encabezados/pies/numeración. Son candidatos, no autorización ni clasificación universal por popularidad.
+
+## Entregas anteriores: imágenes, propiedades de documento y exportación PDF
 
 Validado automáticamente en CI (41094124112), pendiente de prueba del usuario: se han aplicado márgenes simétricos de miniaturas, cabecera de una línea sin contador de páginas, disposición automática de dos páginas y corrección del salto al devolver el foco desde los menús al documento.
 

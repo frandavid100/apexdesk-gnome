@@ -2,6 +2,19 @@
 
 Actualizado: 31 de octubre de 2026. Punto de entrada para continuar desde otra conversación.
 
+## Última entrega: alpha.2 — columnas e iconos (31-10-2026)
+
+- Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.2
+- Flatpak x86_64: 10,113,936 bytes; SHA256 `6a90c8fc6e371586f786193cc8662009254157be39bb5d1d996215b3179dedd2`.
+- Fuente etiquetada/empaquetada: `aeab3e4d31115597dd739ced269c2cf8e1b7c7eb`. Código nativo idéntico al validado en `a13bc6c1a2221035190eb500abbdb0a8683fe30b`; el segundo commit solo corrige preparación de pruebas de paquete/documentación.
+- Párrafo → Columnas: 1–12, iguales/asimétricas/personalizadas, separación en mm y línea opcional. Alcance explícito: sección, documento, selección de texto o desde el cursor. Se prepara el cambio y se aplica en un paso de deshacer; volver sin aplicar no modifica el documento.
+- Se conserva el motor público sin cambios. DOCX conserva anchuras desiguales; el exportador ODT fijado las iguala (mantiene número, separación y línea). Se explica en el desplegable.
+- Estilo/Párrafo/Texto usan iconos simbólicos GTK con tamaño/alineación nativos.
+- CI nativa 41192206555, job 124511105404: cargo test --locked, compilación release, pruebas GTK incluyendo COLUMNS_UI_OK y capturas. Captura de Columnas revisada visualmente.
+- CI paquete 41192998882, job 124513448571: actualización desde alpha.1, datos persistentes, pruebas de columnas/estilos/cabecera en sandbox, lanzador, apertura por portal y reinstalación. Primera prueba de paquete falló por iniciar el portal fuera de la sesión gráfica; corregida sin cambiar el ejecutable. No se publicó ese intento fallido.
+- Pendiente: prueba manual del usuario en GNOME OS/documentos reales.
+- Investigación y prioridades propuestas: [docs/FEATURE_PRIORITIES.md](docs/FEATURE_PRIORITIES.md). No confundir frecuencia histórica de comandos con importancia ni con demanda actual. No se ha añadido telemetría.
+
 ## Cómo retomar
 
 Repositorio: https://github.com/frandavid100/leaf
@@ -233,7 +246,3 @@ Release con bundle, instrucciones, SHA256SUMS, runtime/commit, revisión fuente,
 No se ha publicado en Reddit ni en Flathub, ni se ha creado un manifiesto de Flathub. Es un bundle de GitHub montado con comandos básicos de Flatpak sobre el ejecutable compilado en Ubuntu. Scripts de empaquetado asistidos por IA: declaración actualizada. Para Flathub sigue haciendo falta participación humana y una construcción conforme a sus requisitos.
 
 Pendiente: instalación/prueba manual en GNOME OS del usuario, fidelidad con archivos reales, guardar/reabrir mediante los selectores nativos en el equipo del usuario, actualización entre versiones distintas, captura promocional definitiva y localización. Sin feed de actualizaciones automáticas de Leaf. No presentar pruebas de CI como confirmación manual.
-
-
-## In progress: columns and formatting icons (2026-10-31)
-Alpha.2 adds public-engine section columns (1–12, equal/asymmetric/custom, gap/separator, explicit scopes), accessed from Paragraph → Columnas. GTK symbolic icons replace custom formatting letters. Engine tests passed on initial CI; final popover integration and installed bundle validation are pending. ODT exporter retains column count/gap/separator but equalizes unequal widths; DOCX retains widths. See docs/FEATURE_PRIORITIES.md for researched prioritization and limitations. Engine revision remains unchanged.

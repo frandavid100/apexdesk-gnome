@@ -13,7 +13,7 @@ Leaf is an experimental document editor for Linux, built with GTK4 and libadwait
 ## What works today
 
 - Open, edit and save DOCX and ODT documents; export to PDF.
-- Text formatting, paragraph settings, styles, tables and inline images.
+- Text formatting, paragraph settings, section columns, styles, tables and inline images.
 - Undo/redo, rich clipboard operations and sidebar search with replacement.
 - Multiple tabs and windows; page thumbnails and heading navigation.
 - Adaptive editing controls, dark appearance and configurable autosave/recovery.
@@ -22,9 +22,9 @@ These are implemented features, not a claim of complete Microsoft Word or LibreO
 
 ## Try Leaf
 
-The first **x86_64 Flatpak alpha** is available on [GitHub Releases](https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.1). Download `Leaf-0.1.0-alpha.1-x86_64.flatpak` and open it with GNOME Software, or follow [installation instructions](packaging/INSTALL.md). It uses the GNOME 49 runtime from Flathub, downloaded separately if missing. Leaf itself is not currently on Flathub.
+The current **x86_64 Flatpak alpha** is available on [GitHub Releases](https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.2). Download `Leaf-0.1.0-alpha.2-x86_64.flatpak` and open it with GNOME Software, or follow [installation instructions](packaging/INSTALL.md). It uses the GNOME 49 runtime from Flathub, downloaded separately if missing. Leaf itself is not currently on Flathub.
 
-The installed package has passed automated launcher, interface, document-portal opening and persistent-data reinstall checks on Ubuntu CI. Manual testing on GNOME OS and with your own documents is still needed. This standalone bundle has no automatic Leaf update feed.
+The installed package has passed automated launcher, interface, document-portal opening and persistent-data upgrade/reinstall checks on Ubuntu CI. Manual testing on GNOME OS and with your own documents is still needed. This standalone bundle has no automatic Leaf update feed.
 
 Experienced testers can build the development branch. Requirements: Rust 1.95 or newer, Git, pkg-config, GTK 4.10+ and libadwaita 1.4+ development libraries. The existing CI runs on Ubuntu 24.04; other host environments have not been comprehensively tested.
 
@@ -55,7 +55,7 @@ Screenshots are actual captures of the last validated development build, using a
 
 ## Limits of this alpha
 
-Complex document fidelity, fonts, pagination and format preservation need broader testing. Images are inserted inline; floating-image positioning is not exposed. Tables do not yet have mouse resize handles or formulas. Printing and a complete English interface remain future work. Automated checks do not establish fidelity for arbitrary documents.
+Complex document fidelity, fonts, pagination and format preservation need broader testing. Images are inserted inline; floating-image positioning is not exposed. Tables do not yet have mouse resize handles or formulas. Unequal column widths are retained in DOCX but equalized by the current ODT exporter. Printing and a complete English interface remain future work. Automated checks do not establish fidelity for arbitrary documents.
 
 For everyday work, keep your original and check saved copies in another editor. Autosave to the original file is an explicit preference; use recovery mode while testing.
 
