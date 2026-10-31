@@ -330,6 +330,13 @@ jobs:
           echo "Después de strip:"
           ls -lh wordcraft-gnome
           test -s wordcraft-gnome
+      - name: Backtrace a failed ownership check
+        if: failure()
+        run: |
+          if test -x target/release/wordcraft-gnome && test -f lifecycle-fixed.log; then
+            sudo apt-get install -y --no-install-recommends gdb
+            XDG_CONFIG_HOME=$(mktemp -d) XDG_STATE_HOME=$(mktemp -d) GSK_RENDERER=cairo xvfb-run -a timeout 150s gdb --batch -ex run -ex 'thread apply all bt' --args ./target/release/wordcraft-gnome --lifecycle-ui-test 2>&1 | tee lifecycle-backtrace.log
+          fi
       - name: Show GTK failure details
         if: failure()
         run: |
