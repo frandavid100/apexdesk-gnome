@@ -19,6 +19,12 @@ Copy a short DOCX or ODT document to a test folder. In Preferences, keep autosav
 
 A successful test is useful too: add your environment, file origin/format and the checks you performed to a compatibility report. A successful round-trip of one file does not establish support for all files from that application.
 
+## Keyboard and printing
+
+Use F6 / Shift+F6 to move between document, sidebar and formatting controls; F10 opens the main menu. Check Escape, Enter, table Tab / Shift+Tab and native search-field shortcuts in wide and narrow windows. See [scope and remaining accessibility limits](KEYBOARD_PRINTING.md): the custom canvas still lacks complete screen-reader text access.
+
+From the document menu or Ctrl+P, open Print with unsaved text, then cancel. The editable destination, dirty state and undo history should stay unchanged. Print a copy or use Print to File and check dimensions, orientation, images and text. On a suitable printer, check ranges, copies and duplex. Automated portal tests do not establish physical-printer support.
+
 ## Longer tests
 
 Try a long document, a document with mixed section sizes, lists, tables across pages, and documents created by different editors. Test missing fonts separately from missing content. Keep these variables separate when possible.
@@ -34,6 +40,10 @@ Use [the issue forms](https://github.com/frandavid100/leaf/issues/new/choose). I
 Attach the smallest non-confidential original and affected copy if you can. Use invented content, and check comments, document metadata, filenames and screenshots for personal information. If you cannot share a file, report the steps and a description without it. Logs are optional; remove paths and private text before posting.
 
 ## Current validation baseline
+
+Alpha.5 adds automated keyboard and print-portal checks, including opening/cancelling the real backend dialog inside the installed Flatpak. [Detailed evidence and limits](KEYBOARD_PRINTING.md). This is CI validation, not a manual desktop or hardware confirmation.
+
+## Historical first-package baseline
 
 The first installed Flatpak alpha is [v0.1.0-alpha.1](https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.1), packaged from tag commit `07d5ff9a6f7b1dd0ff0a0fa399e2b258a254769a`. Its native source and tests are identical to the validated native build `497cd6c5aad7a71f4b580e933f4c3e505b9126c5` (successful test job 124494863399 in run 41186663675). The [final packaging run](https://github.com/frandavid100/leaf/actions/runs/41188080151) passed installation, launcher, portal-file opening and persistent-data reinstall checks. This is automated Ubuntu/Xvfb validation with the GNOME 49 runtime, not manual GNOME OS testing. See [installation instructions](../packaging/INSTALL.md).
 

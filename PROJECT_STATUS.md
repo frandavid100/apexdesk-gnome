@@ -2,11 +2,25 @@
 
 Actualizado: 31 de octubre de 2026. Punto de entrada para continuar desde otra conversación.
 
-## En curso: teclado, accesibilidad e impresión autorizados
+## Última entrega: alpha.5 — teclado, controles accesibles e impresión (31-10-2026)
 
-Implementación de Imprimir/Ctrl+P con GtkPrintDialog (GTK 4.14+, portal nativo), PDF temporal privado generado en segundo plano desde una copia; sin guardar ni modificar el documento vivo. F6/Mayús+F6 para zonas, F10 para menú principal, etiquetas accesibles de controles y versión Acerca de unificada. Pruebas nuevas de entrega PDF al portal, cancelación/error, limpieza e inmutabilidad, y teclas reales. Validación y alpha.5 pendientes; no anunciar como publicada hasta CI y revisión.
+Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.5
+Etiqueta/paquete: `3bb562d04129d668261b6aafb25833628d801480`. Código nativo validado: `b1b42907f2059353518480899a3d4d56beb2996f`; igualdad de src/Cargo/tests/vendor/patches comprobada antes de reutilizar su artefacto.
+Flatpak x86_64: **10.151.304 bytes**; SHA256 `0a9d56137e03d2d622e3f224b6ac866851ece7a2766c18e4d750d3dc350ef34d`.
 
-## Última entrega: alpha.4 — conservación ODT (31-10-2026)
+Imprimir… en el menú del documento y Ctrl+P usan GtkPrintDialog y el portal nativo. PDF vectorial temporal privado desde una copia del documento en segundo plano, sin guardar ni cambiar el documento vivo, selección, destino o historial. Control de solicitudes duplicadas, cancelación al cerrar pestaña y limpieza al finalizar. No hay librería nueva ni cambio del motor; compilación desde código requiere GTK 4.14+, runtime Flatpak GNOME 49 ya compatible.
+
+F6/Mayús+F6 recorren documento/panel/formato; F10 abre el menú principal. Etiquetas explícitas en iconos, campos, subopciones, estilos, tablas y números; Escape de formato devuelve foco al ancla. Acerca de y --version comparten versión. No equivale a accesibilidad completa: el lienzo aún no expone texto/selección completos a Orca.
+
+[Informe de implementación, validación y límites](docs/KEYBOARD_PRINTING.md). CI nativa [41225574820](https://github.com/frandavid100/leaf/actions/runs/41225574820), job **124608903617**: cargo test --locked, release GTK, teclas reales, entrega real de descriptor PDF a portal de prueba (éxito/cancelación/error), regresiones gráficas e HiDPI correctos. No se repitió el corpus de 24 archivos. Artefacto nativo 13051823942, digest GitHub ca176fa5dc604a53fdc85dfd349aa071c85649090b10b066fb2305f047e12534.
+
+Paquete [41226912994](https://github.com/frandavid100/leaf/actions/runs/41226912994), job **124612866903**: actualizado desde alpha.4, diálogo real de impresión abierto/cancelado, tres respuestas del portal simulado dentro del sandbox con PDF comprobado, lanzador, archivo externo y persistencia/reinstalación. Artefacto final 13051049778, digest GitHub a63e32c3e3c1bc1a57b5b183f0f06fe302abc17b2a2a724bc1bf415a6e47460e. No se descargaron/verificaron independientemente los artefactos ni se revisó visualmente la captura final tras quedar indisponible el entorno local; resultados automáticos y fuentes permanecen en GitHub.
+
+Detalle observado del backend GTK 1.15.1 de CI: Escape/cierre de ventana devuelve respuesta 2 (fallo), mientras Cancelar devuelve 1. La prueba final usa Cancelar (Alt+C); no se silencian errores reales. En ese backend Escape puede mostrar un error de impresión; usar Cancelar. Impresora física, Orca y contraste alto pendientes de prueba manual. PDF mantiene limitaciones del exportador upstream, incluida advertencia de metadatos Suspects de Poppler. Ver informe; no atribuir a CI una confirmación manual.
+
+Los primeros intentos fallaron antes de publicar por una referencia del test GTK, el número antiguo de opciones del menú, la diferencia Escape/Cancelar del portal y una herramienta ausente en el entorno de prueba del paquete. Corregidos; solo se distribuye la validación final.
+
+## Entrega anterior: alpha.4 — conservación ODT (31-10-2026)
 
 Publicada: https://github.com/frandavid100/leaf/releases/tag/v0.1.0-alpha.4
 Fuente/etiqueta: `d5f969801fb8f069396922cb6603ff4cfa68b35c`.

@@ -3,11 +3,13 @@
 Actualizada: 31 de octubre de 2026. Estado técnico en [PROJECT_STATUS.md](PROJECT_STATUS.md).
 Las fases siguientes son propuestas; no implican autorización para implementarlas todas.
 
-## En curso: revisión de teclado/accesibilidad e impresión
+## Ahora: validar impresión y accesibilidad con usuarios
 
-Autorizadas por el usuario. Implementación y pruebas en curso; completar validación, documentación y paquete antes de marcar como entrega. La accesibilidad del lienzo personalizado para lectores de pantalla seguirá siendo un límite explícito; mejorar etiquetas de controles no equivale a exponer todo el texto a Orca.
+Alpha.5 publicada: impresión nativa (menú del documento/Ctrl+P), navegación F6/Mayús+F6 y F10, etiquetas accesibles y versión Acerca de corregida. Pruebas nativas y del Flatpak superadas; [evidencia y límites](docs/KEYBOARD_PRINTING.md). Motor y dependencias Rust sin cambios. GTK mínimo 4.14 para código fuente; GNOME 49 en Flatpak.
 
-## Ahora: conservación de ODT y validación con usuarios
+Siguiente trabajo propuesto, aún no autorizado como ampliación: recoger pruebas con impresoras reales y documentos del usuario, comprobar Orca/contraste alto y diseñar cómo exponer el texto del lienzo mediante GtkAccessibleText. Las etiquetas no resuelven por sí solas la accesibilidad del documento. Documentado el comportamiento Escape/Cancelar del portal GTK antiguo. Mantener pruebas pequeñas de fallos concretos; el corpus completo sigue siendo manual.
+
+## Entrega anterior: conservación de ODT
 
 Alpha.4 publicada: corregidos los fallos de conservación de cabeceras/pies ODT y filas repetidas descubiertos en la auditoría inicial. [Seguimiento, segunda ejecución de 24 archivos y límites](docs/ODT_PRESERVATION_2026-10-31.md). Siete regresiones pequeñas, comprobación independiente con LibreOffice, CI GTK y Flatpak superadas. Parche aislado de wordcraft-formats con procedencia y actualización documentadas; resto del motor sin cambios. Pendiente prueba manual con documentos reales. La auditoría sigue siendo manual, sin requisito automático por versión. Prioridad siguiente: recoger fallos concretos de usuarios y ampliar reproducciones pequeñas; no implica autorización para nuevas funciones.
 
