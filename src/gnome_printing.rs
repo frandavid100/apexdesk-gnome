@@ -55,7 +55,7 @@ fn print_document(ui: &Rc<Ui>, parent: &ApplicationWindow) {
 fn print_ui_test(ui: &Rc<Ui>, parent: &ApplicationWindow, app: &Application) {
     let document = ui.current.borrow().as_ref().unwrap().session.doc.clone();
     let ui = ui.clone(); let parent = parent.clone(); let app = app.clone();
-    parent.activate_action("win.print", None).unwrap();
+    gtk::prelude::WidgetExt::activate_action(parent,"win.print", None).unwrap();
     // Duplicate activation must not create a second dialog/job.
     print_document(&ui, &parent);
     let attempts = Rc::new(Cell::new(0));

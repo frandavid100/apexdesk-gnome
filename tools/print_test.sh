@@ -2,6 +2,8 @@
 # Run inside a private D-Bus session and an existing virtual display.
 set -euo pipefail
 binary=${1:?tested executable}
+print_test_tmp=$(mktemp -d)
+export TMPDIR="$print_test_tmp"
 for mode in success cancel error; do
   /usr/bin/python3 tools/print_portal_test.py "$mode" "print-$mode.pdf" >"print-portal-$mode.log" 2>&1 &
   portal=$!
@@ -19,4 +21,6 @@ for mode in success cancel error; do
   grep -q 'The Open Studio Handbook' "print-$mode.txt"
   kill "$portal"; wait "$portal" || true
 done
+test -z "$(find "$print_test_tmp" -maxdepth 1 -name 'leaf-print-*' -print -quit)"
+rmdir "$print_test_tmp" || true
 echo PRINT_INTEGRATION_OK

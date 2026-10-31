@@ -18,6 +18,9 @@ flatpak run --socket=x11 --nosocket=wayland "$app_id" --styles-ui-test 2>dist/fl
 grep -q STYLES_POPOVER_OK dist/flatpak-styles.log
 flatpak run --env=GDK_SCALE=2 --socket=x11 --nosocket=wayland "$app_id" --hidpi-ui-test 2>dist/flatpak-hidpi.log
 grep -q 'HIDPI_UI_OK scale=2' dist/flatpak-hidpi.log
+# Show and cancel the real system print dialog; never send to a printer.
+bash tools/print_dialog_test.sh bash tools/flatpak_print_run.sh
+cp print-dialog.log print-dialog.png dist/
 # A real exported desktop launcher, using the installed icon and application ID.
 gtk-launch "$app_id" 2>dist/flatpak-launcher.log &
 launcher_pid=$!
