@@ -1,62 +1,27 @@
-# ApexDesk GNOME
+# Leaf
 
-Prototipo de un lector ofimático **nativo GNOME**, construido con GTK4,
-libadwaita y los motores Rust de ApexDesk.
+**Create and edit documents.**
 
-## Estado
+Leaf is an experimental GTK4/libadwaita document editor for Linux, powered by [WordCraft](https://github.com/storytold/wordcraft). It is an independent project designed for GNOME.
 
-- **Fase 1, superada:** DOCX/ODT se abren, editan y guardan en copias, con
-  comprobaciones de integridad y preservación básica del formato.
-- **Fase 2, en desarrollo:** ventana GNOME, selector de archivos, vista de lectura
-  de texto, negritas, cursivas, subrayados y títulos.
-- **Todavía no** es un editor: no hay modificación de documentos desde la
-  interfaz, maquetación paginada, tablas ni representación de imágenes.
+**The active project is on [`wordcraft-saving`](https://github.com/frandavid100/leaf/tree/wordcraft-saving).** This default branch contains an older ApexDesk prototype and is retained as history. Do not build this branch to try the current editor.
 
-## Licencia y procedencia de los motores
+[Read the current README and see screenshots](https://github.com/frandavid100/leaf/blob/wordcraft-saving/README.md).
 
-El código fuente **actual** de ApexDesk utiliza PolyForm Strict, que no permite
-crear derivados sin permiso. Este prototipo utiliza **únicamente** la revisión
-previa con licencia GPLv3+ fijada al commit
-[`f35e6fa`](https://github.com/apexdesk/apexdesk/commit/f35e6fa10470156a4e55febdf9f8bc2920031b82).
-No se incorporan modificaciones posteriores. Nuestra aplicación también
-está licenciada bajo GPL-3.0-or-later.
+## Status
 
-## Instalación desde fuentes en GNOME
+The current development version implements DOCX/ODT editing and saving, PDF export, styles, tables, inline images, tabs and sidebar search/replacement. Complex document fidelity is still being tested: use copies of your files.
 
-Requisitos: Rust estable, desarrollo GTK4 4.10+ y libadwaita 1.4+,
-`pkg-config` y Git. Por ejemplo, en Ubuntu 24.04:
+**There is no public installable release yet.** The first GitHub alpha and its Flatpak package are being prepared; Leaf is not on Flathub.
 
-```sh
-sudo apt install git cargo pkg-config libgtk-4-dev libadwaita-1-dev
-cargo run --features gui --bin apexdesk-gnome
-```
+## Get involved
 
-El botón **Abrir** permite seleccionar un DOCX u ODT. La ventana indica que
-es una vista previa de **solo lectura**. No modifica el archivo original.
+- [Testing guide](https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/TESTING.md)
+- [Report a bug or document compatibility result](https://github.com/frandavid100/leaf/issues/new/choose) — English and Spanish welcome.
+- [Development status](https://github.com/frandavid100/leaf/blob/wordcraft-saving/PROJECT_STATUS.md)
+- [Release preparation](https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/RELEASE_CHECKLIST.md)
+- [AI assistance disclosure](https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/AI_ASSISTANCE.md)
 
-Para ejecutar la fase 1 desde consola:
+Current frontend development uses substantial AI assistance; scope and validation limits are documented above. WordCraft is consumed unmodified at a pinned revision. Current Leaf source is GPL-3.0-or-later.
 
-```sh
-cargo test
-cargo run -- smoke target/phase1-smoke
-```
-
-Para generar los documentos externos usados en las pruebas:
-
-```sh
-python3 -m pip install python-docx==1.2.0 odfpy==1.4.1
-python3 scripts/make_fixtures.py
-python3 scripts/verify_fixtures.py
-cargo test
-```
-
-## Verificaciones CI
-
-El flujo [**Fase 2 — GNOME GTK4 libadwaita**](.github/workflows/gnome-preview.yml)
-compila el binario y lo adjunta como artefacto de desarrollo para Ubuntu 24.04.
-El flujo también verifica que la aplicación arranca en Xvfb y adjunta una captura
-de la pantalla inicial. Este binario requiere GTK4/libadwaita instalados y
-todavía no es un Flatpak.
-
-La prueba no valida el aspecto visual ni la accesibilidad en una sesión real
-de GNOME; esto requerirá una revisión manual posterior.
+Pull requests for the current editor should target `wordcraft-saving`.

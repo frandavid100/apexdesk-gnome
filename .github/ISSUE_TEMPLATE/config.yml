@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: Testing guide / Guía de pruebas
+    url: https://github.com/frandavid100/leaf/blob/wordcraft-saving/docs/TESTING.md
+    about: Start here for a short test and useful reporting details. Puedes informar en español.

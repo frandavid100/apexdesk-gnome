@@ -1,0 +1,59 @@
+name: Bug report / Informe de fallo
+description: Report a reproducible crash, editing or interface problem. English and Spanish welcome.
+title: "[Bug]: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please report one problem per issue. Do not attach confidential files or logs containing private text.
+        Puedes responder en español. Describe un solo fallo y usa contenido inventado en los archivos de prueba.
+  - type: input
+    id: build
+    attributes:
+      label: Leaf version or source commit / Versión o commit
+      description: Include the release tag, or git rev-parse HEAD for a source build.
+    validations:
+      required: true
+  - type: dropdown
+    id: installation
+    attributes:
+      label: Installation / Instalación
+      options:
+        - Source build / Compilado desde fuentes
+        - Development executable ZIP / ZIP de desarrollo
+        - Flatpak (include its version above / indica la versión arriba)
+        - Other / Otro
+    validations:
+      required: true
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment / Entorno
+      description: Distribution, GNOME version, architecture, Wayland or X11, scaling and any relevant font.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce / Pasos para reproducirlo
+      description: Start from opening Leaf or a named non-confidential test file. Include the exact menu or shortcut.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior / Resultado esperado
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual behavior / Resultado real
+      description: Include whether it repeats and whether undo or reopening helps.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Optional screenshots, logs or minimal file / Pruebas opcionales
+      description: Remove private text, paths and metadata before attaching anything. A file is not required to report a bug.
