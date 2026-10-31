@@ -11,6 +11,9 @@ fn release_document(ui:&Rc<Ui>) {
     ui.printing.cancel();
     // The bar lives inside a tab: detach its strong TabView reference before
     // closing a whole window, where individual pages are not detached first.
+    // Unmap first: libadwaita 1.5 finishes tab animations on unmap.
+    // Their callbacks must run before set_view(None) frees their tab records.
+    ui.tab_bar.set_visible(false);
     ui.tab_bar.set_view(None::<&adw::TabView>);
     if let Some(controller)=ui.outside_controller.borrow_mut().take(){if let Some(widget)=controller.widget(){widget.remove_controller(&controller);}}
     let current=ui.current.borrow_mut().take();
