@@ -82,6 +82,6 @@ fn columns_ui_test(ui:&Rc<Ui>,parent:&ApplicationWindow,app:&Application){
     {let d=ui.current.borrow();let s=&d.as_ref().unwrap().session;assert_eq!(s.selected_text(),text);assert_eq!(s.undo_depth(),depth+1);let counts:Vec<_>=s.doc.sections().iter().map(|(_,p)|p.columns.count).collect();assert_eq!(counts,vec![1,2,1]);}
     apply_user_edit(ui,Edit::Undo);assert_eq!(ui.current.borrow().as_ref().unwrap().session.doc,doc);apply_user_edit(ui,Edit::Redo);
     let rev=ui.current.borrow().as_ref().unwrap().session.rev();let dialog=show_columns(ui,parent);dialog.controls.count.set_value(3.0);dialog.window.close();assert_eq!(ui.current.borrow().as_ref().unwrap().session.rev(),rev);
-    for menu in ui.format_buttons.borrow().iter(){if let Some(name)=menu.icon_name(){assert!(gtk::IconTheme::for_display(&parent.display()).has_icon(&name));}}
+    for menu in ui.format_buttons.borrow().iter(){if let Some(name)=menu.icon_name(){assert!(gtk::IconTheme::for_display(&gtk::prelude::WidgetExt::display(parent)).has_icon(&name));}}
     eprintln!("COLUMNS_UI_OK");app.quit();
 }
