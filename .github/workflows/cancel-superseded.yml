@@ -1,0 +1,15 @@
+name: Cancel superseded alpha preview
+on:
+  push:
+    branches: [wordcraft-saving]
+    paths: [.github/workflows/cancel-superseded.yml]
+permissions:
+  actions: write
+jobs:
+  cancel:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Stop superseded preview before publication
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method POST repos/frandavid100/leaf/actions/runs/41191412422/cancel
